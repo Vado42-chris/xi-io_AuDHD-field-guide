@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>xi-io: AuDHD Field Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;900&family=Lora:ital,wght@0,400;0,500;1,400&family=Open+Dyslexic&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --xi-accent: #4DB6AC;
+            --xi-accent-glow: rgba(77, 182, 172, 0.4);
+            --xi-bg-deep: #050505;
+            --xi-panel-bg: rgba(12, 12, 12, 0.5);
+            --xi-panel-border: rgba(255, 255, 255, 0.08);
+        }
+
+        html, body {
+            margin: 0; padding: 0;
+            background-color: var(--xi-bg-deep);
+            color: #FFFFFF;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden; 
+        }
+
+        body.dyslexic { font-family: 'Lora', serif !important; letter-spacing: 0.05em; }
+
+        #flashlight {
+            position: fixed; inset: 0; pointer-events: none; z-index: 1;
+            background: radial-gradient(circle 700px at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                        rgba(77, 182, 172, 0.12), transparent 80%);
+        }
+
+        .grid-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+        .grid-layer-1 { background-size: 100px 100px; background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); }
+        .grid-layer-2 { background-size: 20px 20px; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); }
+
+        .glass-sidebar {
+            background: rgba(5, 5, 5, 0.6);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border-color: var(--xi-panel-border);
+        }
+
+        .xi-panel {
+            background: var(--xi-panel-bg);
+            border: 1px solid var(--xi-panel-border);
+            border-radius: 28px;
+            backdrop-filter: blur(25px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .xi-panel:hover { border-color: rgba(77, 182, 172, 0.3); transform: translateY(-2px); }
+
+        .xi-button {
+            padding: 1.25rem 2.5rem;
+            border-radius: 1.25rem;
+            text-transform: uppercase;
+            font-weight: 900;
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .xi-button-primary { background: var(--xi-accent); color: #000; box-shadow: 0 0 40px var(--xi-accent-glow); }
+        .xi-button-primary:hover { background: #A7FFEB; box-shadow: 0 0 60px var(--xi-accent); }
+        .xi-button-secondary { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: #FFF; }
+        .xi-button-secondary:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+
+        .tall-title { font-weight: 100; letter-spacing: -0.05em; text-transform: lowercase; }
+        .xi-glow { filter: drop-shadow(0 0 15px var(--xi-accent-glow)); }
+        .xi-text-glow { text-shadow: 0 0 20px var(--xi-accent-glow); }
+
+        /* Neural Scrollbar Styling */
+        .xi-scroll::-webkit-scrollbar { width: 4px; }
+        .xi-scroll::-webkit-scrollbar-track { background: transparent; }
+        .xi-scroll::-webkit-scrollbar-thumb { background: rgba(77, 182, 172, 0.2); border-radius: 10px; }
+        .xi-scroll::-webkit-scrollbar-thumb:hover { background: rgba(77, 182, 172, 0.5); }
+        
+        .tab-active { background: rgba(77, 182, 172, 0.1) !important; border-color: rgba(77, 182, 172, 0.3) !important; color: var(--xi-accent) !important; }
+
+        @keyframes scan { 0% { transform: translateY(-100%); opacity: 0; } 50% { opacity: 0.5; } 100% { transform: translateY(100%); opacity: 0; } }
+        .xi-scan-line { position: absolute; width: 100%; height: 2px; background: var(--xi-accent); animation: scan 3s linear infinite; pointer-events: none; }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom": "https://esm.sh/react-dom@^19.2.3",
+    "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="flashlight"></div>
+    <div class="grid-layer grid-layer-2"></div>
+    <div class="grid-layer grid-layer-1"></div>
+    <div id="root"></div>
+    <script>
+        window.addEventListener('mousemove', e => {
+            document.documentElement.style.setProperty('--mouse-x', (e.clientX / window.innerWidth * 100) + '%');
+            document.documentElement.style.setProperty('--mouse-y', (e.clientY / window.innerHeight * 100) + '%');
+        });
+    </script>
+</body>
+</html>
