@@ -1,20 +1,37 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# xi-io: AuDHD Field Guide
 
-# Run and deploy your AI Studio app
+## System Overview
+xi-io is a specialized nervous-system stabilization platform designed for AuDHD (Autistic/ADHD) users. It utilizes **Hallberg Math** for stability quantization and the **Gemini 3 Pro** engine for "Neural Relay" coaching.
 
-This contains everything you need to run your app locally.
+## Setup Requirements
 
-View your app in AI Studio: https://ai.studio/apps/drive/1IYaY998ySm4KU2oWsWN2T57h6y1656Uv
+### 1. Intelligence Uplink (API Key)
+This application requires a Google Gemini API Key.
+- **Provider**: [Google AI Studio](https://aistudio.google.com/)
+- **Configuration**: The application looks for an environment variable named `API_KEY`.
+- **Note**: Ensure the key has permissions for the `gemini-3-pro-preview` model.
 
-## Run Locally
+### 2. Environment Variables
+If hosting on platforms like Vercel, Netlify, or Cloudflare Pages, set:
+`API_KEY=your_gemini_api_key_here`
 
-**Prerequisites:**  Node.js
+## Architectural Philosophy
+- **Hallberg Math**: A proprietary heuristic that calculates "R-Factor" (Environmental Stability) by cross-referencing sensory load entries against a Fibonacci-weighted assessment baseline.
+- **PDA Reframing**: The "Coach" is programmed to bypass Pathological Demand Avoidance by reframing tasks as "Autonomous Choice" rather than "External Requirements."
+- **Spoon Economy**: A finite resource tracking system (U-Units) that visualizes cognitive battery life.
 
+## For AI Agents / Future Developers
+- **Persistence**: All user data (Archive, Lexicon, Responses) is stored in `localStorage` under the `xi_` prefix.
+- **Modularity**: 
+  - `types.ts`: Core interfaces for the neuro-inclusion framework.
+  - `services/hallbergMath.ts`: The mathematical engine for stability analysis.
+  - `services/geminiService.ts`: Context-aware AI integration with multi-turn history support.
+- **UI Guidelines**:
+  - High-contrast, dark-mode-only aesthetic.
+  - "Flashlight" effect for sensory focus.
+  - Grid overlays to reduce visual noise (Low Friction design).
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Operational Status
+- **Current Version**: 1.3.5
+- **Neural Archive**: Functional (L1: Project Groups, L2: Signal Threads).
+- **Stability Core**: Nominal.

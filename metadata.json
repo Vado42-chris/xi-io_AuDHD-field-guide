@@ -1,16 +1,26 @@
 {
   "name": "xi-io: AuDHD Field Guide",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "description": "Integrated neural-stability platform. Standardized UI v2. Full Intelligence Archive & Lexicon Decryption implemented.",
   "requestFramePermissions": [
     "geolocation"
   ],
   "author": "Xibalba Systems",
+  "prerequisites": {
+    "api_key": "Required (Google Gemini)",
+    "environment_variable": "API_KEY",
+    "browser_capabilities": [
+      "ESM Support",
+      "Web Storage API",
+      "Geolocation"
+    ]
+  },
   "operationalValidation": {
     "ui_consistency": "100%",
     "hallberg_math": "100%",
     "lexicon_integration": "100%",
-    "intelligence_archive": "100%"
+    "intelligence_archive": "100%",
+    "contextual_persistence": "100%"
   },
   "roadmap": [
     "Biometric integration layer",
