@@ -32,12 +32,15 @@ export class GeminiService {
     const local = parts[0]?.text ? this.getLocalReframing(parts[0].text) : null;
 
     // Map history to Gemini's format (user/model roles)
-    const contents = history.map(h => ({
-      role: h.role === 'ai' ? 'model' : 'user',
-      parts: h.parts
-    }));
+    // We filter to ensure parts are valid and non-empty
+    const contents = history
+      .filter(h => h.parts && h.parts.length > 0)
+      .map(h => ({
+        role: h.role === 'ai' ? 'model' : 'user',
+        parts: h.parts
+      }));
 
-    // Add current message
+    // Add current message to the stream
     contents.push({ role: 'user', parts });
 
     try {
@@ -45,8 +48,15 @@ export class GeminiService {
         model: "gemini-3-pro-preview",
         contents,
         config: {
-          systemInstruction: `You are the xi-io AuDHD Chat Coach. Use Spoon Theory and PDA reframing. NEVER use deficit-based language. Structure your responses with headers and lists for high readability. Current stability context: ${context}. Keep your persona consistent across the conversation.`,
-          temperature: 0.7,
+          systemInstruction: `You are the xi-io AuDHD Chat Coach.
+          CORE MISSION: Use Spoon Theory and PDA reframing to help the user stabilize.
+          TONE: Clinical yet supportive, high-tech, neuro-inclusive.
+          RULES: 
+          1. NEVER use deficit-based language.
+          2. Structure responses with headers and lists for low cognitive load.
+          3. Use the current context to tailor advice: ${context}.
+          4. If the user mentions a previous part of the conversation, acknowledge it—you have access to the full neural history.`,
+          temperature: 0.8,
           tools: [{ googleSearch: {} }],
         }
       });
@@ -65,7 +75,7 @@ export class GeminiService {
     } catch (error) {
       console.error("Coach Service Error:", error);
       return { 
-        text: local || "Signal interruption. The neural relay is currently offline.", 
+        text: local || "Signal interruption. The neural relay is currently re-calibrating. Please try re-sending the signal.", 
         urls: [] 
       };
     }

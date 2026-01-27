@@ -139,6 +139,7 @@ const CoachView: React.FC<{
     setAttachment(null);
     setLoading(true);
 
+    // Prepare history
     const history: ChatHistoryItem[] = activeThread.messages.map(m => ({
       role: m.role,
       parts: m.parts || [{ text: m.text }]
@@ -164,7 +165,7 @@ const CoachView: React.FC<{
       <header className="flex justify-between items-end px-4">
         <h2 className="text-7xl font-thin tall-title">relay</h2>
         <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4DB6AC]/40 hidden md:block">
-          Uplink ID: {activeThread.id.slice(0, 8)}
+          Uplink: {activeThread.title}
         </div>
       </header>
       
@@ -262,24 +263,23 @@ const App: React.FC = () => {
   })));
   const [env, setEnv] = useState<EnvironmentData>({ latitude: null, longitude: null, entropyModifier: 0.05, lastUpdated: 0 });
 
-  // Group Management State
+  // Group & Thread Management
   const [groups, setGroups] = useState<Record<string, ChatGroup>>(() => {
     const saved = localStorage.getItem('xi_groups');
     if (saved) return JSON.parse(saved);
     const initialId = 'default-node';
     return {
-      [initialId]: { id: initialId, name: 'General Archives', timestamp: Date.now() }
+      [initialId]: { id: initialId, name: 'Neural Archives', timestamp: Date.now() }
     };
   });
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
 
-  // Thread Management State
   const [threads, setThreads] = useState<Record<string, ChatThread>>(() => {
     const saved = localStorage.getItem('xi_threads');
     if (saved) return JSON.parse(saved);
     const id = Date.now().toString();
     return {
-      [id]: { id, title: 'Initial Calibration Session', timestamp: Date.now(), groupId: 'default-node', messages: [
+      [id]: { id, title: 'Initial Calibration', timestamp: Date.now(), groupId: 'default-node', messages: [
         { role: 'ai', text: 'Neural relay established. How can I assist in your stabilization today?', id: 'init' }
       ] }
     };
@@ -326,7 +326,8 @@ const App: React.FC = () => {
       if (!thread) return prev;
       
       let newTitle = thread.title;
-      if (thread.title === 'New Neural Session' || thread.title === 'Initial Calibration Session') {
+      // Auto-title logic
+      if (thread.title === 'New Neural Session' || thread.title === 'Initial Calibration') {
         const firstUser = messages.find(m => m.role === 'user');
         if (firstUser) {
           newTitle = firstUser.text.slice(0, 32) + (firstUser.text.length > 32 ? '...' : '');
@@ -346,26 +347,23 @@ const App: React.FC = () => {
     setThreads(prev => ({
       ...prev,
       [id]: { id, title: 'New Neural Session', timestamp: Date.now(), groupId: targetGroupId, messages: [
-        { role: 'ai', text: 'New neural relay established. How can I assist in your stabilization today?', id: `init-${id}` }
+        { role: 'ai', text: 'Neural relay established. What is the current focus?', id: `init-${id}` }
       ] }
     }));
     setActiveThreadId(id);
   };
 
   const createNewGroup = () => {
-    const name = prompt("Enter Project/Group Name:");
+    const name = prompt("Enter Project Label:");
     if (!name) return;
     const id = Date.now().toString();
-    setGroups(prev => ({
-      ...prev,
-      [id]: { id, name, timestamp: Date.now() }
-    }));
+    setGroups(prev => ({ ...prev, [id]: { id, name, timestamp: Date.now() } }));
     setCurrentGroupId(id);
   };
 
   const deleteThread = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (Object.keys(threads).length === 1) return;
+    if (Object.keys(threads).length <= 1) return;
     setThreads(prev => {
       const next = { ...prev };
       delete next[id];
@@ -430,21 +428,22 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* CONTEXT-AWARE RIGHT SIDEBAR */}
-      <aside className="hidden xl:flex flex-col w-[360px] h-[calc(100vh-6rem)] fixed right-0 top-24 glass-sidebar border-l p-8 gap-8 overflow-y-auto z-[80] xi-scroll">
+      {/* REFINED CONTEXT-AWARE RIGHT SIDEBAR: NEURAL ARCHIVE */}
+      <aside className="hidden xl:flex flex-col w-[360px] h-[calc(100vh-6rem)] fixed right-0 top-24 glass-sidebar border-l p-8 gap-8 overflow-y-auto z-[80] xi-scroll no-scrollbar">
         {currentPage === Page.Coach ? (
           <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right duration-500 h-full">
-            
-            {!currentGroupId ? (
-              // LEVEL 1: GROUP SELECTION
-              <>
-                <div className="space-y-4">
-                  <MetaLabel>Relay Command</MetaLabel>
-                  <Button primary onClick={createNewGroup} className="w-full py-6">Initialize New Project</Button>
-                </div>
+            <div>
+              <MetaLabel>Archive Operations</MetaLabel>
+              <Button primary onClick={createNewThread} className="w-full py-6 mt-2">Initialize New Session</Button>
+            </div>
 
-                <div className="flex-1 space-y-4">
-                  <MetaLabel>Neural Archive // Groups</MetaLabel>
+            <div className="flex-1 flex flex-col gap-6">
+              {!currentGroupId ? (
+                <>
+                  <div className="flex justify-between items-center">
+                    <MetaLabel>Neural Groups</MetaLabel>
+                    <button onClick={createNewGroup} className="text-[#4DB6AC] hover:text-[#A7FFEB] transition-colors"><Icons.Plus className="w-4 h-4" /></button>
+                  </div>
                   <div className="space-y-3">
                     {(Object.values(groups) as ChatGroup[]).sort((a,b) => b.timestamp - a.timestamp).map(group => (
                       <div 
@@ -452,40 +451,32 @@ const App: React.FC = () => {
                         onClick={() => setCurrentGroupId(group.id)}
                         className="p-5 rounded-3xl border border-transparent bg-white/5 hover:bg-[#4DB6AC]/10 hover:border-[#4DB6AC]/30 transition-all cursor-pointer group flex items-center gap-4"
                       >
-                        <div className="w-10 h-10 rounded-2xl bg-[#4DB6AC]/10 flex items-center justify-center text-[#4DB6AC]">
-                          <Icons.Patterns />
-                        </div>
+                        <div className="w-10 h-10 rounded-2xl bg-[#4DB6AC]/10 flex items-center justify-center text-[#4DB6AC]"><Icons.Patterns /></div>
                         <div className="flex-1 overflow-hidden">
-                          <div className="text-sm font-medium truncate text-white/80 group-hover:text-white transition-colors">
-                            {group.name}
-                          </div>
+                          <div className="text-sm font-medium truncate text-white/80 group-hover:text-white">{group.name}</div>
                           <div className="text-[8px] font-black uppercase text-white/20 tracking-widest mt-1">
-                            {Object.values(threads).filter(t => t.groupId === group.id).length} Nodes Linked
+                            {Object.values(threads).filter(t => t.groupId === group.id).length} Nodes Loaded
                           </div>
                         </div>
-                        <Icons.ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-40 transition-opacity" />
+                        <Icons.ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-40" />
                       </div>
                     ))}
                   </div>
-                </div>
-              </>
-            ) : (
-              // LEVEL 2: THREAD SELECTION IN GROUP
-              <>
-                <div className="space-y-4">
-                  <button 
-                    onClick={() => setCurrentGroupId(null)}
-                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#4DB6AC] hover:text-[#A7FFEB] transition-colors mb-2"
-                  >
-                    <Icons.ArrowRight className="rotate-180 w-3 h-3" /> Return to Archives
-                  </button>
-                  <MetaLabel>Active Group: {activeGroup?.name}</MetaLabel>
-                  <Button primary onClick={createNewThread} className="w-full py-6">New Neural Session</Button>
-                </div>
-
-                <div className="flex-1 space-y-4">
-                  <MetaLabel>Captures in {activeGroup?.name}</MetaLabel>
-                  <div className="space-y-3 pr-2">
+                </>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-2">
+                    <button 
+                      onClick={() => setCurrentGroupId(null)}
+                      className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#4DB6AC] hover:text-[#A7FFEB] transition-colors"
+                    >
+                      <Icons.ArrowRight className="rotate-180 w-3 h-3" /> Back to Groups
+                    </button>
+                    <div className="flex justify-between items-center mt-4">
+                      <MetaLabel>Captures: {activeGroup?.name}</MetaLabel>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
                     {(Object.values(threads) as ChatThread[])
                       .filter(t => t.groupId === currentGroupId)
                       .sort((a,b) => b.timestamp - a.timestamp)
@@ -493,16 +484,17 @@ const App: React.FC = () => {
                         <div 
                           key={thread.id} 
                           onClick={() => setActiveThreadId(thread.id)}
-                          className={`p-5 rounded-2xl border transition-all cursor-pointer group relative overflow-hidden ${activeThreadId === thread.id ? 'bg-[#4DB6AC]/10 border-[#4DB6AC]/50' : 'bg-white/5 border-transparent hover:border-white/10'}`}
+                          className={`p-5 rounded-2xl border transition-all cursor-pointer group relative overflow-hidden ${activeThreadId === thread.id ? 'bg-[#4DB6AC]/10 border-[#4DB6AC]/50 shadow-[0_0_30px_rgba(77,182,172,0.1)]' : 'bg-white/5 border-transparent hover:border-white/10'}`}
                         >
                           {activeThreadId === thread.id && <div className="absolute left-0 top-0 w-1 h-full bg-[#4DB6AC] xi-glow" />}
                           <div className="flex justify-between items-start mb-2">
                             <div className="text-[8px] font-black uppercase text-[#4DB6AC]/60 tracking-widest">
-                              {new Date(thread.timestamp).toLocaleDateString()} // {thread.id.slice(-4)}
+                              {new Date(thread.timestamp).toLocaleDateString()} // Node {thread.id.slice(-4)}
                             </div>
                             <button 
                               onClick={(e) => deleteThread(thread.id, e)} 
                               className="opacity-0 group-hover:opacity-100 text-red-500/50 hover:text-red-500 p-1 transition-opacity"
+                              title="Purge Capture"
                             >
                               <Icons.Plus className="rotate-45 w-4 h-4" />
                             </button>
@@ -510,12 +502,15 @@ const App: React.FC = () => {
                           <div className={`text-sm font-light truncate mb-1 ${activeThreadId === thread.id ? 'text-white' : 'text-white/40 group-hover:text-white/70'}`}>
                             {thread.title}
                           </div>
+                          <div className="text-[8px] font-black uppercase tracking-widest opacity-20">
+                            {thread.messages.length} Signal Frames
+                          </div>
                         </div>
                       ))}
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </div>
         ) : (
           <div className="space-y-8 animate-in fade-in duration-500">
@@ -538,6 +533,7 @@ const App: React.FC = () => {
                 <span>ADHD Load</span>
               </div>
             </Panel>
+            <div className="mt-auto text-center opacity-10 text-[8px] font-black uppercase tracking-[0.4em] pt-20">Xibalba.Systems // Neural.Archive</div>
           </div>
         )}
       </aside>
@@ -545,6 +541,9 @@ const App: React.FC = () => {
   );
 };
 
+/**
+ * SUB-VIEWS
+ */
 const LandingView: React.FC<{ results: ComprehensiveResult | null; stability: string | number; setCurrentPage: (p: Page) => void }> = ({ results, stability, setCurrentPage }) => {
   if (!results) return (
     <div className="space-y-12">
