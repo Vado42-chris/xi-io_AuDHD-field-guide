@@ -1,37 +1,34 @@
+
 # xi-io: AuDHD Field Guide
 
 ## System Overview
-xi-io is a specialized nervous-system stabilization platform designed for AuDHD (Autistic/ADHD) users. It utilizes **Hallberg Math** for stability quantization and the **Gemini 3 Pro** engine for "Neural Relay" coaching.
+xi-io is a specialized nervous-system stabilization platform designed for AuDHD (Autistic/ADHD) users. It utilizes **Hallberg Math** for stability quantization and the **Gemini 3 Pro** engine for "Neural Relay" coaching, supplemented by **gemini-2.5-flash-image** for high-fidelity generative visual placeholders.
 
-## Setup Requirements
+## Operational Status: Final Production Alpha (Hardened)
+- **High-Fidelity Placeholders**: Integrated AI-generated generative visuals for empty states in 'Neural Relay' and 'Survival Intel' to reduce user anxiety and provide visual grounding.
+- **Clinical Report Standards**: Hardened the "Physician Trace" with professional grouping, clinical metadata, and high-fidelity typography hierarchy.
+- **Categorization & Filtering**: Full categorization management for 'Survival Intel' articles in Settings, allowing users to subscribe to specific neuro-architecture research streams.
+- **Navigation Resilience**: Fully functional hamburger menu and 3-column architecture optimized for all device breakpoints without text clipping.
+- **Provisioning Ecosystem**: Hardened Standard/Pro tiers with functional subscription management (Upgrade/Cancel), cloud sync calibration, and locked feature overlays.
+- **Micro-action Feedback**: Standardized toast notifications for all critical system traces (Commit, Purge, Export, Link).
+- **Intelligence Customization**: Added dedicated UI for Custom Uplink URLs, allowing users to power the app via any OpenAI-compatible or local API source.
 
-### 1. Intelligence Uplink (API Key)
-This application requires a Google Gemini API Key.
-- **Provider**: [Google AI Studio](https://aistudio.google.com/)
-- **Configuration**: The application looks for an environment variable named `API_KEY`.
-- **Note**: Ensure the key has permissions for the `gemini-3-pro-preview` model.
-
-### 2. Environment Variables
-If hosting on platforms like Vercel, Netlify, or Cloudflare Pages, set:
-`API_KEY=your_gemini_api_key_here`
-
-## Architectural Philosophy
-- **Hallberg Math**: A proprietary heuristic that calculates "R-Factor" (Environmental Stability) by cross-referencing sensory load entries against a Fibonacci-weighted assessment baseline.
-- **PDA Reframing**: The "Coach" is programmed to bypass Pathological Demand Avoidance by reframing tasks as "Autonomous Choice" rather than "External Requirements."
-- **Spoon Economy**: A finite resource tracking system (U-Units) that visualizes cognitive battery life.
-
-## For AI Agents / Future Developers
-- **Persistence**: All user data (Archive, Lexicon, Responses) is stored in `localStorage` under the `xi_` prefix.
-- **Modularity**: 
-  - `types.ts`: Core interfaces for the neuro-inclusion framework.
-  - `services/hallbergMath.ts`: The mathematical engine for stability analysis.
-  - `services/geminiService.ts`: Context-aware AI integration with multi-turn history support.
-- **UI Guidelines**:
-  - High-contrast, dark-mode-only aesthetic.
-  - "Flashlight" effect for sensory focus.
-  - Grid overlays to reduce visual noise (Low Friction design).
-
-## Operational Status
-- **Current Version**: 1.3.5
-- **Neural Archive**: Functional (L1: Project Groups, L2: Signal Threads).
-- **Stability Core**: Nominal.
+## Burn-down Manifest (COMPLETED)
+- [x] Implement Article Preference Calibration (Survival Intel Filter)
+- [x] Integrate high-fidelity generative placeholders (Empty States)
+- [x] Restore 3-Column Architecture (Global)
+- [x] Fix Main Navigation Text Clipping (Hardened)
+- [x] Refine Report View for Clinical Standards (Typography & Grouping)
+- [x] Implement Article Categorization & Filtering
+- [x] Implement Interactive Rich Tooltips for Graphs
+- [x] Implement PDF Export for Physician Trace
+- [x] Integrate Survival Intel API (Gemini Search Grounding)
+- [x] Profile Gateway via PersonaHUD (Hardened)
+- [x] Subscription Management UI (Upgrade/Terminate)
+- [x] Intelligence Uplink Configuration (Cloud/Local Dynamic Toggle)
+- [x] Google Account Integration (Simulated Sync)
+- [x] Micro-action Feedback (Toast System)
+- [x] Granular Lexicon Management (Hardened Confirmations)
+- [x] Responsive Hamburger Menu (Z-index Fix & Backdrop)
+- [x] Neural Feed Dashboard Integration
+- [x] ARIA Landmark & Focus Management Hardening

@@ -1,18 +1,21 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>xi-io: AuDHD Field Guide</title>
+    <title>xi-io: Alpha 2.2.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;900&family=Lora:ital,wght@0,400;0,500;1,400&family=Open+Dyslexic&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --xi-accent: #4DB6AC;
-            --xi-accent-glow: rgba(77, 182, 172, 0.4);
+            --xi-accent-glow: rgba(77, 182, 172, 0.25);
             --xi-bg-deep: #050505;
-            --xi-panel-bg: rgba(12, 12, 12, 0.5);
+            --xi-panel-bg: rgba(12, 12, 12, 0.7);
             --xi-panel-border: rgba(255, 255, 255, 0.08);
+            --xi-radius-lg: 12px;
+            --xi-radius-md: 6px;
         }
 
         html, body {
@@ -24,67 +27,101 @@
             overflow: hidden; 
         }
 
-        body.dyslexic { font-family: 'Lora', serif !important; letter-spacing: 0.05em; }
-
         #flashlight {
             position: fixed; inset: 0; pointer-events: none; z-index: 1;
-            background: radial-gradient(circle 700px at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-                        rgba(77, 182, 172, 0.12), transparent 80%);
+            background: radial-gradient(circle 600px at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                        rgba(77, 182, 172, 0.08), transparent 80%);
         }
 
-        .grid-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-        .grid-layer-1 { background-size: 100px 100px; background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); }
-        .grid-layer-2 { background-size: 20px 20px; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); }
-
         .glass-sidebar {
-            background: rgba(5, 5, 5, 0.6);
-            backdrop-filter: blur(40px) saturate(180%);
-            -webkit-backdrop-filter: blur(40px) saturate(180%);
-            border-color: var(--xi-panel-border);
+            background: rgba(5, 5, 5, 0.98);
+            backdrop-filter: blur(50px);
+            border-right: 1px solid var(--xi-panel-border);
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .xi-panel {
             background: var(--xi-panel-bg);
             border: 1px solid var(--xi-panel-border);
-            border-radius: 28px;
-            backdrop-filter: blur(25px);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border-radius: var(--xi-radius-lg);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .xi-panel:hover { border-color: rgba(77, 182, 172, 0.3); transform: translateY(-2px); }
 
         .xi-button {
-            padding: 1.25rem 2.5rem;
-            border-radius: 1.25rem;
+            padding: 1rem 1.5rem;
+            border-radius: var(--xi-radius-md);
             text-transform: uppercase;
             font-weight: 900;
             font-size: 0.65rem;
-            letter-spacing: 0.3em;
-            transition: all 0.3s ease;
+            letter-spacing: 0.2em;
+            transition: all 0.2s ease;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 10px;
+            border: 1px solid transparent;
         }
-        .xi-button-primary { background: var(--xi-accent); color: #000; box-shadow: 0 0 40px var(--xi-accent-glow); }
-        .xi-button-primary:hover { background: #A7FFEB; box-shadow: 0 0 60px var(--xi-accent); }
-        .xi-button-secondary { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: #FFF; }
-        .xi-button-secondary:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+        .xi-button-primary { background: var(--xi-accent); color: #000; }
+        .xi-button-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px var(--xi-accent-glow); }
+        .xi-button-secondary { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: #FFF; }
+        .xi-button-secondary:hover { background: rgba(255,255,255,0.07); }
+        
+        .nav-item {
+            position: relative;
+            transition: all 0.2s ease;
+            border: none;
+            outline: none;
+            width: 100%;
+            text-align: left;
+            overflow: visible; /* Fixed clipping */
+            white-space: nowrap;
+        }
+        
+        .nav-active-bar {
+            position: absolute;
+            left: 0;
+            top: 20%;
+            bottom: 20%;
+            width: 3px;
+            background: var(--xi-accent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .tab-active .nav-active-bar { opacity: 1; }
+
+        .xi-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+        .xi-scroll::-webkit-scrollbar-thumb { background: rgba(77, 182, 172, 0.3); border-radius: 10px; }
+        .xi-scroll::-webkit-scrollbar-track { background: transparent; }
 
         .tall-title { font-weight: 100; letter-spacing: -0.05em; text-transform: lowercase; }
-        .xi-glow { filter: drop-shadow(0 0 15px var(--xi-accent-glow)); }
-        .xi-text-glow { text-shadow: 0 0 20px var(--xi-accent-glow); }
+        .xi-glow { filter: drop-shadow(0 0 10px var(--xi-accent-glow)); }
 
-        /* Neural Scrollbar Styling */
-        .xi-scroll::-webkit-scrollbar { width: 4px; }
-        .xi-scroll::-webkit-scrollbar-track { background: transparent; }
-        .xi-scroll::-webkit-scrollbar-thumb { background: rgba(77, 182, 172, 0.2); border-radius: 10px; }
-        .xi-scroll::-webkit-scrollbar-thumb:hover { background: rgba(77, 182, 172, 0.5); }
-        
-        .tab-active { background: rgba(77, 182, 172, 0.1) !important; border-color: rgba(77, 182, 172, 0.3) !important; color: var(--xi-accent) !important; }
+        @keyframes scan { 0% { transform: translateY(-100%); opacity: 0; } 50% { opacity: 0.3; } 100% { transform: translateY(100%); opacity: 0; } }
+        .xi-scan-line { position: absolute; width: 100%; height: 1px; background: var(--xi-accent); animation: scan 8s linear infinite; pointer-events: none; top: 0; left: 0; }
 
-        @keyframes scan { 0% { transform: translateY(-100%); opacity: 0; } 50% { opacity: 0.5; } 100% { transform: translateY(100%); opacity: 0; } }
-        .xi-scan-line { position: absolute; width: 100%; height: 2px; background: var(--xi-accent); animation: scan 3s linear infinite; pointer-events: none; }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.5; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(0.95); opacity: 0.5; }
+        }
+        .stability-ring {
+            animation: pulse-ring 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        .clamp-title {
+            font-size: clamp(4rem, 12vw, 10rem);
+            line-height: 0.85;
+        }
+
+        @media print {
+            body { background: white; color: black; overflow: visible; }
+            .glass-sidebar, header, nav, aside, .xi-scan-line, #flashlight { display: none !important; }
+            main { padding: 0 !important; margin: 0 !important; width: 100% !important; background: white !important; }
+            .xi-panel { background: white !important; border: 1px solid #ddd !important; color: black !important; }
+            .xi-button, .MetaLabel { color: black !important; }
+            h1, h2, h3, p { color: black !important; }
+        }
     </style>
 <script type="importmap">
 {
@@ -93,16 +130,14 @@
     "react": "https://esm.sh/react@^19.2.3",
     "react-dom": "https://esm.sh/react-dom@^19.2.3",
     "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/"
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/"
   }
 }
 </script>
 </head>
 <body>
     <div id="flashlight"></div>
-    <div class="grid-layer grid-layer-2"></div>
-    <div class="grid-layer grid-layer-1"></div>
     <div id="root"></div>
     <script>
         window.addEventListener('mousemove', e => {

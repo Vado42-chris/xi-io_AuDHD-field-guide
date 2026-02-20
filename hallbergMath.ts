@@ -1,5 +1,5 @@
 
-import { Question, PillarScore, ComprehensiveResult, JournalEntry, HistoryPoint, EnvironmentData } from '../types';
+import { Question, PillarScore, ComprehensiveResult, JournalEntry, HistoryPoint, EnvironmentData } from './types';
 
 export const analyzePatterns = (
   responses: Record<string, number>, 
@@ -14,6 +14,7 @@ export const analyzePatterns = (
     burnout: { total: 0, count: 0, max: 0 }
   };
 
+  // Fibonacci weights for categorical importance
   const FIB = [13, 8, 5, 3, 2, 1, 1];
 
   questions.forEach((q, idx) => {
@@ -46,6 +47,7 @@ export const analyzePatterns = (
     hallberg: { R: 0, confidence: 0, invariants: [], contradictions: [], actionableIntel: [] }
   };
 
+  // R-Factor Calculation: Combining baseline traits with recent sensory volatility
   const baselineLoad = Object.values(pillars).reduce((acc, curr) => acc + curr.total, 0) / 
                        Math.max(1, Object.values(pillars).reduce((acc, curr) => acc + curr.max, 0));
   
@@ -55,8 +57,8 @@ export const analyzePatterns = (
   
   lexicon.forEach(entry => {
     const ageInHours = (now - entry.timestamp) / (1000 * 60 * 60);
-    if (ageInHours <= 72) { // Expanded window to 72 hours for better baseline
-      const weight = Math.exp(-ageInHours / 18); // Half-life increased to 18 hours
+    if (ageInHours <= 72) {
+      const weight = Math.exp(-ageInHours / 18); // 18h half-life for sensory impact
       weightedEntropySum += (entry.sensoryEntropy / 100) * weight;
       totalWeight += weight;
     }
@@ -65,28 +67,27 @@ export const analyzePatterns = (
   const recentEntropy = totalWeight > 0 ? (weightedEntropySum / totalWeight) : 0;
   const envModifier = env ? env.entropyModifier : 0.05;
 
+  // The final Hallberg R-Factor: Normalized 0-1
   const R = (baselineLoad * 0.25) + (recentEntropy * 0.65) + (envModifier * 0.1);
 
   const invs: string[] = [];
   const intel: string[] = [];
   const contradictions: string[] = [];
 
-  // IDENTITY FRICTION DETECTION
+  // IDENTITY FRICTION & ASYMMETRY DETECTION
   if (results.masking.percentile > 65 && results.burnout.percentile > 65) {
-    contradictions.push("Identity Friction: Camouflage load is cannibalizing nervous system reserve.");
+    contradictions.push("Identity Friction: Camouflage load is cannibalizing reserve.");
     intel.push("URGENT: Cease non-essential social masking. Identity preservation priority.");
   }
   
-  if (results.adhd.percentile > 70 && results.autism.percentile < 30) {
-    invs.push("Pure Kinetic Signal: High novelty-seeking, low sensory filtering resistance.");
+  if (results.autism.percentile > 70 && results.adhd.percentile > 70) {
+    invs.push("AuDHD Oscillation: Concurrent demand for rigidity and novelty.");
   }
 
   if (R > 0.8) {
-    intel.push("CRITICAL STALL: Total cognitive shutdown imminent. Engage dark-room protocol.");
+    intel.push("CRITICAL STALL: Engage dark-room protocol. Minimize all demands.");
   } else if (R > 0.6) {
     intel.push("WARNING: Cognitive bandwidth restricted. Use Plain Language only.");
-  } else {
-    intel.push("OPTIMAL: System baseline stable for high-load task integration.");
   }
 
   results.hallberg = {
@@ -105,10 +106,10 @@ export const getHistoryTrend = (journal: JournalEntry[]): HistoryPoint[] => {
     .slice(0, 14)
     .reverse()
     .map(entry => ({
-      date: new Date(entry.timestamp).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }),
+      date: new Date(entry.timestamp).toLocaleDateString([], { weekday: 'short', day: 'numeric' }),
       value: entry.sensoryEntropy / 100,
       fullDate: entry.timestamp,
       mood: entry.mood,
-      noteSnippet: entry.note.length > 60 ? entry.note.substring(0, 60) + '...' : entry.note
+      noteSnippet: entry.note.length > 40 ? entry.note.substring(0, 40) + '...' : entry.note
     }));
 };

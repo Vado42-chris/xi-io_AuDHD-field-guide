@@ -2,13 +2,60 @@
 export enum Page {
   Landing = 'landing',
   Assessment = 'assessment',
-  Dashboard = 'dashboard',
-  Spoons = 'spoons',
   Tracking = 'tracking',
   Coach = 'coach',
   Resources = 'resources',
   Settings = 'settings',
+  Provisioning = 'provisioning',
+  Addons = 'addons',
+  Report = 'report',
   Calendar = 'calendar'
+}
+
+export type SubscriptionTier = 'Standard' | 'Pro' | 'Enterprise' | 'Education';
+
+export interface EmergencyContact {
+  id: string;
+  name: string;
+  phone: string;
+  relationship: string;
+}
+
+export interface NewsArticle {
+  id: string;
+  title: string;
+  url: string;
+  source: string;
+  summary: string;
+  category: string;
+  timestamp: number;
+}
+
+export interface NewsCategory {
+  id: string;
+  name: string;
+  query: string;
+}
+
+export interface NeuralLinkConfig {
+  uplinkType: 'Cloud' | 'Local' | 'Hybrid';
+  privacyLevel: 'ZeroKnowledge' | 'Aggregated';
+  autoSync: boolean;
+}
+
+export interface UserIdentity {
+  id: string;
+  username: string;
+  isProvisioned: boolean;
+  tier: SubscriptionTier;
+  privacyMode: 'LocalOnly' | 'CloudSync';
+  uplinkType: 'Local' | 'Google';
+  avatarColor: string;
+  institutionKey?: string;
+  emergencyContacts: EmergencyContact[];
+  subscribedCategories: string[];
+  neuralConfig: NeuralLinkConfig;
+  subscriptionActive: boolean;
 }
 
 export interface PillarScore {
@@ -37,62 +84,76 @@ export interface JournalEntry {
   id: string;
   timestamp: number;
   mood: number;
-  sensoryLoad: number;
+  sensoryEntropy: number;
   note: string;
-  spoonsRemaining: number;
+  uUnitsRemaining: number;
 }
 
-export interface Article {
+export interface ChatMessage {
+  role: 'user' | 'ai';
+  text: string;
+  id: string;
+  urls?: {title: string, uri: string}[];
+}
+
+export interface ChatThread {
   id: string;
   title: string;
-  category: string;
-  readTime: string;
-  content: string[];
+  timestamp: number;
+  messages: ChatMessage[];
+  nodeId: string; 
 }
 
-// Added missing Badge interface to resolve import error in constants.ts
-export interface Badge {
+export interface NeuralNode {
   id: string;
-  label: string;
+  name: string;
+  icon: string;
   description: string;
-  unlocked: boolean;
-  humor: string;
+  systemInstruction: string;
+  inputHint: string;
 }
 
 export interface Question {
   id: string;
   pillar: 'autism' | 'adhd' | 'masking' | 'burnout';
+  type: 'scenario' | 'validated';
   text: string;
-  type: 'validated' | 'scenario';
   options: { label: string; value: number }[];
 }
 
-export interface SensorySettings {
-  darkMode: boolean;
-  reducedMotion: boolean;
-  dyslexicFont: boolean;
-  fontSize: number;
-  dashboardWidgets: string[];
-  signalSubscriptions: string[];
+export interface Addon {
+  id: string;
+  name: string;
+  version: string;
+  description: string;
+  enabled: boolean;
+  author: string;
+  isConnected: boolean;
+}
+
+export interface SpotifyTrack {
+  id: string;
+  title: string;
+  artist: string;
+  duration: string;
+  mode: 'Ambient' | 'Focus' | 'Release';
+}
+
+export interface SpotifyState {
+  isPlaying: boolean;
+  regulationMode: 'Ambient' | 'Focus' | 'Release';
+  currentTrack?: SpotifyTrack;
+  playlist: SpotifyTrack[];
 }
 
 export interface HistoryPoint {
   date: string;
   value: number;
   fullDate: number;
+  mood: number;
+  noteSnippet: string;
 }
 
 export interface EnvironmentData {
-  latitude: number | null;
-  longitude: number | null;
   entropyModifier: number;
-  lastUpdated: number;
-}
-
-export interface SyncPacket {
-  responses: Record<string, number>;
-  journal: JournalEntry[];
-  lexicon: Record<string, number>;
-  timestamp: number;
-  version: string;
 }
