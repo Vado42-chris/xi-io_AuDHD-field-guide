@@ -24,7 +24,10 @@ export const CurrentStateSelector: React.FC<CurrentStateSelectorProps> = ({
 
   const visibleStates = [...states]
     .filter((state) => !state.hidden)
-    .sort((a, b) => a.order - b.order);
+    .sort((a, b) => {
+      if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
+      return a.order - b.order;
+    });
 
   return (
     <div className="fg-sheet-overlay" role="dialog" aria-modal="true" aria-label="Current state selector">
