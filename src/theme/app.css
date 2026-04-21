@@ -408,7 +408,8 @@ body {
 .fg-thread-surface,
 .fg-thread-header,
 .fg-post-send-check,
-.fg-composer {
+.fg-composer,
+.fg-config-row {
   border-radius: 18px;
 }
 
@@ -476,10 +477,9 @@ body {
   gap: 12px;
 }
 
-.fg-textarea {
+.fg-textarea,
+.fg-inline-input {
   width: 100%;
-  min-height: 100px;
-  resize: vertical;
   box-sizing: border-box;
   border-radius: 16px;
   border: 1px solid var(--fg-border);
@@ -489,15 +489,32 @@ body {
   font: inherit;
 }
 
-.fg-textarea::placeholder {
+.fg-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.fg-inline-input {
+  min-height: 46px;
+}
+
+.fg-textarea::placeholder,
+.fg-inline-input::placeholder {
   color: var(--fg-text-muted);
 }
 
-.fg-composer-actions {
+.fg-composer-actions,
+.fg-config-row {
   display: flex;
   justify-content: space-between;
   gap: 10px;
   align-items: center;
+}
+
+.fg-config-main {
+  display: grid;
+  gap: 8px;
+  flex: 1 1 auto;
 }
 
 @media (max-width: 900px) {
@@ -523,7 +540,8 @@ body {
 
   .fg-state-bar,
   .fg-sheet-header,
-  .fg-composer-actions {
+  .fg-composer-actions,
+  .fg-config-row {
     flex-direction: column;
     align-items: flex-start;
   }
