@@ -1,11 +1,12 @@
 import React from 'react';
-import { ThreadSummary } from '../../types/core';
+import { CurrentState, ThreadSummary } from '../../types/core';
 
 interface JournalHomeProps {
   recentThreads: ThreadSummary[];
+  currentState: CurrentState;
 }
 
-export const JournalHome: React.FC<JournalHomeProps> = ({ recentThreads }) => {
+export const JournalHome: React.FC<JournalHomeProps> = ({ recentThreads, currentState }) => {
   return (
     <div className="fg-content-card fg-glass">
       <div className="fg-header">
@@ -25,6 +26,9 @@ export const JournalHome: React.FC<JournalHomeProps> = ({ recentThreads }) => {
             New threads will inherit the current state snapshot automatically and stay editable as the
             conversation changes.
           </p>
+          <div className="fg-meta-pill fg-glass" style={{ marginTop: 14, display: 'inline-flex' }}>
+            Next thread starts from: {currentState.label} · {currentState.intensity}
+          </div>
         </article>
 
         <article className="fg-card fg-glass">
