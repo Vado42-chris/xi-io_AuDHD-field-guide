@@ -10,6 +10,7 @@ import {
   AppIdentity,
   AppSection,
   CurrentState,
+  CustomStateLabel,
   DEFAULT_CURRENT_STATE,
   DEFAULT_CUSTOM_STATES,
   DEFAULT_IDENTITY,
@@ -109,7 +110,7 @@ export const AppShell: React.FC = () => {
   const [activeSection, setActiveSection] = useState<AppSection>('help_now');
   const [identity, setIdentity] = useState<AppIdentity>(() => readLocal<AppIdentity>('fg_identity_v2', DEFAULT_IDENTITY));
   const [currentState, setCurrentState] = useState<CurrentState>(() => readLocal<CurrentState>('fg_current_state_v2', DEFAULT_CURRENT_STATE));
-  const [customStates] = useState(() => readLocal('fg_custom_states_v2', DEFAULT_CUSTOM_STATES));
+  const [customStates, setCustomStates] = useState<CustomStateLabel[]>(() => readLocal<CustomStateLabel[]>('fg_custom_states_v2', DEFAULT_CUSTOM_STATES));
   const [journalThreads, setJournalThreads] = useState<JournalThread[]>(() => readLocal<JournalThread[]>('fg_journal_threads_v2', makeDefaultThreads()));
   const [supportLog, setSupportLog] = useState<SupportLogEntry[]>(() => readLocal<SupportLogEntry[]>('fg_support_log_v2', []));
   const [learningSignals, setLearningSignals] = useState<LearningSignal[]>(() => readLocal<LearningSignal[]>('fg_learning_signals_v2', []));
@@ -123,6 +124,10 @@ export const AppShell: React.FC = () => {
   useEffect(() => {
     writeLocal('fg_current_state_v2', currentState);
   }, [currentState]);
+
+  useEffect(() => {
+    writeLocal('fg_custom_states_v2', customStates);
+  }, [customStates]);
 
   useEffect(() => {
     writeLocal('fg_support_log_v2', supportLog);
@@ -141,8 +146,16 @@ export const AppShell: React.FC = () => {
 
     const derivedSensory = deriveSensorySupports(supportLog);
     setSensorySupports((prev) => {
-      const confirmedMap = new Map(prev.map((record) => [record.id, record.confirmed]));
-      return derivedSensory.map((record) => ({ ...record, confirmed: confirmedMap.get(record.id) ?? false }));
+      const priorMap = new Map(prev.map((record) => [record.id, record]));
+      return derivedSensory.map((record) => {
+        const prior = priorMap.get(record.id);
+        return {
+          ...record,
+          confirmed: prior?.confirmed ?? record.confirmed,
+          favorite: prior?.favorite ?? record.favorite,
+          hidden: prior?.hidden ?? record.hidden,
+        };
+      });
     });
   }, [journalThreads, supportLog]);
 
@@ -295,6 +308,31 @@ export const AppShell: React.FC = () => {
     setSensorySupports((prev) => prev.map((record) => (record.id === recordId ? { ...record, confirmed: true } : record)));
   };
 
+  const handleRenameState = (stateId: string, label: string) => {
+    setCustomStates((prev) => prev.map((state) => (state.id === stateId ? { ...state, label } : state)));
+    setCurrentState((prev) => {
+      const match = customStates.find((state) => state.id === stateId);
+      if (!match || prev.canonicalId !== match.canonicalId || prev.label !== match.label) return prev;
+      return { ...prev, label, updatedAt: Date.now() };
+    });
+  };
+
+  const handleToggleStateFavorite = (stateId: string) => {
+    setCustomStates((prev) => prev.map((state) => (state.id === stateId ? { ...state, favorite: !state.favorite } : state)));
+  };
+
+  const handleToggleStateHidden = (stateId: string) => {
+    setCustomStates((prev) => prev.map((state) => (state.id === stateId ? { ...state, hidden: !state.hidden } : state)));
+  };
+
+  const handleToggleComfortFavorite = (recordId: string) => {
+    setSensorySupports((prev) => prev.map((record) => (record.id === recordId ? { ...record, favorite: !record.favorite } : record)));
+  };
+
+  const handleToggleComfortHidden = (recordId: string) => {
+    setSensorySupports((prev) => prev.map((record) => (record.id === recordId ? { ...record, hidden: !record.hidden } : record)));
+  };
+
   const activeView = useMemo(() => {
     switch (activeSection) {
       case 'journal':
@@ -319,7 +357,17 @@ export const AppShell: React.FC = () => {
           />
         );
       case 'customize':
-        return <CustomizeHome />;
+        return (
+          <CustomizeHome
+            customStates={customStates}
+            sensorySupports={sensorySupports}
+            onRenameState={handleRenameState}
+            onToggleStateFavorite={handleToggleStateFavorite}
+            onToggleStateHidden={handleToggleStateHidden}
+            onToggleComfortFavorite={handleToggleComfortFavorite}
+            onToggleComfortHidden={handleToggleComfortHidden}
+          />
+        );
       case 'help_now':
       default:
         return (
@@ -331,7 +379,7 @@ export const AppShell: React.FC = () => {
           />
         );
     }
-  }, [activeSection, journalThreads, currentState, recentOutcomeSummary, learningSignals, sensorySupports]);
+  }, [activeSection, journalThreads, currentState, recentOutcomeSummary, learningSignals, sensorySupports, customStates]);
 
   return (
     <div className="fg-app-shell">
