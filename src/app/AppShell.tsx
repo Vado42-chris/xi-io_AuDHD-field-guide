@@ -22,10 +22,12 @@ import {
   StateSnapshot,
   SupportLogEntry,
   SupportOutcome,
+  ThresholdSummary,
 } from '../types/core';
 import { readLocal, writeLocal } from '../lib/storage/localStore';
 import { deriveLearningSignals, deriveSensorySupports } from '../lib/patterns/learningSignals';
 import { buildPatternReviewSummary } from '../lib/patterns/patternReview';
+import { buildPersonalizedSuggestions, buildThresholdSummary } from '../lib/patterns/personalizationThreshold';
 
 const SECTION_LABELS: Record<AppSection, { kicker: string; label: string }> = {
   help_now: { kicker: 'Immediate support', label: 'Help Now' },
@@ -160,6 +162,16 @@ export const AppShell: React.FC = () => {
     [learningSignals, sensorySupports]
   );
 
+  const thresholdSummary: ThresholdSummary = useMemo(
+    () => buildThresholdSummary(learningSignals, sensorySupports),
+    [learningSignals, sensorySupports]
+  );
+
+  const personalizedSupports = useMemo(
+    () => buildPersonalizedSuggestions(currentState.canonicalId, thresholdSummary, sensorySupports),
+    [currentState.canonicalId, thresholdSummary, sensorySupports]
+  );
+
   const updateCurrentState = (partial: Partial<CurrentState>) => {
     setCurrentState((prev) => ({ ...prev, ...partial, updatedAt: Date.now(), source: partial.source ?? 'user' }));
   };
@@ -259,14 +271,14 @@ export const AppShell: React.FC = () => {
       case 'journal':
         return <JournalHome threads={journalThreads} currentState={currentState} onCreateThread={handleCreateThread} onOpenThread={handleOpenThread} onSendMessage={handleSendMessage} onKeepThreadState={handleKeepThreadState} onRequestStateUpdate={() => setSelectorOpen(true)} />;
       case 'learn_me':
-        return <LearnMeHome signals={learningSignals} sensorySupports={sensorySupports} summary={patternSummary} onConfirmSignal={handleConfirmSignal} onConfirmSensory={handleConfirmSensory} />;
+        return <LearnMeHome signals={learningSignals} sensorySupports={sensorySupports} summary={patternSummary} thresholdSummary={thresholdSummary} onConfirmSignal={handleConfirmSignal} onConfirmSensory={handleConfirmSensory} />;
       case 'customize':
         return <CustomizeHome customStates={customStates} sensorySupports={sensorySupports} onRenameState={handleRenameState} onToggleStateFavorite={handleToggleStateFavorite} onToggleStateHidden={handleToggleStateHidden} onToggleComfortFavorite={handleToggleComfortFavorite} onToggleComfortHidden={handleToggleComfortHidden} />;
       case 'help_now':
       default:
-        return <HelpNowHome currentState={currentState} onApplyRouteState={handleApplyRouteState} onLogOutcome={handleLogOutcome} recentOutcomeSummary={recentOutcomeSummary} />;
+        return <HelpNowHome currentState={currentState} thresholdSummary={thresholdSummary} personalizedSupports={personalizedSupports} onApplyRouteState={handleApplyRouteState} onLogOutcome={handleLogOutcome} recentOutcomeSummary={recentOutcomeSummary} />;
     }
-  }, [activeSection, journalThreads, currentState, recentOutcomeSummary, learningSignals, sensorySupports, customStates, patternSummary]);
+  }, [activeSection, journalThreads, currentState, recentOutcomeSummary, learningSignals, sensorySupports, customStates, patternSummary, thresholdSummary, personalizedSupports]);
 
   return (
     <div className="fg-app-shell">
