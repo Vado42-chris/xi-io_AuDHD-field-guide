@@ -7,6 +7,13 @@
 - low-demand paths must exist for distressed users
 - free-text input is optional in primary flows, not mandatory
 
+## Responsive rules
+- the default product view should be designed for tablet first
+- mobile must fail gracefully by simplifying layout, not hiding core actions
+- desktop must expand gracefully by adding breathing room and secondary context, not dashboard noise
+- primary actions must remain obvious and reachable across tablet, mobile, and desktop
+- no critical workflow may depend on hover behavior or multi-column desktop assumptions
+
 ## State rules
 - every new thread inherits the current state snapshot
 - post-send state check is soft, not blocking
@@ -42,4 +49,4 @@
 - every primary flow must include empty, skip, unsure, and recovery paths
 - every slice must define what shared objects it reads and writes
 - every slice must define which shared components it depends on
-- every slice must pass mobile-first review before considered complete
+- every slice must pass tablet-first, mobile-fallback, and desktop-expansion review before considered complete
