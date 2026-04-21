@@ -13,6 +13,8 @@ export type StateIntensity = 'low' | 'medium' | 'high';
 
 export type SupportOutcome = 'helped' | 'a_little' | 'no_change' | 'worse' | 'skipped';
 
+export type LearningKind = 'stressor' | 'destresser' | 'sensory';
+
 export interface CurrentState {
   canonicalId: CanonicalStateId;
   label: string;
@@ -87,6 +89,27 @@ export interface SupportLogEntry {
   supportTitle: string;
   supportRoute: string;
   outcome: SupportOutcome;
+  createdAt: number;
+}
+
+export interface LearningSignal {
+  id: string;
+  label: string;
+  kind: LearningKind;
+  source: 'thread' | 'support_log' | 'manual';
+  confidence: 'emerging' | 'repeated';
+  contexts: string[];
+  confirmed: boolean;
+  createdAt: number;
+}
+
+export interface SensorySupportRecord {
+  id: string;
+  label: string;
+  category: 'sound' | 'touch' | 'movement' | 'pressure' | 'temperature' | 'light' | 'reduction';
+  helpfulStates: CanonicalStateId[];
+  outcomeCounts: Record<SupportOutcome, number>;
+  confirmed: boolean;
   createdAt: number;
 }
 
