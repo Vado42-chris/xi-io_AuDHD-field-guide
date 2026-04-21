@@ -1,36 +1,73 @@
 import React from 'react';
+import LearningSignalCard from '../../components/learn-me/LearningSignalCard';
+import SensorySupportCard from '../../components/learn-me/SensorySupportCard';
+import { LearningSignal, SensorySupportRecord } from '../../types/core';
 
-const blocks = [
-  'Trigger map',
-  'Stressors and de-stressers',
-  'Sensory profile',
-  'What helps most',
-];
+interface LearnMeHomeProps {
+  signals: LearningSignal[];
+  sensorySupports: SensorySupportRecord[];
+  onConfirmSignal: (signalId: string) => void;
+  onConfirmSensory: (recordId: string) => void;
+}
 
-export const LearnMeHome: React.FC = () => {
+export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
+  signals,
+  sensorySupports,
+  onConfirmSignal,
+  onConfirmSensory,
+}) => {
+  const stressors = signals.filter((signal) => signal.kind === 'stressor');
+  const destressers = signals.filter((signal) => signal.kind === 'destresser');
+
   return (
-    <div className="fg-content-card fg-glass">
+    <div className="fg-content-card fg-glass fg-help-layout">
       <div className="fg-header">
         <div className="fg-kicker">Learn Me</div>
-        <h1 className="fg-section-title">Pattern review comes after capture, not before it.</h1>
+        <h1 className="fg-section-title">Capture first, then confirm what seems to matter.</h1>
         <p className="fg-section-body">
-          This area will eventually surface repeated patterns, confidence, and what helps over time.
-          For now it exists as a clean home for the learning layer instead of burying it inside a score view.
+          This slice introduces user-correctable learning records. The app suggests stressors,
+          de-stressers, and sensory supports from journal threads and support outcomes, then lets the user confirm them.
         </p>
       </div>
 
-      <div className="fg-grid" style={{ marginTop: 20 }}>
-        {blocks.map((block) => (
-          <article key={block} className="fg-card fg-glass">
-            <div className="fg-kicker">Planned surface</div>
-            <h2 className="fg-card-title">{block}</h2>
-            <p className="fg-card-copy">
-              This will be built from user-confirmed memory, outcomes, and pattern confidence after the core
-              state and journaling flows are stable.
-            </p>
-          </article>
-        ))}
-      </div>
+      <section className="fg-panel-stack">
+        <div className="fg-kicker">Stressors</div>
+        <div className="fg-grid">
+          {stressors.length > 0 ? (
+            stressors.map((signal) => (
+              <LearningSignalCard key={signal.id} signal={signal} onConfirm={() => onConfirmSignal(signal.id)} />
+            ))
+          ) : (
+            <div className="fg-state-meta">No stressor candidates yet. More journal and support history will make this clearer.</div>
+          )}
+        </div>
+      </section>
+
+      <section className="fg-panel-stack">
+        <div className="fg-kicker">De-stressers</div>
+        <div className="fg-grid">
+          {destressers.length > 0 ? (
+            destressers.map((signal) => (
+              <LearningSignalCard key={signal.id} signal={signal} onConfirm={() => onConfirmSignal(signal.id)} />
+            ))
+          ) : (
+            <div className="fg-state-meta">No de-stresser candidates yet. Confirmed helpful supports will surface here.</div>
+          )}
+        </div>
+      </section>
+
+      <section className="fg-panel-stack">
+        <div className="fg-kicker">Sensory supports</div>
+        <div className="fg-grid">
+          {sensorySupports.length > 0 ? (
+            sensorySupports.map((record) => (
+              <SensorySupportCard key={record.id} record={record} onConfirm={() => onConfirmSensory(record.id)} />
+            ))
+          ) : (
+            <div className="fg-state-meta">No sensory support records yet. Supports tied to sound, light, pressure, temperature, and reduction will appear here.</div>
+          )}
+        </div>
+      </section>
     </div>
   );
 };
