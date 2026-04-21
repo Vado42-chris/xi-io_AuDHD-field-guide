@@ -14,12 +14,15 @@ import {
   DEFAULT_CUSTOM_STATES,
   DEFAULT_IDENTITY,
   JournalThread,
+  LearningSignal,
+  SensorySupportRecord,
   StateIntensity,
   StateSnapshot,
   SupportLogEntry,
   SupportOutcome,
 } from '../types/core';
 import { readLocal, writeLocal } from '../lib/storage/localStore';
+import { deriveLearningSignals, deriveSensorySupports } from '../lib/patterns/learningSignals';
 
 const SECTION_LABELS: Record<AppSection, { kicker: string; label: string }> = {
   help_now: { kicker: 'Immediate support', label: 'Help Now' },
@@ -109,6 +112,8 @@ export const AppShell: React.FC = () => {
   const [customStates] = useState(() => readLocal('fg_custom_states_v2', DEFAULT_CUSTOM_STATES));
   const [journalThreads, setJournalThreads] = useState<JournalThread[]>(() => readLocal<JournalThread[]>('fg_journal_threads_v2', makeDefaultThreads()));
   const [supportLog, setSupportLog] = useState<SupportLogEntry[]>(() => readLocal<SupportLogEntry[]>('fg_support_log_v2', []));
+  const [learningSignals, setLearningSignals] = useState<LearningSignal[]>(() => readLocal<LearningSignal[]>('fg_learning_signals_v2', []));
+  const [sensorySupports, setSensorySupports] = useState<SensorySupportRecord[]>(() => readLocal<SensorySupportRecord[]>('fg_sensory_supports_v2', []));
   const [selectorOpen, setSelectorOpen] = useState(false);
 
   useEffect(() => {
@@ -126,6 +131,28 @@ export const AppShell: React.FC = () => {
   useEffect(() => {
     writeLocal('fg_journal_threads_v2', journalThreads);
   }, [journalThreads]);
+
+  useEffect(() => {
+    const derived = deriveLearningSignals(journalThreads, supportLog);
+    setLearningSignals((prev) => {
+      const confirmedMap = new Map(prev.map((signal) => [signal.id, signal.confirmed]));
+      return derived.map((signal) => ({ ...signal, confirmed: confirmedMap.get(signal.id) ?? false }));
+    });
+
+    const derivedSensory = deriveSensorySupports(supportLog);
+    setSensorySupports((prev) => {
+      const confirmedMap = new Map(prev.map((record) => [record.id, record.confirmed]));
+      return derivedSensory.map((record) => ({ ...record, confirmed: confirmedMap.get(record.id) ?? false }));
+    });
+  }, [journalThreads, supportLog]);
+
+  useEffect(() => {
+    writeLocal('fg_learning_signals_v2', learningSignals);
+  }, [learningSignals]);
+
+  useEffect(() => {
+    writeLocal('fg_sensory_supports_v2', sensorySupports);
+  }, [sensorySupports]);
 
   const recentOutcomeSummary = useMemo(() => {
     const latest = supportLog[0];
@@ -260,6 +287,14 @@ export const AppShell: React.FC = () => {
     );
   };
 
+  const handleConfirmSignal = (signalId: string) => {
+    setLearningSignals((prev) => prev.map((signal) => (signal.id === signalId ? { ...signal, confirmed: true } : signal)));
+  };
+
+  const handleConfirmSensory = (recordId: string) => {
+    setSensorySupports((prev) => prev.map((record) => (record.id === recordId ? { ...record, confirmed: true } : record)));
+  };
+
   const activeView = useMemo(() => {
     switch (activeSection) {
       case 'journal':
@@ -275,7 +310,14 @@ export const AppShell: React.FC = () => {
           />
         );
       case 'learn_me':
-        return <LearnMeHome />;
+        return (
+          <LearnMeHome
+            signals={learningSignals}
+            sensorySupports={sensorySupports}
+            onConfirmSignal={handleConfirmSignal}
+            onConfirmSensory={handleConfirmSensory}
+          />
+        );
       case 'customize':
         return <CustomizeHome />;
       case 'help_now':
@@ -289,7 +331,7 @@ export const AppShell: React.FC = () => {
           />
         );
     }
-  }, [activeSection, journalThreads, currentState, recentOutcomeSummary]);
+  }, [activeSection, journalThreads, currentState, recentOutcomeSummary, learningSignals, sensorySupports]);
 
   return (
     <div className="fg-app-shell">
