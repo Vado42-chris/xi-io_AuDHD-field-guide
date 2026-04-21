@@ -263,6 +263,19 @@ body {
   border-radius: 18px;
 }
 
+.fg-support-card {
+  text-align: left;
+  appearance: none;
+  width: 100%;
+  cursor: pointer;
+}
+
+.fg-support-card[data-active='true'],
+.fg-choice-chip[data-active='true'] {
+  border-color: rgba(126, 217, 204, 0.28);
+  background: rgba(126, 217, 204, 0.1);
+}
+
 .fg-card-title {
   margin: 0;
   font-size: 1.06rem;
@@ -274,6 +287,109 @@ body {
   color: var(--fg-text-soft);
   line-height: 1.55;
   font-size: 0.92rem;
+}
+
+.fg-chip-grid,
+.fg-chip-row,
+.fg-outcome-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.fg-choice-chip {
+  appearance: none;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--fg-border);
+  color: var(--fg-text-soft);
+  background: rgba(255,255,255,0.03);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fg-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.fg-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.56);
+}
+
+.fg-sheet {
+  position: relative;
+  width: min(100%, 840px);
+  margin: 0 12px 12px;
+  padding: 18px;
+  border-radius: 24px;
+  display: grid;
+  gap: 18px;
+}
+
+.fg-sheet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.fg-sheet-title {
+  margin: 6px 0 0;
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+  line-height: 1.1;
+}
+
+.fg-sheet-section {
+  display: grid;
+  gap: 12px;
+}
+
+.fg-sheet-label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--fg-text-soft);
+}
+
+.fg-help-layout {
+  display: grid;
+  gap: 18px;
+}
+
+.fg-help-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.fg-meta-pill {
+  padding: 10px 12px;
+  border-radius: 999px;
+  color: var(--fg-text-soft);
+  font-size: 0.82rem;
+}
+
+.fg-panel-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.fg-route-card {
+  padding: 18px;
+  border-radius: 18px;
+}
+
+.fg-outcome-stack {
+  display: grid;
+  gap: 12px;
 }
 
 @media (max-width: 900px) {
@@ -296,7 +412,8 @@ body {
     padding: 14px;
   }
 
-  .fg-state-bar {
+  .fg-state-bar,
+  .fg-sheet-header {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -308,5 +425,11 @@ body {
   .fg-button,
   .fg-quiet-button {
     flex: 1 1 auto;
+  }
+
+  .fg-sheet {
+    margin: 0;
+    width: 100%;
+    border-radius: 22px 22px 0 0;
   }
 }
