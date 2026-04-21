@@ -13,10 +13,11 @@ import {
   DEFAULT_CURRENT_STATE,
   DEFAULT_CUSTOM_STATES,
   DEFAULT_IDENTITY,
+  JournalThread,
+  StateIntensity,
+  StateSnapshot,
   SupportLogEntry,
   SupportOutcome,
-  ThreadSummary,
-  StateIntensity,
 } from '../types/core';
 import { readLocal, writeLocal } from '../lib/storage/localStore';
 
@@ -27,22 +28,61 @@ const SECTION_LABELS: Record<AppSection, { kicker: string; label: string }> = {
   customize: { kicker: 'User-owned controls', label: 'Customize' },
 };
 
-const DEFAULT_THREADS: ThreadSummary[] = [
-  {
-    id: 'thread-1',
-    title: 'Back pain and overload notes',
-    updatedAt: Date.now() - 1000 * 60 * 50,
-    startingStateLabel: 'In Pain',
-    summary: 'Pain seemed to lead the mood and the task-lock around dinner prep.',
-  },
-  {
-    id: 'thread-2',
-    title: 'Social recovery after a hard message',
-    updatedAt: Date.now() - 1000 * 60 * 60 * 18,
-    startingStateLabel: 'Activated',
-    summary: 'The user wanted help slowing down before replying.',
-  },
-];
+const makeStateSnapshot = (state: CurrentState): StateSnapshot => ({
+  canonicalId: state.canonicalId,
+  label: state.label,
+  intensity: state.intensity,
+  recordedAt: Date.now(),
+});
+
+const makeDefaultThreads = (): JournalThread[] => {
+  const painState: StateSnapshot = {
+    canonicalId: 'in_pain',
+    label: 'In Pain',
+    intensity: 'high',
+    recordedAt: Date.now() - 1000 * 60 * 55,
+  };
+
+  const activatedState: StateSnapshot = {
+    canonicalId: 'activated',
+    label: 'Activated',
+    intensity: 'medium',
+    recordedAt: Date.now() - 1000 * 60 * 60 * 18,
+  };
+
+  return [
+    {
+      id: 'thread-1',
+      title: 'Back pain and overload notes',
+      createdAt: Date.now() - 1000 * 60 * 55,
+      updatedAt: Date.now() - 1000 * 60 * 30,
+      startingState: painState,
+      currentState: painState,
+      summary: 'Pain seemed to lead the mood and the task-lock around dinner prep.',
+      tags: ['pain', 'overload'],
+      messages: [
+        { id: 'm-1', role: 'user', text: 'My back pain is taking over and I cannot think straight.', createdAt: Date.now() - 1000 * 60 * 50 },
+        { id: 'm-2', role: 'ibal', text: 'Let us keep this low-demand. Start by reducing one source of extra strain and name what the body needs first.', createdAt: Date.now() - 1000 * 60 * 49 },
+      ],
+      transitions: [],
+    },
+    {
+      id: 'thread-2',
+      title: 'Social recovery after a hard message',
+      createdAt: Date.now() - 1000 * 60 * 60 * 18,
+      updatedAt: Date.now() - 1000 * 60 * 60 * 17,
+      startingState: activatedState,
+      currentState: activatedState,
+      summary: 'The user wanted help slowing down before replying.',
+      tags: ['social', 'activated'],
+      messages: [
+        { id: 'm-3', role: 'user', text: 'I got a message that hit me hard and I want to fire back.', createdAt: Date.now() - 1000 * 60 * 60 * 18 },
+        { id: 'm-4', role: 'ibal', text: 'Do less first. Hold the reply, cool the next action down, and decide later.', createdAt: Date.now() - 1000 * 60 * 60 * 17 },
+      ],
+      transitions: [],
+    },
+  ];
+};
 
 const NavButton: React.FC<{
   section: AppSection;
@@ -67,7 +107,7 @@ export const AppShell: React.FC = () => {
   const [identity, setIdentity] = useState<AppIdentity>(() => readLocal<AppIdentity>('fg_identity_v2', DEFAULT_IDENTITY));
   const [currentState, setCurrentState] = useState<CurrentState>(() => readLocal<CurrentState>('fg_current_state_v2', DEFAULT_CURRENT_STATE));
   const [customStates] = useState(() => readLocal('fg_custom_states_v2', DEFAULT_CUSTOM_STATES));
-  const [recentThreads] = useState<ThreadSummary[]>(() => readLocal<ThreadSummary[]>('fg_recent_threads_v2', DEFAULT_THREADS));
+  const [journalThreads, setJournalThreads] = useState<JournalThread[]>(() => readLocal<JournalThread[]>('fg_journal_threads_v2', makeDefaultThreads()));
   const [supportLog, setSupportLog] = useState<SupportLogEntry[]>(() => readLocal<SupportLogEntry[]>('fg_support_log_v2', []));
   const [selectorOpen, setSelectorOpen] = useState(false);
 
@@ -82,6 +122,10 @@ export const AppShell: React.FC = () => {
   useEffect(() => {
     writeLocal('fg_support_log_v2', supportLog);
   }, [supportLog]);
+
+  useEffect(() => {
+    writeLocal('fg_journal_threads_v2', journalThreads);
+  }, [journalThreads]);
 
   const recentOutcomeSummary = useMemo(() => {
     const latest = supportLog[0];
@@ -139,10 +183,97 @@ export const AppShell: React.FC = () => {
     setSupportLog((prev) => [entry, ...prev].slice(0, 20));
   };
 
+  const handleCreateThread = () => {
+    const snapshot = makeStateSnapshot(currentState);
+    const newThread: JournalThread = {
+      id: `thread-${Date.now()}`,
+      title: `${currentState.label} check-in`,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      startingState: snapshot,
+      currentState: snapshot,
+      summary: `Started from ${currentState.label.toLowerCase()} · ${currentState.intensity}.`,
+      tags: [currentState.canonicalId],
+      messages: [
+        {
+          id: `m-${Date.now()}`,
+          role: 'ibal',
+          text: `Starting from ${currentState.label.toLowerCase()} · ${currentState.intensity}. You can keep this brief. What feels most important to capture right now?`,
+          createdAt: Date.now(),
+        },
+      ],
+      transitions: [],
+    };
+
+    setJournalThreads((prev) => [newThread, ...prev]);
+    setActiveSection('journal');
+  };
+
+  const handleOpenThread = (threadId: string) => {
+    setJournalThreads((prev) => {
+      const found = prev.find((thread) => thread.id === threadId);
+      if (!found) return prev;
+      return [found, ...prev.filter((thread) => thread.id !== threadId)];
+    });
+  };
+
+  const handleSendMessage = (threadId: string, text: string) => {
+    setJournalThreads((prev) =>
+      prev.map((thread) => {
+        if (thread.id !== threadId) return thread;
+
+        const userMessage = {
+          id: `m-${Date.now()}-u`,
+          role: 'user' as const,
+          text,
+          createdAt: Date.now(),
+        };
+
+        const ibalMessage = {
+          id: `m-${Date.now()}-i`,
+          role: 'ibal' as const,
+          text: `Noted. I will treat this as part of the same thread and keep the context connected. After this send, check whether your state still fits.`,
+          createdAt: Date.now() + 1,
+        };
+
+        return {
+          ...thread,
+          updatedAt: Date.now(),
+          summary: text.length > 120 ? `${text.slice(0, 117)}...` : text,
+          messages: [...thread.messages, userMessage, ibalMessage],
+        };
+      })
+    );
+  };
+
+  const handleKeepThreadState = (threadId: string) => {
+    setJournalThreads((prev) =>
+      prev.map((thread) => {
+        if (thread.id !== threadId) return thread;
+        const snapshot = makeStateSnapshot(currentState);
+        return {
+          ...thread,
+          updatedAt: Date.now(),
+          currentState: snapshot,
+        };
+      })
+    );
+  };
+
   const activeView = useMemo(() => {
     switch (activeSection) {
       case 'journal':
-        return <JournalHome recentThreads={recentThreads} currentState={currentState} />;
+        return (
+          <JournalHome
+            threads={journalThreads}
+            currentState={currentState}
+            onCreateThread={handleCreateThread}
+            onOpenThread={handleOpenThread}
+            onSendMessage={handleSendMessage}
+            onKeepThreadState={handleKeepThreadState}
+            onRequestStateUpdate={() => setSelectorOpen(true)}
+          />
+        );
       case 'learn_me':
         return <LearnMeHome />;
       case 'customize':
@@ -158,7 +289,7 @@ export const AppShell: React.FC = () => {
           />
         );
     }
-  }, [activeSection, recentThreads, currentState, recentOutcomeSummary]);
+  }, [activeSection, journalThreads, currentState, recentOutcomeSummary]);
 
   return (
     <div className="fg-app-shell">
