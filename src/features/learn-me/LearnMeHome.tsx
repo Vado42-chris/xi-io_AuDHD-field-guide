@@ -2,12 +2,14 @@ import React from 'react';
 import LearningSignalCard from '../../components/learn-me/LearningSignalCard';
 import PatternReviewSummaryCard from '../../components/learn-me/PatternReviewSummaryCard';
 import SensorySupportCard from '../../components/learn-me/SensorySupportCard';
-import { LearningSignal, PatternReviewSummary, SensorySupportRecord } from '../../types/core';
+import ThresholdSummaryCard from '../../components/learn-me/ThresholdSummaryCard';
+import { LearningSignal, PatternReviewSummary, SensorySupportRecord, ThresholdSummary } from '../../types/core';
 
 interface LearnMeHomeProps {
   signals: LearningSignal[];
   sensorySupports: SensorySupportRecord[];
   summary: PatternReviewSummary;
+  thresholdSummary: ThresholdSummary;
   onConfirmSignal: (signalId: string) => void;
   onConfirmSensory: (recordId: string) => void;
 }
@@ -16,6 +18,7 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
   signals,
   sensorySupports,
   summary,
+  thresholdSummary,
   onConfirmSignal,
   onConfirmSensory,
 }) => {
@@ -28,11 +31,12 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
         <div className="fg-kicker">Learn Me</div>
         <h1 className="fg-section-title">Readable patterns, without pretending certainty.</h1>
         <p className="fg-section-body">
-          This slice turns the learning layer into a readable review surface. Repeated signals, strongest supports,
-          contradictions, and overall confidence are visible now, while still staying grounded in captured evidence.
+          This slice adds threshold visibility on top of pattern review. The app now shows whether it is still learning,
+          warming up, or ready for tailored support, and makes that gate explicit instead of hidden.
         </p>
       </div>
 
+      <ThresholdSummaryCard summary={thresholdSummary} />
       <PatternReviewSummaryCard summary={summary} />
 
       <section className="fg-panel-stack">
