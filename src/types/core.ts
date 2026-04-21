@@ -110,6 +110,8 @@ export interface SensorySupportRecord {
   helpfulStates: CanonicalStateId[];
   outcomeCounts: Record<SupportOutcome, number>;
   confirmed: boolean;
+  favorite: boolean;
+  hidden: boolean;
   createdAt: number;
 }
 
