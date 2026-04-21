@@ -116,6 +116,8 @@ export const deriveSensorySupports = (supportLog: SupportLogEntry[]): SensorySup
             helpfulStates: [entry.stateCanonicalId as CanonicalStateId],
             outcomeCounts,
             confirmed: false,
+            favorite: false,
+            hidden: false,
             createdAt: Date.now(),
           });
         }
