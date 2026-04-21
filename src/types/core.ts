@@ -63,6 +63,15 @@ export interface StateTransition {
   source: 'post_send' | 'manual';
 }
 
+export interface ThreadMemoryEntry {
+  summary: string;
+  suggestedTags: string[];
+  confirmedTags: string[];
+  stressorTags: string[];
+  destresserTags: string[];
+  lastStructuredAt: number;
+}
+
 export interface JournalThread {
   id: string;
   title: string;
@@ -74,6 +83,7 @@ export interface JournalThread {
   tags: string[];
   messages: JournalMessage[];
   transitions: StateTransition[];
+  memory?: ThreadMemoryEntry;
 }
 
 export interface ThreadSummary {
