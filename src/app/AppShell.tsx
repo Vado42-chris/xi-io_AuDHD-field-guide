@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import '../theme/app.css';
 import { CurrentStateBar } from '../components/state/CurrentStateBar';
+import { CurrentStateSelector } from '../components/state/CurrentStateSelector';
 import { CustomizeHome } from '../features/customize/CustomizeHome';
 import { HelpNowHome } from '../features/help-now/HelpNowHome';
 import { JournalHome } from '../features/journal/JournalHome';
@@ -10,9 +11,12 @@ import {
   AppSection,
   CurrentState,
   DEFAULT_CURRENT_STATE,
-  DEFAULT_IDENTITY,
   DEFAULT_CUSTOM_STATES,
+  DEFAULT_IDENTITY,
+  SupportLogEntry,
+  SupportOutcome,
   ThreadSummary,
+  StateIntensity,
 } from '../types/core';
 import { readLocal, writeLocal } from '../lib/storage/localStore';
 
@@ -62,7 +66,10 @@ export const AppShell: React.FC = () => {
   const [activeSection, setActiveSection] = useState<AppSection>('help_now');
   const [identity, setIdentity] = useState<AppIdentity>(() => readLocal<AppIdentity>('fg_identity_v2', DEFAULT_IDENTITY));
   const [currentState, setCurrentState] = useState<CurrentState>(() => readLocal<CurrentState>('fg_current_state_v2', DEFAULT_CURRENT_STATE));
+  const [customStates] = useState(() => readLocal('fg_custom_states_v2', DEFAULT_CUSTOM_STATES));
   const [recentThreads] = useState<ThreadSummary[]>(() => readLocal<ThreadSummary[]>('fg_recent_threads_v2', DEFAULT_THREADS));
+  const [supportLog, setSupportLog] = useState<SupportLogEntry[]>(() => readLocal<SupportLogEntry[]>('fg_support_log_v2', []));
+  const [selectorOpen, setSelectorOpen] = useState(false);
 
   useEffect(() => {
     writeLocal('fg_identity_v2', identity);
@@ -72,31 +79,86 @@ export const AppShell: React.FC = () => {
     writeLocal('fg_current_state_v2', currentState);
   }, [currentState]);
 
+  useEffect(() => {
+    writeLocal('fg_support_log_v2', supportLog);
+  }, [supportLog]);
+
+  const recentOutcomeSummary = useMemo(() => {
+    const latest = supportLog[0];
+    if (!latest) return undefined;
+    const outcome = latest.outcome.replace('_', ' ');
+    return `${latest.supportTitle} · ${outcome}`;
+  }, [supportLog]);
+
+  const updateCurrentState = (partial: Partial<CurrentState>) => {
+    setCurrentState((prev) => ({
+      ...prev,
+      ...partial,
+      updatedAt: Date.now(),
+      source: partial.source ?? 'user',
+    }));
+  };
+
+  const handleSelectState = (stateId: string) => {
+    const next = customStates.find((state) => state.id === stateId);
+    if (!next) return;
+
+    updateCurrentState({
+      canonicalId: next.canonicalId,
+      label: next.label,
+      source: 'user',
+    });
+  };
+
+  const handleSelectIntensity = (intensity: StateIntensity) => {
+    updateCurrentState({ intensity, source: 'user' });
+  };
+
+  const handleApplyRouteState = (canonicalId: CurrentState['canonicalId']) => {
+    const matching = customStates.find((state) => state.canonicalId === canonicalId && !state.hidden) || customStates.find((state) => state.canonicalId === canonicalId);
+    if (!matching) return;
+
+    setActiveSection('help_now');
+    updateCurrentState({
+      canonicalId: matching.canonicalId,
+      label: matching.label,
+      source: 'support_flow',
+    });
+  };
+
+  const handleLogOutcome = (supportTitle: string, supportRoute: string, outcome: SupportOutcome) => {
+    const entry: SupportLogEntry = {
+      id: `${Date.now()}`,
+      stateLabel: currentState.label,
+      stateCanonicalId: currentState.canonicalId,
+      supportTitle,
+      supportRoute,
+      outcome,
+      createdAt: Date.now(),
+    };
+    setSupportLog((prev) => [entry, ...prev].slice(0, 20));
+  };
+
   const activeView = useMemo(() => {
     switch (activeSection) {
       case 'journal':
-        return <JournalHome recentThreads={recentThreads} />;
+        return <JournalHome recentThreads={recentThreads} currentState={currentState} />;
       case 'learn_me':
         return <LearnMeHome />;
       case 'customize':
         return <CustomizeHome />;
       case 'help_now':
       default:
-        return <HelpNowHome />;
+        return (
+          <HelpNowHome
+            currentState={currentState}
+            onApplyRouteState={handleApplyRouteState}
+            onLogOutcome={handleLogOutcome}
+            recentOutcomeSummary={recentOutcomeSummary}
+          />
+        );
     }
-  }, [activeSection, recentThreads]);
-
-  const handleStateUpdate = () => {
-    const nextIndex = (DEFAULT_CUSTOM_STATES.findIndex((state) => state.canonicalId === currentState.canonicalId) + 1) % DEFAULT_CUSTOM_STATES.length;
-    const next = DEFAULT_CUSTOM_STATES[nextIndex];
-    setCurrentState({
-      canonicalId: next.canonicalId,
-      label: next.label,
-      intensity: currentState.intensity === 'medium' ? 'high' : currentState.intensity === 'high' ? 'low' : 'medium',
-      updatedAt: Date.now(),
-      source: 'user',
-    });
-  };
+  }, [activeSection, recentThreads, currentState, recentOutcomeSummary]);
 
   return (
     <div className="fg-app-shell">
@@ -125,11 +187,24 @@ export const AppShell: React.FC = () => {
           </aside>
 
           <main className="fg-main fg-substrate">
-            <CurrentStateBar currentState={currentState} onUpdate={handleStateUpdate} />
+            <CurrentStateBar
+              currentState={currentState}
+              onUpdate={() => setSelectorOpen(true)}
+              onHelpNow={() => setActiveSection('help_now')}
+            />
             {activeView}
           </main>
         </div>
       </div>
+
+      <CurrentStateSelector
+        currentState={currentState}
+        states={customStates}
+        open={selectorOpen}
+        onClose={() => setSelectorOpen(false)}
+        onSelectState={handleSelectState}
+        onSelectIntensity={handleSelectIntensity}
+      />
     </div>
   );
 };
