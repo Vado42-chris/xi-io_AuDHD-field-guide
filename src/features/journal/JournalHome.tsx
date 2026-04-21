@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import MessageBubble from '../../components/journal/MessageBubble';
 import PostSendStateCheck from '../../components/journal/PostSendStateCheck';
 import ThreadHeader from '../../components/journal/ThreadHeader';
+import ThreadMemoryCard from '../../components/journal/ThreadMemoryCard';
 import { CurrentState, JournalThread } from '../../types/core';
 
 interface JournalHomeProps {
@@ -11,6 +12,7 @@ interface JournalHomeProps {
   onOpenThread: (threadId: string) => void;
   onSendMessage: (threadId: string, text: string) => void;
   onKeepThreadState: (threadId: string) => void;
+  onApplySuggestedTags: (threadId: string) => void;
   onRequestStateUpdate: () => void;
 }
 
@@ -21,6 +23,7 @@ export const JournalHome: React.FC<JournalHomeProps> = ({
   onOpenThread,
   onSendMessage,
   onKeepThreadState,
+  onApplySuggestedTags,
   onRequestStateUpdate,
 }) => {
   const [draft, setDraft] = useState('');
@@ -39,8 +42,7 @@ export const JournalHome: React.FC<JournalHomeProps> = ({
         <div className="fg-kicker">Journal</div>
         <h1 className="fg-section-title">State-aware threads with ibal.</h1>
         <p className="fg-section-body">
-          This slice turns the journal from a shell into a continuity surface. New threads start from the
-          active current state, conversations can be resumed, and each send is followed by a soft state check.
+          This slice gives each thread a stronger memory layer. Summaries, suggested tags, and structured stressor and de-stresser notes now live beside the conversation and stay user-correctable.
         </p>
       </div>
 
@@ -81,6 +83,13 @@ export const JournalHome: React.FC<JournalHomeProps> = ({
           {activeThread ? (
             <>
               <ThreadHeader thread={activeThread} />
+
+              {activeThread.memory ? (
+                <ThreadMemoryCard
+                  memory={activeThread.memory}
+                  onApplySuggestedTags={() => onApplySuggestedTags(activeThread.id)}
+                />
+              ) : null}
 
               <div className="fg-thread-message-stack">
                 {activeThread.messages.map((message) => (
