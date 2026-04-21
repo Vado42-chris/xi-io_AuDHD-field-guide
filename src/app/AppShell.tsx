@@ -28,6 +28,7 @@ import { readLocal, writeLocal } from '../lib/storage/localStore';
 import { deriveLearningSignals, deriveSensorySupports } from '../lib/patterns/learningSignals';
 import { buildPatternReviewSummary } from '../lib/patterns/patternReview';
 import { buildPersonalizedSuggestions, buildThresholdSummary } from '../lib/patterns/personalizationThreshold';
+import { buildThreadMemoryEntry } from '../lib/journal/threadIntelligence';
 
 const SECTION_LABELS: Record<AppSection, { kicker: string; label: string }> = {
   help_now: { kicker: 'Immediate support', label: 'Help Now' },
@@ -58,7 +59,7 @@ const makeDefaultThreads = (): JournalThread[] => {
     recordedAt: Date.now() - 1000 * 60 * 60 * 18,
   };
 
-  return [
+  const baseThreads: JournalThread[] = [
     {
       id: 'thread-1',
       title: 'Back pain and overload notes',
@@ -90,6 +91,11 @@ const makeDefaultThreads = (): JournalThread[] => {
       transitions: [],
     },
   ];
+
+  return baseThreads.map((thread) => ({
+    ...thread,
+    memory: buildThreadMemoryEntry(thread),
+  }));
 };
 
 const NavButton: React.FC<{
@@ -206,7 +212,7 @@ export const AppShell: React.FC = () => {
 
   const handleCreateThread = () => {
     const snapshot = makeStateSnapshot(currentState);
-    const newThread: JournalThread = {
+    const baseThread: JournalThread = {
       id: `thread-${Date.now()}`,
       title: `${currentState.label} check-in`,
       createdAt: Date.now(),
@@ -218,6 +224,7 @@ export const AppShell: React.FC = () => {
       messages: [{ id: `m-${Date.now()}`, role: 'ibal', text: `Starting from ${currentState.label.toLowerCase()} · ${currentState.intensity}. You can keep this brief. What feels most important to capture right now?`, createdAt: Date.now() }],
       transitions: [],
     };
+    const newThread = { ...baseThread, memory: buildThreadMemoryEntry(baseThread) };
     setJournalThreads((prev) => [newThread, ...prev]);
     setActiveSection('journal');
   };
@@ -235,14 +242,48 @@ export const AppShell: React.FC = () => {
       if (thread.id !== threadId) return thread;
       const userMessage = { id: `m-${Date.now()}-u`, role: 'user' as const, text, createdAt: Date.now() };
       const ibalMessage = { id: `m-${Date.now()}-i`, role: 'ibal' as const, text: 'Noted. I will treat this as part of the same thread and keep the context connected. After this send, check whether your state still fits.', createdAt: Date.now() + 1 };
-      return { ...thread, updatedAt: Date.now(), summary: text.length > 120 ? `${text.slice(0, 117)}...` : text, messages: [...thread.messages, userMessage, ibalMessage] };
+      const nextThread: JournalThread = {
+        ...thread,
+        updatedAt: Date.now(),
+        summary: text.length > 120 ? `${text.slice(0, 117)}...` : text,
+        messages: [...thread.messages, userMessage, ibalMessage],
+      };
+      return { ...nextThread, memory: buildThreadMemoryEntry(nextThread) };
     }));
   };
 
   const handleKeepThreadState = (threadId: string) => {
     setJournalThreads((prev) => prev.map((thread) => {
       if (thread.id !== threadId) return thread;
-      return { ...thread, updatedAt: Date.now(), currentState: makeStateSnapshot(currentState) };
+      const nextState = makeStateSnapshot(currentState);
+      const transition = {
+        id: `transition-${Date.now()}`,
+        from: thread.currentState,
+        to: nextState,
+        createdAt: Date.now(),
+        source: 'post_send' as const,
+      };
+      return {
+        ...thread,
+        updatedAt: Date.now(),
+        currentState: nextState,
+        transitions: [...thread.transitions, transition],
+      };
+    }));
+  };
+
+  const handleApplySuggestedTags = (threadId: string) => {
+    setJournalThreads((prev) => prev.map((thread) => {
+      if (thread.id !== threadId || !thread.memory) return thread;
+      const mergedTags = Array.from(new Set([...thread.tags, ...thread.memory.suggestedTags]));
+      return {
+        ...thread,
+        tags: mergedTags,
+        memory: {
+          ...thread.memory,
+          confirmedTags: mergedTags,
+        },
+      };
     }));
   };
 
@@ -269,7 +310,7 @@ export const AppShell: React.FC = () => {
   const activeView = useMemo(() => {
     switch (activeSection) {
       case 'journal':
-        return <JournalHome threads={journalThreads} currentState={currentState} onCreateThread={handleCreateThread} onOpenThread={handleOpenThread} onSendMessage={handleSendMessage} onKeepThreadState={handleKeepThreadState} onRequestStateUpdate={() => setSelectorOpen(true)} />;
+        return <JournalHome threads={journalThreads} currentState={currentState} onCreateThread={handleCreateThread} onOpenThread={handleOpenThread} onSendMessage={handleSendMessage} onKeepThreadState={handleKeepThreadState} onApplySuggestedTags={handleApplySuggestedTags} onRequestStateUpdate={() => setSelectorOpen(true)} />;
       case 'learn_me':
         return <LearnMeHome signals={learningSignals} sensorySupports={sensorySupports} summary={patternSummary} thresholdSummary={thresholdSummary} onConfirmSignal={handleConfirmSignal} onConfirmSensory={handleConfirmSensory} />;
       case 'customize':
