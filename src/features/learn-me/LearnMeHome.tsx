@@ -1,11 +1,13 @@
 import React from 'react';
 import LearningSignalCard from '../../components/learn-me/LearningSignalCard';
+import PatternReviewSummaryCard from '../../components/learn-me/PatternReviewSummaryCard';
 import SensorySupportCard from '../../components/learn-me/SensorySupportCard';
-import { LearningSignal, SensorySupportRecord } from '../../types/core';
+import { LearningSignal, PatternReviewSummary, SensorySupportRecord } from '../../types/core';
 
 interface LearnMeHomeProps {
   signals: LearningSignal[];
   sensorySupports: SensorySupportRecord[];
+  summary: PatternReviewSummary;
   onConfirmSignal: (signalId: string) => void;
   onConfirmSensory: (recordId: string) => void;
 }
@@ -13,6 +15,7 @@ interface LearnMeHomeProps {
 export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
   signals,
   sensorySupports,
+  summary,
   onConfirmSignal,
   onConfirmSensory,
 }) => {
@@ -23,12 +26,14 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
     <div className="fg-content-card fg-glass fg-help-layout">
       <div className="fg-header">
         <div className="fg-kicker">Learn Me</div>
-        <h1 className="fg-section-title">Capture first, then confirm what seems to matter.</h1>
+        <h1 className="fg-section-title">Readable patterns, without pretending certainty.</h1>
         <p className="fg-section-body">
-          This slice introduces user-correctable learning records. The app suggests stressors,
-          de-stressers, and sensory supports from journal threads and support outcomes, then lets the user confirm them.
+          This slice turns the learning layer into a readable review surface. Repeated signals, strongest supports,
+          contradictions, and overall confidence are visible now, while still staying grounded in captured evidence.
         </p>
       </div>
+
+      <PatternReviewSummaryCard summary={summary} />
 
       <section className="fg-panel-stack">
         <div className="fg-kicker">Stressors</div>
