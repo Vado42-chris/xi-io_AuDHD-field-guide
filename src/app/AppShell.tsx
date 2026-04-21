@@ -16,6 +16,7 @@ import {
   DEFAULT_IDENTITY,
   JournalThread,
   LearningSignal,
+  PatternReviewSummary,
   SensorySupportRecord,
   StateIntensity,
   StateSnapshot,
@@ -24,6 +25,7 @@ import {
 } from '../types/core';
 import { readLocal, writeLocal } from '../lib/storage/localStore';
 import { deriveLearningSignals, deriveSensorySupports } from '../lib/patterns/learningSignals';
+import { buildPatternReviewSummary } from '../lib/patterns/patternReview';
 
 const SECTION_LABELS: Record<AppSection, { kicker: string; label: string }> = {
   help_now: { kicker: 'Immediate support', label: 'Help Now' },
@@ -117,25 +119,13 @@ export const AppShell: React.FC = () => {
   const [sensorySupports, setSensorySupports] = useState<SensorySupportRecord[]>(() => readLocal<SensorySupportRecord[]>('fg_sensory_supports_v2', []));
   const [selectorOpen, setSelectorOpen] = useState(false);
 
-  useEffect(() => {
-    writeLocal('fg_identity_v2', identity);
-  }, [identity]);
-
-  useEffect(() => {
-    writeLocal('fg_current_state_v2', currentState);
-  }, [currentState]);
-
-  useEffect(() => {
-    writeLocal('fg_custom_states_v2', customStates);
-  }, [customStates]);
-
-  useEffect(() => {
-    writeLocal('fg_support_log_v2', supportLog);
-  }, [supportLog]);
-
-  useEffect(() => {
-    writeLocal('fg_journal_threads_v2', journalThreads);
-  }, [journalThreads]);
+  useEffect(() => { writeLocal('fg_identity_v2', identity); }, [identity]);
+  useEffect(() => { writeLocal('fg_current_state_v2', currentState); }, [currentState]);
+  useEffect(() => { writeLocal('fg_custom_states_v2', customStates); }, [customStates]);
+  useEffect(() => { writeLocal('fg_support_log_v2', supportLog); }, [supportLog]);
+  useEffect(() => { writeLocal('fg_journal_threads_v2', journalThreads); }, [journalThreads]);
+  useEffect(() => { writeLocal('fg_learning_signals_v2', learningSignals); }, [learningSignals]);
+  useEffect(() => { writeLocal('fg_sensory_supports_v2', sensorySupports); }, [sensorySupports]);
 
   useEffect(() => {
     const derived = deriveLearningSignals(journalThreads, supportLog);
@@ -159,55 +149,34 @@ export const AppShell: React.FC = () => {
     });
   }, [journalThreads, supportLog]);
 
-  useEffect(() => {
-    writeLocal('fg_learning_signals_v2', learningSignals);
-  }, [learningSignals]);
-
-  useEffect(() => {
-    writeLocal('fg_sensory_supports_v2', sensorySupports);
-  }, [sensorySupports]);
-
   const recentOutcomeSummary = useMemo(() => {
     const latest = supportLog[0];
     if (!latest) return undefined;
-    const outcome = latest.outcome.replace('_', ' ');
-    return `${latest.supportTitle} · ${outcome}`;
+    return `${latest.supportTitle} · ${latest.outcome.replace('_', ' ')}`;
   }, [supportLog]);
 
+  const patternSummary: PatternReviewSummary = useMemo(
+    () => buildPatternReviewSummary(learningSignals, sensorySupports),
+    [learningSignals, sensorySupports]
+  );
+
   const updateCurrentState = (partial: Partial<CurrentState>) => {
-    setCurrentState((prev) => ({
-      ...prev,
-      ...partial,
-      updatedAt: Date.now(),
-      source: partial.source ?? 'user',
-    }));
+    setCurrentState((prev) => ({ ...prev, ...partial, updatedAt: Date.now(), source: partial.source ?? 'user' }));
   };
 
   const handleSelectState = (stateId: string) => {
     const next = customStates.find((state) => state.id === stateId);
     if (!next) return;
-
-    updateCurrentState({
-      canonicalId: next.canonicalId,
-      label: next.label,
-      source: 'user',
-    });
+    updateCurrentState({ canonicalId: next.canonicalId, label: next.label, source: 'user' });
   };
 
-  const handleSelectIntensity = (intensity: StateIntensity) => {
-    updateCurrentState({ intensity, source: 'user' });
-  };
+  const handleSelectIntensity = (intensity: StateIntensity) => updateCurrentState({ intensity, source: 'user' });
 
   const handleApplyRouteState = (canonicalId: CurrentState['canonicalId']) => {
     const matching = customStates.find((state) => state.canonicalId === canonicalId && !state.hidden) || customStates.find((state) => state.canonicalId === canonicalId);
     if (!matching) return;
-
     setActiveSection('help_now');
-    updateCurrentState({
-      canonicalId: matching.canonicalId,
-      label: matching.label,
-      source: 'support_flow',
-    });
+    updateCurrentState({ canonicalId: matching.canonicalId, label: matching.label, source: 'support_flow' });
   };
 
   const handleLogOutcome = (supportTitle: string, supportRoute: string, outcome: SupportOutcome) => {
@@ -234,17 +203,9 @@ export const AppShell: React.FC = () => {
       currentState: snapshot,
       summary: `Started from ${currentState.label.toLowerCase()} · ${currentState.intensity}.`,
       tags: [currentState.canonicalId],
-      messages: [
-        {
-          id: `m-${Date.now()}`,
-          role: 'ibal',
-          text: `Starting from ${currentState.label.toLowerCase()} · ${currentState.intensity}. You can keep this brief. What feels most important to capture right now?`,
-          createdAt: Date.now(),
-        },
-      ],
+      messages: [{ id: `m-${Date.now()}`, role: 'ibal', text: `Starting from ${currentState.label.toLowerCase()} · ${currentState.intensity}. You can keep this brief. What feels most important to capture right now?`, createdAt: Date.now() }],
       transitions: [],
     };
-
     setJournalThreads((prev) => [newThread, ...prev]);
     setActiveSection('journal');
   };
@@ -258,128 +219,54 @@ export const AppShell: React.FC = () => {
   };
 
   const handleSendMessage = (threadId: string, text: string) => {
-    setJournalThreads((prev) =>
-      prev.map((thread) => {
-        if (thread.id !== threadId) return thread;
-
-        const userMessage = {
-          id: `m-${Date.now()}-u`,
-          role: 'user' as const,
-          text,
-          createdAt: Date.now(),
-        };
-
-        const ibalMessage = {
-          id: `m-${Date.now()}-i`,
-          role: 'ibal' as const,
-          text: `Noted. I will treat this as part of the same thread and keep the context connected. After this send, check whether your state still fits.`,
-          createdAt: Date.now() + 1,
-        };
-
-        return {
-          ...thread,
-          updatedAt: Date.now(),
-          summary: text.length > 120 ? `${text.slice(0, 117)}...` : text,
-          messages: [...thread.messages, userMessage, ibalMessage],
-        };
-      })
-    );
+    setJournalThreads((prev) => prev.map((thread) => {
+      if (thread.id !== threadId) return thread;
+      const userMessage = { id: `m-${Date.now()}-u`, role: 'user' as const, text, createdAt: Date.now() };
+      const ibalMessage = { id: `m-${Date.now()}-i`, role: 'ibal' as const, text: 'Noted. I will treat this as part of the same thread and keep the context connected. After this send, check whether your state still fits.', createdAt: Date.now() + 1 };
+      return { ...thread, updatedAt: Date.now(), summary: text.length > 120 ? `${text.slice(0, 117)}...` : text, messages: [...thread.messages, userMessage, ibalMessage] };
+    }));
   };
 
   const handleKeepThreadState = (threadId: string) => {
-    setJournalThreads((prev) =>
-      prev.map((thread) => {
-        if (thread.id !== threadId) return thread;
-        const snapshot = makeStateSnapshot(currentState);
-        return {
-          ...thread,
-          updatedAt: Date.now(),
-          currentState: snapshot,
-        };
-      })
-    );
+    setJournalThreads((prev) => prev.map((thread) => {
+      if (thread.id !== threadId) return thread;
+      return { ...thread, updatedAt: Date.now(), currentState: makeStateSnapshot(currentState) };
+    }));
   };
 
-  const handleConfirmSignal = (signalId: string) => {
-    setLearningSignals((prev) => prev.map((signal) => (signal.id === signalId ? { ...signal, confirmed: true } : signal)));
-  };
-
-  const handleConfirmSensory = (recordId: string) => {
-    setSensorySupports((prev) => prev.map((record) => (record.id === recordId ? { ...record, confirmed: true } : record)));
-  };
+  const handleConfirmSignal = (signalId: string) => setLearningSignals((prev) => prev.map((signal) => (signal.id === signalId ? { ...signal, confirmed: true } : signal)));
+  const handleConfirmSensory = (recordId: string) => setSensorySupports((prev) => prev.map((record) => (record.id === recordId ? { ...record, confirmed: true } : record)));
 
   const handleRenameState = (stateId: string, label: string) => {
-    setCustomStates((prev) => prev.map((state) => (state.id === stateId ? { ...state, label } : state)));
-    setCurrentState((prev) => {
-      const match = customStates.find((state) => state.id === stateId);
-      if (!match || prev.canonicalId !== match.canonicalId || prev.label !== match.label) return prev;
-      return { ...prev, label, updatedAt: Date.now() };
+    const cleaned = label.trimStart();
+    setCustomStates((prev) => {
+      const target = prev.find((state) => state.id === stateId);
+      const nextStates = prev.map((state) => (state.id === stateId ? { ...state, label: cleaned } : state));
+      if (target && currentState.canonicalId === target.canonicalId && currentState.label === target.label) {
+        setCurrentState((current) => ({ ...current, label: cleaned, updatedAt: Date.now() }));
+      }
+      return nextStates;
     });
   };
 
-  const handleToggleStateFavorite = (stateId: string) => {
-    setCustomStates((prev) => prev.map((state) => (state.id === stateId ? { ...state, favorite: !state.favorite } : state)));
-  };
-
-  const handleToggleStateHidden = (stateId: string) => {
-    setCustomStates((prev) => prev.map((state) => (state.id === stateId ? { ...state, hidden: !state.hidden } : state)));
-  };
-
-  const handleToggleComfortFavorite = (recordId: string) => {
-    setSensorySupports((prev) => prev.map((record) => (record.id === recordId ? { ...record, favorite: !record.favorite } : record)));
-  };
-
-  const handleToggleComfortHidden = (recordId: string) => {
-    setSensorySupports((prev) => prev.map((record) => (record.id === recordId ? { ...record, hidden: !record.hidden } : record)));
-  };
+  const handleToggleStateFavorite = (stateId: string) => setCustomStates((prev) => prev.map((state) => (state.id === stateId ? { ...state, favorite: !state.favorite } : state)));
+  const handleToggleStateHidden = (stateId: string) => setCustomStates((prev) => prev.map((state) => (state.id === stateId ? { ...state, hidden: !state.hidden } : state)));
+  const handleToggleComfortFavorite = (recordId: string) => setSensorySupports((prev) => prev.map((record) => (record.id === recordId ? { ...record, favorite: !record.favorite } : record)));
+  const handleToggleComfortHidden = (recordId: string) => setSensorySupports((prev) => prev.map((record) => (record.id === recordId ? { ...record, hidden: !record.hidden } : record)));
 
   const activeView = useMemo(() => {
     switch (activeSection) {
       case 'journal':
-        return (
-          <JournalHome
-            threads={journalThreads}
-            currentState={currentState}
-            onCreateThread={handleCreateThread}
-            onOpenThread={handleOpenThread}
-            onSendMessage={handleSendMessage}
-            onKeepThreadState={handleKeepThreadState}
-            onRequestStateUpdate={() => setSelectorOpen(true)}
-          />
-        );
+        return <JournalHome threads={journalThreads} currentState={currentState} onCreateThread={handleCreateThread} onOpenThread={handleOpenThread} onSendMessage={handleSendMessage} onKeepThreadState={handleKeepThreadState} onRequestStateUpdate={() => setSelectorOpen(true)} />;
       case 'learn_me':
-        return (
-          <LearnMeHome
-            signals={learningSignals}
-            sensorySupports={sensorySupports}
-            onConfirmSignal={handleConfirmSignal}
-            onConfirmSensory={handleConfirmSensory}
-          />
-        );
+        return <LearnMeHome signals={learningSignals} sensorySupports={sensorySupports} summary={patternSummary} onConfirmSignal={handleConfirmSignal} onConfirmSensory={handleConfirmSensory} />;
       case 'customize':
-        return (
-          <CustomizeHome
-            customStates={customStates}
-            sensorySupports={sensorySupports}
-            onRenameState={handleRenameState}
-            onToggleStateFavorite={handleToggleStateFavorite}
-            onToggleStateHidden={handleToggleStateHidden}
-            onToggleComfortFavorite={handleToggleComfortFavorite}
-            onToggleComfortHidden={handleToggleComfortHidden}
-          />
-        );
+        return <CustomizeHome customStates={customStates} sensorySupports={sensorySupports} onRenameState={handleRenameState} onToggleStateFavorite={handleToggleStateFavorite} onToggleStateHidden={handleToggleStateHidden} onToggleComfortFavorite={handleToggleComfortFavorite} onToggleComfortHidden={handleToggleComfortHidden} />;
       case 'help_now':
       default:
-        return (
-          <HelpNowHome
-            currentState={currentState}
-            onApplyRouteState={handleApplyRouteState}
-            onLogOutcome={handleLogOutcome}
-            recentOutcomeSummary={recentOutcomeSummary}
-          />
-        );
+        return <HelpNowHome currentState={currentState} onApplyRouteState={handleApplyRouteState} onLogOutcome={handleLogOutcome} recentOutcomeSummary={recentOutcomeSummary} />;
     }
-  }, [activeSection, journalThreads, currentState, recentOutcomeSummary, learningSignals, sensorySupports, customStates]);
+  }, [activeSection, journalThreads, currentState, recentOutcomeSummary, learningSignals, sensorySupports, customStates, patternSummary]);
 
   return (
     <div className="fg-app-shell">
@@ -393,39 +280,22 @@ export const AppShell: React.FC = () => {
                 <div className="fg-brand-subtitle">State-aware journal and reflection shell</div>
               </div>
             </div>
-
             <div className="fg-nav-list">
-              {(['help_now', 'journal', 'learn_me', 'customize'] as AppSection[]).map((section) => (
-                <NavButton key={section} section={section} active={activeSection === section} onClick={setActiveSection} />
-              ))}
+              {(['help_now', 'journal', 'learn_me', 'customize'] as AppSection[]).map((section) => <NavButton key={section} section={section} active={activeSection === section} onClick={setActiveSection} />)}
             </div>
-
             <div className="fg-glass" style={{ borderRadius: 18, padding: '16px 14px', marginTop: 'auto' }}>
               <div className="fg-kicker">Identity</div>
               <div style={{ fontWeight: 700, marginTop: 4 }}>{identity.username}</div>
               <div className="fg-state-meta">Local-first shell foundation</div>
             </div>
           </aside>
-
           <main className="fg-main fg-substrate">
-            <CurrentStateBar
-              currentState={currentState}
-              onUpdate={() => setSelectorOpen(true)}
-              onHelpNow={() => setActiveSection('help_now')}
-            />
+            <CurrentStateBar currentState={currentState} onUpdate={() => setSelectorOpen(true)} onHelpNow={() => setActiveSection('help_now')} />
             {activeView}
           </main>
         </div>
       </div>
-
-      <CurrentStateSelector
-        currentState={currentState}
-        states={customStates}
-        open={selectorOpen}
-        onClose={() => setSelectorOpen(false)}
-        onSelectState={handleSelectState}
-        onSelectIntensity={handleSelectIntensity}
-      />
+      <CurrentStateSelector currentState={currentState} states={customStates} open={selectorOpen} onClose={() => setSelectorOpen(false)} onSelectState={handleSelectState} onSelectIntensity={handleSelectIntensity} />
     </div>
   );
 };
