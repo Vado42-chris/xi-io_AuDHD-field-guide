@@ -72,6 +72,26 @@ export interface ThreadMemoryEntry {
   lastStructuredAt: number;
 }
 
+export interface MemoryVaultEntry {
+  id: string;
+  threadId: string;
+  threadTitle: string;
+  summary: string;
+  confirmedTags: string[];
+  stressorTags: string[];
+  destresserTags: string[];
+  createdAt: number;
+  confirmed: boolean;
+}
+
+export interface MemoryVaultSummary {
+  totalEntries: number;
+  confirmedEntries: number;
+  repeatedTags: string[];
+  repeatedStressors: string[];
+  repeatedDestressers: string[];
+}
+
 export interface JournalThread {
   id: string;
   title: string;
