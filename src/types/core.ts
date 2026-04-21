@@ -14,6 +14,7 @@ export type StateIntensity = 'low' | 'medium' | 'high';
 export type SupportOutcome = 'helped' | 'a_little' | 'no_change' | 'worse' | 'skipped';
 
 export type LearningKind = 'stressor' | 'destresser' | 'sensory';
+export type ConfidenceLevel = 'early' | 'learning' | 'trusted';
 
 export interface CurrentState {
   canonicalId: CanonicalStateId;
@@ -113,6 +114,16 @@ export interface SensorySupportRecord {
   favorite: boolean;
   hidden: boolean;
   createdAt: number;
+}
+
+export interface PatternReviewSummary {
+  confidenceLevel: ConfidenceLevel;
+  evidenceCount: number;
+  contradictionCount: number;
+  repeatedStressors: string[];
+  repeatedDestressers: string[];
+  strongestSupports: string[];
+  cautionNotes: string[];
 }
 
 export const DEFAULT_CUSTOM_STATES: CustomStateLabel[] = [
