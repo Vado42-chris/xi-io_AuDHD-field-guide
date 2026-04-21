@@ -16,6 +16,8 @@ import {
   DEFAULT_IDENTITY,
   JournalThread,
   LearningSignal,
+  MemoryVaultEntry,
+  MemoryVaultSummary,
   PatternReviewSummary,
   SensorySupportRecord,
   StateIntensity,
@@ -29,6 +31,7 @@ import { deriveLearningSignals, deriveSensorySupports } from '../lib/patterns/le
 import { buildPatternReviewSummary } from '../lib/patterns/patternReview';
 import { buildPersonalizedSuggestions, buildThresholdSummary } from '../lib/patterns/personalizationThreshold';
 import { buildThreadMemoryEntry } from '../lib/journal/threadIntelligence';
+import { buildMemoryVaultEntries, buildMemoryVaultSummary } from '../lib/memory/memoryVault';
 
 const SECTION_LABELS: Record<AppSection, { kicker: string; label: string }> = {
   help_now: { kicker: 'Immediate support', label: 'Help Now' },
@@ -92,24 +95,15 @@ const makeDefaultThreads = (): JournalThread[] => {
     },
   ];
 
-  return baseThreads.map((thread) => ({
-    ...thread,
-    memory: buildThreadMemoryEntry(thread),
-  }));
+  return baseThreads.map((thread) => ({ ...thread, memory: buildThreadMemoryEntry(thread) }));
 };
 
-const NavButton: React.FC<{
-  section: AppSection;
-  active: boolean;
-  onClick: (section: AppSection) => void;
-}> = ({ section, active, onClick }) => {
+const NavButton: React.FC<{ section: AppSection; active: boolean; onClick: (section: AppSection) => void; }> = ({ section, active, onClick }) => {
   const item = SECTION_LABELS[section];
   return (
     <button type="button" className="fg-nav-button fg-glass" data-active={active} onClick={() => onClick(section)}>
       <div style={{ display: 'grid', gap: 2 }}>
-        <div className="fg-kicker" style={{ color: active ? 'var(--fg-accent-strong)' : 'var(--fg-text-muted)' }}>
-          {item.kicker}
-        </div>
+        <div className="fg-kicker" style={{ color: active ? 'var(--fg-accent-strong)' : 'var(--fg-text-muted)' }}>{item.kicker}</div>
         <div style={{ fontWeight: 700 }}>{item.label}</div>
       </div>
     </button>
@@ -163,20 +157,11 @@ export const AppShell: React.FC = () => {
     return `${latest.supportTitle} · ${latest.outcome.replace('_', ' ')}`;
   }, [supportLog]);
 
-  const patternSummary: PatternReviewSummary = useMemo(
-    () => buildPatternReviewSummary(learningSignals, sensorySupports),
-    [learningSignals, sensorySupports]
-  );
-
-  const thresholdSummary: ThresholdSummary = useMemo(
-    () => buildThresholdSummary(learningSignals, sensorySupports),
-    [learningSignals, sensorySupports]
-  );
-
-  const personalizedSupports = useMemo(
-    () => buildPersonalizedSuggestions(currentState.canonicalId, thresholdSummary, sensorySupports),
-    [currentState.canonicalId, thresholdSummary, sensorySupports]
-  );
+  const memoryEntries: MemoryVaultEntry[] = useMemo(() => buildMemoryVaultEntries(journalThreads), [journalThreads]);
+  const memorySummary: MemoryVaultSummary = useMemo(() => buildMemoryVaultSummary(memoryEntries), [memoryEntries]);
+  const patternSummary: PatternReviewSummary = useMemo(() => buildPatternReviewSummary(learningSignals, sensorySupports), [learningSignals, sensorySupports]);
+  const thresholdSummary: ThresholdSummary = useMemo(() => buildThresholdSummary(learningSignals, sensorySupports), [learningSignals, sensorySupports]);
+  const personalizedSupports = useMemo(() => buildPersonalizedSuggestions(currentState.canonicalId, thresholdSummary, sensorySupports), [currentState.canonicalId, thresholdSummary, sensorySupports]);
 
   const updateCurrentState = (partial: Partial<CurrentState>) => {
     setCurrentState((prev) => ({ ...prev, ...partial, updatedAt: Date.now(), source: partial.source ?? 'user' }));
@@ -242,12 +227,7 @@ export const AppShell: React.FC = () => {
       if (thread.id !== threadId) return thread;
       const userMessage = { id: `m-${Date.now()}-u`, role: 'user' as const, text, createdAt: Date.now() };
       const ibalMessage = { id: `m-${Date.now()}-i`, role: 'ibal' as const, text: 'Noted. I will treat this as part of the same thread and keep the context connected. After this send, check whether your state still fits.', createdAt: Date.now() + 1 };
-      const nextThread: JournalThread = {
-        ...thread,
-        updatedAt: Date.now(),
-        summary: text.length > 120 ? `${text.slice(0, 117)}...` : text,
-        messages: [...thread.messages, userMessage, ibalMessage],
-      };
+      const nextThread: JournalThread = { ...thread, updatedAt: Date.now(), summary: text.length > 120 ? `${text.slice(0, 117)}...` : text, messages: [...thread.messages, userMessage, ibalMessage] };
       return { ...nextThread, memory: buildThreadMemoryEntry(nextThread) };
     }));
   };
@@ -256,19 +236,8 @@ export const AppShell: React.FC = () => {
     setJournalThreads((prev) => prev.map((thread) => {
       if (thread.id !== threadId) return thread;
       const nextState = makeStateSnapshot(currentState);
-      const transition = {
-        id: `transition-${Date.now()}`,
-        from: thread.currentState,
-        to: nextState,
-        createdAt: Date.now(),
-        source: 'post_send' as const,
-      };
-      return {
-        ...thread,
-        updatedAt: Date.now(),
-        currentState: nextState,
-        transitions: [...thread.transitions, transition],
-      };
+      const transition = { id: `transition-${Date.now()}`, from: thread.currentState, to: nextState, createdAt: Date.now(), source: 'post_send' as const };
+      return { ...thread, updatedAt: Date.now(), currentState: nextState, transitions: [...thread.transitions, transition] };
     }));
   };
 
@@ -276,19 +245,20 @@ export const AppShell: React.FC = () => {
     setJournalThreads((prev) => prev.map((thread) => {
       if (thread.id !== threadId || !thread.memory) return thread;
       const mergedTags = Array.from(new Set([...thread.tags, ...thread.memory.suggestedTags]));
-      return {
-        ...thread,
-        tags: mergedTags,
-        memory: {
-          ...thread.memory,
-          confirmedTags: mergedTags,
-        },
-      };
+      return { ...thread, tags: mergedTags, memory: { ...thread.memory, confirmedTags: mergedTags } };
     }));
   };
 
   const handleConfirmSignal = (signalId: string) => setLearningSignals((prev) => prev.map((signal) => (signal.id === signalId ? { ...signal, confirmed: true } : signal)));
   const handleConfirmSensory = (recordId: string) => setSensorySupports((prev) => prev.map((record) => (record.id === recordId ? { ...record, confirmed: true } : record)));
+  const handleConfirmMemoryEntry = (entryId: string) => {
+    const threadId = entryId.replace('memory-', '');
+    setJournalThreads((prev) => prev.map((thread) => {
+      if (thread.id !== threadId || !thread.memory) return thread;
+      const mergedTags = Array.from(new Set([...thread.tags, ...thread.memory.confirmedTags]));
+      return { ...thread, tags: mergedTags, memory: { ...thread.memory, confirmedTags: mergedTags } };
+    }));
+  };
 
   const handleRenameState = (stateId: string, label: string) => {
     const cleaned = label.trimStart();
@@ -312,14 +282,14 @@ export const AppShell: React.FC = () => {
       case 'journal':
         return <JournalHome threads={journalThreads} currentState={currentState} onCreateThread={handleCreateThread} onOpenThread={handleOpenThread} onSendMessage={handleSendMessage} onKeepThreadState={handleKeepThreadState} onApplySuggestedTags={handleApplySuggestedTags} onRequestStateUpdate={() => setSelectorOpen(true)} />;
       case 'learn_me':
-        return <LearnMeHome signals={learningSignals} sensorySupports={sensorySupports} summary={patternSummary} thresholdSummary={thresholdSummary} onConfirmSignal={handleConfirmSignal} onConfirmSensory={handleConfirmSensory} />;
+        return <LearnMeHome signals={learningSignals} sensorySupports={sensorySupports} memoryEntries={memoryEntries} memorySummary={memorySummary} summary={patternSummary} thresholdSummary={thresholdSummary} onConfirmSignal={handleConfirmSignal} onConfirmSensory={handleConfirmSensory} onConfirmMemoryEntry={handleConfirmMemoryEntry} />;
       case 'customize':
         return <CustomizeHome customStates={customStates} sensorySupports={sensorySupports} onRenameState={handleRenameState} onToggleStateFavorite={handleToggleStateFavorite} onToggleStateHidden={handleToggleStateHidden} onToggleComfortFavorite={handleToggleComfortFavorite} onToggleComfortHidden={handleToggleComfortHidden} />;
       case 'help_now':
       default:
         return <HelpNowHome currentState={currentState} thresholdSummary={thresholdSummary} personalizedSupports={personalizedSupports} onApplyRouteState={handleApplyRouteState} onLogOutcome={handleLogOutcome} recentOutcomeSummary={recentOutcomeSummary} />;
     }
-  }, [activeSection, journalThreads, currentState, recentOutcomeSummary, learningSignals, sensorySupports, customStates, patternSummary, thresholdSummary, personalizedSupports]);
+  }, [activeSection, journalThreads, currentState, recentOutcomeSummary, learningSignals, sensorySupports, customStates, patternSummary, thresholdSummary, personalizedSupports, memoryEntries, memorySummary]);
 
   return (
     <div className="fg-app-shell">
