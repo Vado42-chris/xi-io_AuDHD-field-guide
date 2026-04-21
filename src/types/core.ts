@@ -11,6 +11,8 @@ export type CanonicalStateId =
 
 export type StateIntensity = 'low' | 'medium' | 'high';
 
+export type SupportOutcome = 'helped' | 'a_little' | 'no_change' | 'worse' | 'skipped';
+
 export interface CurrentState {
   canonicalId: CanonicalStateId;
   label: string;
@@ -41,6 +43,16 @@ export interface ThreadSummary {
   updatedAt: number;
   startingStateLabel: string;
   summary?: string;
+}
+
+export interface SupportLogEntry {
+  id: string;
+  stateLabel: string;
+  stateCanonicalId: CanonicalStateId;
+  supportTitle: string;
+  supportRoute: string;
+  outcome: SupportOutcome;
+  createdAt: number;
 }
 
 export const DEFAULT_CUSTOM_STATES: CustomStateLabel[] = [
