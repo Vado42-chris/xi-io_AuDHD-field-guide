@@ -15,6 +15,7 @@ export type SupportOutcome = 'helped' | 'a_little' | 'no_change' | 'worse' | 'sk
 
 export type LearningKind = 'stressor' | 'destresser' | 'sensory';
 export type ConfidenceLevel = 'early' | 'learning' | 'trusted';
+export type PersonalizationReadiness = 'not_ready' | 'warming_up' | 'ready';
 
 export interface CurrentState {
   canonicalId: CanonicalStateId;
@@ -124,6 +125,22 @@ export interface PatternReviewSummary {
   repeatedDestressers: string[];
   strongestSupports: string[];
   cautionNotes: string[];
+}
+
+export interface ThresholdSummary {
+  readiness: PersonalizationReadiness;
+  confirmedEvidence: number;
+  targetEvidence: number;
+  contradictionCount: number;
+  canPersonalize: boolean;
+  message: string;
+}
+
+export interface PersonalizedSupportSuggestion {
+  title: string;
+  body: string;
+  reason: string;
+  state: CanonicalStateId;
 }
 
 export const DEFAULT_CUSTOM_STATES: CustomStateLabel[] = [
