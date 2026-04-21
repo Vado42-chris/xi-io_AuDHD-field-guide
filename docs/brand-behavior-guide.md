@@ -48,6 +48,16 @@ Avoid as primary UX language:
 - strong hierarchy and clear spacing
 - minimal decorative motion
 - visual effects must never compete with core usability
+- default surfaces should use subtle textured greys rather than dead-flat color where materiality improves orientation
+- texture must feel quiet and real, not noisy, patterned, or high-contrast
+- texture should support depth and surface feel on tablet, especially for panels, cards, and shell backgrounds
+- distressed-use flows must still prioritize legibility over material richness
+
+## Surface guidance
+- prefer soft charcoal and graphite ranges over pure flat black fills for primary surfaces
+- texture can be achieved through very subtle tonal variation, grain, brushed softness, or low-contrast material depth
+- avoid busy noise, speckled patterns, or anything that reads as visual clutter
+- accent color should sit on top of the material system, not fight it
 
 ## Brand rules
 - Xibalba flavor is welcome, but usability wins every tie
@@ -59,3 +69,4 @@ Avoid as primary UX language:
 - branded surfaces must still hit readability expectations
 - accent color cannot be the only carrier of meaning
 - decorative effects must be removable or absent in distressed-use contexts
+- texture must never reduce text contrast, focus visibility, or state clarity
