@@ -1,9 +1,17 @@
 import React, { useMemo, useState } from 'react';
 import SupportCard from '../../components/support/SupportCard';
-import { CanonicalStateId, CurrentState, SupportOutcome } from '../../types/core';
+import {
+  CanonicalStateId,
+  CurrentState,
+  PersonalizedSupportSuggestion,
+  SupportOutcome,
+  ThresholdSummary,
+} from '../../types/core';
 
 interface HelpNowHomeProps {
   currentState: CurrentState;
+  thresholdSummary: ThresholdSummary;
+  personalizedSupports: PersonalizedSupportSuggestion[];
   onApplyRouteState: (canonicalId: CanonicalStateId) => void;
   onLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome) => void;
   recentOutcomeSummary?: string;
@@ -64,6 +72,8 @@ const OUTCOMES: Array<{ id: SupportOutcome; label: string }> = [
 
 export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   currentState,
+  thresholdSummary,
+  personalizedSupports,
   onApplyRouteState,
   onLogOutcome,
   recentOutcomeSummary,
@@ -91,13 +101,13 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <h1 className="fg-section-title">A calmer first action, not a dashboard.</h1>
         <p className="fg-section-body">
           Pick what feels closest right now, get a low-demand starter support, and log whether it helped.
-          This is the first real customer-facing slice of the reset.
+          Tailored support only appears once the threshold says the app has earned that level of specificity.
         </p>
       </div>
 
       <div className="fg-help-meta">
         <div className="fg-meta-pill fg-glass">Current state: {currentState.label} · {currentState.intensity}</div>
-        <div className="fg-meta-pill fg-glass">New journal threads should start from this state</div>
+        <div className="fg-meta-pill fg-glass">Threshold: {thresholdSummary.readiness}</div>
         {recentOutcomeSummary ? <div className="fg-meta-pill fg-glass">Latest outcome: {recentOutcomeSummary}</div> : null}
       </div>
 
@@ -116,6 +126,29 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
           ))}
         </div>
       </section>
+
+      {thresholdSummary.canPersonalize && personalizedSupports.length > 0 ? (
+        <section className="fg-panel-stack">
+          <div className="fg-kicker">Tailored supports</div>
+          <div className="fg-grid">
+            {personalizedSupports.map((support) => (
+              <SupportCard
+                key={support.title}
+                kicker="Tailored support"
+                title={support.title}
+                body={`${support.body} ${support.reason}`}
+                active={selectedSupportTitle === support.title}
+                onSelect={() => setSelectedSupportTitle(support.title)}
+              />
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
+          <div className="fg-kicker">Tailored supports are gated</div>
+          <div className="fg-state-meta">{thresholdSummary.message}</div>
+        </section>
+      )}
 
       <section className="fg-panel-stack">
         <div className="fg-kicker">Starter supports</div>
