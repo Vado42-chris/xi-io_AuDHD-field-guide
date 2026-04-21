@@ -37,6 +37,41 @@ export interface AppIdentity {
   isProvisioned: boolean;
 }
 
+export interface StateSnapshot {
+  canonicalId: CanonicalStateId;
+  label: string;
+  intensity: StateIntensity;
+  recordedAt: number;
+}
+
+export interface JournalMessage {
+  id: string;
+  role: 'user' | 'ibal';
+  text: string;
+  createdAt: number;
+}
+
+export interface StateTransition {
+  id: string;
+  from: StateSnapshot;
+  to: StateSnapshot;
+  createdAt: number;
+  source: 'post_send' | 'manual';
+}
+
+export interface JournalThread {
+  id: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
+  startingState: StateSnapshot;
+  currentState: StateSnapshot;
+  summary?: string;
+  tags: string[];
+  messages: JournalMessage[];
+  transitions: StateTransition[];
+}
+
 export interface ThreadSummary {
   id: string;
   title: string;
