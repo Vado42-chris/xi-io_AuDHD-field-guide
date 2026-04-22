@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  ActiveTrial,
   AppIdentity,
   AppSection,
   CurrentState,
@@ -44,6 +45,7 @@ export interface AppShellController {
   sensorySupports: SensorySupportRecord[];
   selectorOpen: boolean;
   recentOutcomeSummary?: string;
+  activeTrial: ActiveTrial | null;
   memoryEntries: MemoryVaultEntry[];
   memorySummary: MemoryVaultSummary;
   evidenceItems: PatternEvidenceItem[];
@@ -57,6 +59,8 @@ export interface AppShellController {
   handleSelectState: (stateId: string) => void;
   handleSelectIntensity: (intensity: StateIntensity) => void;
   handleApplyRouteState: (canonicalId: CurrentState['canonicalId']) => void;
+  handleStartTrial: (recommendationId: string, supportTitle: string) => void;
+  handleClearTrial: () => void;
   handleLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => void;
   handleReviewTransfer: (recommendationId: string, transferSafety: RecommendationLedgerItem['transferSafety'], transferWarning: string | undefined, decision: TransferDecision, reason: string) => void;
   handleRevalidateSupport: (recommendationId: string, result: RevalidationResult, note: string) => void;
@@ -87,6 +91,7 @@ export const useAppShellController = (): AppShellController => {
   const [supportLog, setSupportLog] = useState<SupportLogEntry[]>(() => readLocal<SupportLogEntry[]>('fg_support_log_v2', []));
   const [transferReviews, setTransferReviews] = useState<TransferReviewRecord[]>(() => readLocal<TransferReviewRecord[]>('fg_transfer_reviews_v1', []));
   const [revalidationRecords, setRevalidationRecords] = useState<RevalidationRecord[]>(() => readLocal<RevalidationRecord[]>('fg_revalidation_records_v1', []));
+  const [activeTrial, setActiveTrial] = useState<ActiveTrial | null>(() => readLocal<ActiveTrial | null>('fg_active_trial_v1', null));
   const [learningSignals, setLearningSignals] = useState<LearningSignal[]>(() => readLocal<LearningSignal[]>('fg_learning_signals_v2', []));
   const [sensorySupports, setSensorySupports] = useState<SensorySupportRecord[]>(() => readLocal<SensorySupportRecord[]>('fg_sensory_supports_v2', []));
   const [selectorOpen, setSelectorOpen] = useState(false);
@@ -96,6 +101,7 @@ export const useAppShellController = (): AppShellController => {
   useEffect(() => { writeLocal('fg_support_log_v2', supportLog); }, [supportLog]);
   useEffect(() => { writeLocal('fg_transfer_reviews_v1', transferReviews); }, [transferReviews]);
   useEffect(() => { writeLocal('fg_revalidation_records_v1', revalidationRecords); }, [revalidationRecords]);
+  useEffect(() => { writeLocal('fg_active_trial_v1', activeTrial); }, [activeTrial]);
   useEffect(() => { writeLocal('fg_journal_threads_v2', journalThreads); }, [journalThreads]);
   useEffect(() => { writeLocal('fg_learning_signals_v2', learningSignals); }, [learningSignals]);
   useEffect(() => { writeLocal('fg_sensory_supports_v2', sensorySupports); }, [sensorySupports]);
@@ -144,10 +150,12 @@ export const useAppShellController = (): AppShellController => {
     supportLog,
     transferReviews,
     revalidationRecords,
+    activeTrial,
     setCurrentState,
     setSupportLog,
     setTransferReviews,
     setRevalidationRecords,
+    setActiveTrial,
     setActiveSection: () => setActiveSection('help_now'),
   });
 
@@ -171,6 +179,7 @@ export const useAppShellController = (): AppShellController => {
     sensorySupports,
     selectorOpen,
     recentOutcomeSummary: helpNowFeature.recentOutcomeSummary,
+    activeTrial,
     memoryEntries: learningFeature.memoryEntries,
     memorySummary: learningFeature.memorySummary,
     evidenceItems: learningFeature.evidenceItems,
@@ -184,6 +193,8 @@ export const useAppShellController = (): AppShellController => {
     handleSelectState: helpNowFeature.handleSelectState,
     handleSelectIntensity: helpNowFeature.handleSelectIntensity,
     handleApplyRouteState: helpNowFeature.handleApplyRouteState,
+    handleStartTrial: helpNowFeature.handleStartTrial,
+    handleClearTrial: helpNowFeature.handleClearTrial,
     handleLogOutcome: helpNowFeature.handleLogOutcome,
     handleReviewTransfer: helpNowFeature.handleReviewTransfer,
     handleRevalidateSupport: helpNowFeature.handleRevalidateSupport,
