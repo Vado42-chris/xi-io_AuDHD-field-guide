@@ -29,6 +29,9 @@ export const CustomizeHome: React.FC<CustomizeHomeProps> = ({
       return a.label.localeCompare(b.label);
     });
 
+  const pinnedStateCount = customStates.filter((state) => state.favorite && !state.hidden).length;
+  const pinnedComfortCount = visibleComfortTools.filter((record) => record.favorite).length;
+
   return (
     <div className="fg-content-card fg-glass fg-help-layout">
       <div className="fg-header">
@@ -39,6 +42,28 @@ export const CustomizeHome: React.FC<CustomizeHomeProps> = ({
           pin favorites for the quick selector, hide states they never use, and start building a comfort wall from learned sensory tools.
         </p>
       </div>
+
+      <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
+        <div className="fg-kicker">Where this shows up</div>
+        <div className="fg-grid">
+          <article className="fg-card fg-glass">
+            <h2 className="fg-card-title">State names follow you into support</h2>
+            <p className="fg-card-copy">
+              Renamed states appear back in the current-state selector and anywhere the app refers to your current state in plain language.
+            </p>
+          </article>
+          <article className="fg-card fg-glass">
+            <h2 className="fg-card-title">Pinned comforts stay closer</h2>
+            <p className="fg-card-copy">
+              Comfort tools you favorite here now surface in Help Now as pinned comforts, so your preferred supports stay more visible during real use.
+            </p>
+          </article>
+        </div>
+        <div className="fg-help-meta" style={{ marginTop: 12 }}>
+          <div className="fg-meta-pill fg-glass">Pinned states: {pinnedStateCount}</div>
+          <div className="fg-meta-pill fg-glass">Pinned comforts: {pinnedComfortCount}</div>
+        </div>
+      </section>
 
       <section className="fg-panel-stack">
         <div className="fg-kicker">State Studio</div>
