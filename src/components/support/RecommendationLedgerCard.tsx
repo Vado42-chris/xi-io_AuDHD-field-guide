@@ -34,10 +34,16 @@ export const RecommendationLedgerCard: React.FC<RecommendationLedgerCardProps> =
           )) : <div className="fg-card-copy">No active weakening evidence is currently attached.</div>}
         </div>
         <div>
-          <div className="fg-kicker">Outcome history</div>
+          <div className="fg-kicker">Current-state outcome history</div>
           {item.outcomeHistory.length > 0 ? item.outcomeHistory.map((event) => (
             <div key={event.id} className="fg-card-copy">• {new Date(event.createdAt).toLocaleString()}, {event.outcome}, {event.stateLabel}</div>
           )) : <div className="fg-card-copy">No recommendation-specific outcomes logged yet.</div>}
+        </div>
+        <div>
+          <div className="fg-kicker">Per-state trust</div>
+          {item.stateTrustMap.map((trust) => (
+            <div key={trust.state} className="fg-card-copy">• {trust.state}: {trust.availability}, {trust.confidence}, score {trust.rankScore}</div>
+          ))}
         </div>
       </div>
     </section>
