@@ -57,7 +57,7 @@ export const AppShell: React.FC = () => {
             thresholdSummary={controller.thresholdSummary}
             onConfirmSignal={controller.handleConfirmSignal}
             onConfirmSensory={controller.handleConfirmSensory}
-            onConfirmMemoryEntry={controller.handleConfirmMemoryEntry}
+            onSaveMemoryEntry={controller.handleSaveMemoryEntry}
           />
         );
       case 'customize':
