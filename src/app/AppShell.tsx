@@ -84,7 +84,10 @@ export const AppShell: React.FC = () => {
             thresholdSummary={controller.thresholdSummary}
             personalizedSupports={controller.personalizedSupports}
             recommendationLedger={controller.recommendationLedger}
+            activeTrial={controller.activeTrial}
             onApplyRouteState={controller.handleApplyRouteState}
+            onStartTrial={controller.handleStartTrial}
+            onClearTrial={controller.handleClearTrial}
             onLogOutcome={controller.handleLogOutcome}
             onReviewTransfer={controller.handleReviewTransfer}
             onRevalidateSupport={controller.handleRevalidateSupport}
