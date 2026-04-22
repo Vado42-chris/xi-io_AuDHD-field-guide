@@ -14,13 +14,12 @@ export const RecommendationStateMatrix: React.FC<RecommendationStateMatrixProps>
         {item.stateTrustMap.map((trust) => (
           <div key={trust.state} className="fg-glass" style={{ padding: 12, borderRadius: 14 }}>
             <div className="fg-kicker">{trust.state}</div>
-            <div className="fg-card-copy">Availability: {trust.availability}</div>
+            <div className="fg-card-copy">Current status: {trust.availability.replace('_', ' ')}</div>
             <div className="fg-card-copy">Confidence: {trust.confidence}</div>
-            <div className="fg-card-copy">Rank: {trust.rankScore}</div>
-            <div className="fg-card-copy">Performance: {trust.performanceScore}</div>
-            <div className="fg-card-copy">Recovery: {trust.recoveryScore}</div>
-            <div className="fg-card-copy">Transfer learning: {trust.transferLearningScore}</div>
-            <div className="fg-card-copy">Learned transfer trust: {trust.learnedTransferTrust}</div>
+            <div className="fg-card-copy">Trust mix: {trust.directTrustPercent}% normal use, {trust.transferTrustPercent}% supervised retries</div>
+            <div className="fg-card-copy">Same-state results score: {trust.performanceScore}</div>
+            <div className="fg-card-copy">Recovery push: {trust.recoveryScore}</div>
+            <div className="fg-card-copy">Retry learning: {trust.learnedTransferTrust}</div>
             <div className="fg-state-meta">Outcomes logged: {trust.outcomeHistory.length}</div>
           </div>
         ))}
