@@ -1,4 +1,7 @@
 import React, { useMemo, useState } from 'react';
+import GuidedActionPanel from '../../components/patterns/GuidedActionPanel';
+import OutcomeChooser from '../../components/patterns/OutcomeChooser';
+import TrialBanner from '../../components/patterns/TrialBanner';
 import RecommendationLedgerCard from '../../components/support/RecommendationLedgerCard';
 import RecommendationStateMatrix from '../../components/support/RecommendationStateMatrix';
 import TransferTrustLegend from '../../components/support/TransferTrustLegend';
@@ -87,16 +90,16 @@ const OUTCOMES: Array<{ id: SupportOutcome; label: string }> = [
 const buildWhyTheseFirst = (items: RecommendationLedgerItem[]) => {
   const first = items[0];
   if (!first) return 'No tailored supports are ready yet.';
-  if (first.trustFreshness === 'fresh') return 'These come first because they are the strongest current fit and have been confirmed more recently.';
-  if (first.availability === 'recovering') return 'These come first because they still fit now, even though they are being re-tested carefully.';
+  if (first.status.trustFreshness === 'fresh') return 'These come first because they are the strongest current fit and have been confirmed more recently.';
+  if (first.status.availability === 'recovering') return 'These come first because they still fit now, even though they are being re-tested carefully.';
   return 'These come first because they are the safest current fit from what the app knows right now.';
 };
 
 const groupRecommendations = (items: RecommendationLedgerItem[]) => {
-  const bestFitNow = items.filter((item) => item.availability === 'active' && item.trustFreshness === 'fresh');
-  const worthTryingCarefully = items.filter((item) => item.availability === 'recovering' || (item.availability === 'active' && item.trustFreshness === 'aging'));
-  const needsFreshCheck = items.filter((item) => item.trustFreshness === 'needs_recheck' && item.availability !== 'avoid_for_now');
-  const avoidForNow = items.filter((item) => item.availability === 'avoid_for_now');
+  const bestFitNow = items.filter((item) => item.status.availability === 'active' && item.status.trustFreshness === 'fresh');
+  const worthTryingCarefully = items.filter((item) => item.status.availability === 'recovering' || (item.status.availability === 'active' && item.status.trustFreshness === 'aging'));
+  const needsFreshCheck = items.filter((item) => item.status.trustFreshness === 'needs_recheck' && item.status.availability !== 'avoid_for_now');
+  const avoidForNow = items.filter((item) => item.status.availability === 'avoid_for_now');
   return { bestFitNow, worthTryingCarefully, needsFreshCheck, avoidForNow };
 };
 
@@ -177,7 +180,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
           {items.map((item) => (
             <SupportCard
               key={item.id}
-              kicker={item.priorityReason}
+              kicker={item.status.priorityReason}
               title={item.title}
               body={item.body}
               active={selectedSupportTitle === item.title || activeTrial?.recommendationId === item.id}
@@ -212,14 +215,12 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
       </div>
 
       {activeTrial ? (
-        <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
-          <div className="fg-kicker">Currently trying</div>
-          <div className="fg-card-copy">You are currently trying “{activeTrial.supportTitle}”. {activeTrialElapsed}.</div>
-          <div className="fg-state-meta">When you feel ready, tell the app how it went. There is no rush.</div>
-          <div className="fg-chip-row">
-            <button type="button" className="fg-choice-chip fg-glass" onClick={onClearTrial}>Clear</button>
-          </div>
-        </section>
+        <TrialBanner
+          title="Currently trying"
+          body={`You are currently trying “${activeTrial.supportTitle}”. ${activeTrialElapsed}.`}
+          meta="When you feel ready, tell the app how it went. There is no rush."
+          onClear={onClearTrial}
+        />
       ) : null}
 
       <section className="fg-panel-stack">
@@ -288,34 +289,19 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
                 : 'Pick a support first, then log whether it helped.'}
           </div>
         </div>
-        <div className="fg-outcome-row">
-          {OUTCOMES.map((outcome) => (
-            <button
-              key={outcome.id}
-              type="button"
-              className="fg-choice-chip fg-glass"
-              onClick={() => handleOutcome(outcome.id)}
-              disabled={!selectedSupportTitle && !activeTrial}
-            >
-              {outcome.label}
-            </button>
-          ))}
-        </div>
+        <OutcomeChooser outcomes={OUTCOMES} disabled={!selectedSupportTitle && !activeTrial} onChoose={handleOutcome} />
         {pendingReflection && reflectionPrompt ? (
-          <div className="fg-panel-stack fg-glass" style={{ padding: 14, borderRadius: 14, marginTop: 14 }}>
-            <div className="fg-kicker">Optional note</div>
-            <div className="fg-card-copy">{reflectionPrompt.label}</div>
-            <textarea
-              className="fg-textarea"
-              value={reflectionNote}
-              onChange={(e) => setReflectionNote(e.target.value)}
-              placeholder="You can leave a short note here, or skip it."
-            />
-            <div className="fg-chip-row">
-              <button type="button" className="fg-choice-chip fg-glass" onClick={handleSaveReflection}>Save note</button>
-              <button type="button" className="fg-choice-chip fg-glass" onClick={() => { setPendingReflection(null); setReflectionNote(''); }}>Skip</button>
-            </div>
-          </div>
+          <GuidedActionPanel
+            kicker="Optional note"
+            body={reflectionPrompt.label}
+            textareaValue={reflectionNote}
+            textareaPlaceholder="You can leave a short note here, or skip it."
+            onTextareaChange={setReflectionNote}
+            actions={[
+              { label: 'Save note', onClick: handleSaveReflection },
+              { label: 'Skip', onClick: () => { setPendingReflection(null); setReflectionNote(''); } },
+            ]}
+          />
         ) : null}
       </section>
     </div>
