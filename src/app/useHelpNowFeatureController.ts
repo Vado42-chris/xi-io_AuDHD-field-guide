@@ -4,6 +4,8 @@ import {
   CustomStateLabel,
   PatternEvidenceItem,
   RecommendationLedgerItem,
+  RevalidationRecord,
+  RevalidationResult,
   SensorySupportRecord,
   StateIntensity,
   SupportLogEntry,
@@ -22,9 +24,11 @@ interface HelpNowFeatureControllerArgs {
   evidenceItems: PatternEvidenceItem[];
   supportLog: SupportLogEntry[];
   transferReviews: TransferReviewRecord[];
+  revalidationRecords: RevalidationRecord[];
   setCurrentState: Dispatch<SetStateAction<CurrentState>>;
   setSupportLog: Dispatch<SetStateAction<SupportLogEntry[]>>;
   setTransferReviews: Dispatch<SetStateAction<TransferReviewRecord[]>>;
+  setRevalidationRecords: Dispatch<SetStateAction<RevalidationRecord[]>>;
   setActiveSection: (section: 'help_now') => void;
 }
 
@@ -37,6 +41,7 @@ export interface HelpNowFeatureController {
   handleApplyRouteState: (canonicalId: CurrentState['canonicalId']) => void;
   handleLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => void;
   handleReviewTransfer: (recommendationId: string, transferSafety: RecommendationLedgerItem['transferSafety'], transferWarning: string | undefined, decision: TransferDecision, reason: string) => void;
+  handleRevalidateSupport: (recommendationId: string, result: RevalidationResult, note: string) => void;
 }
 
 export const useHelpNowFeatureController = ({
@@ -47,9 +52,11 @@ export const useHelpNowFeatureController = ({
   evidenceItems,
   supportLog,
   transferReviews,
+  revalidationRecords,
   setCurrentState,
   setSupportLog,
   setTransferReviews,
+  setRevalidationRecords,
   setActiveSection,
 }: HelpNowFeatureControllerArgs): HelpNowFeatureController => {
   const updateCurrentState = (partial: Partial<CurrentState>) => {
@@ -68,8 +75,8 @@ export const useHelpNowFeatureController = ({
   );
 
   const recommendationLedger = useMemo(
-    () => buildRecommendationLedger(currentState.canonicalId, personalizedSupports, evidenceItems, supportLog, transferReviews),
-    [currentState.canonicalId, personalizedSupports, evidenceItems, supportLog, transferReviews]
+    () => buildRecommendationLedger(currentState.canonicalId, personalizedSupports, evidenceItems, supportLog, transferReviews, revalidationRecords),
+    [currentState.canonicalId, personalizedSupports, evidenceItems, supportLog, transferReviews, revalidationRecords]
   );
 
   const handleSelectState = (stateId: string) => {
@@ -122,6 +129,18 @@ export const useHelpNowFeatureController = ({
     setTransferReviews((prev) => [record, ...prev].slice(0, 60));
   };
 
+  const handleRevalidateSupport = (recommendationId: string, result: RevalidationResult, note: string) => {
+    const record: RevalidationRecord = {
+      id: `recheck-${Date.now()}`,
+      recommendationId,
+      currentState: currentState.canonicalId,
+      createdAt: Date.now(),
+      result,
+      note: note || undefined,
+    };
+    setRevalidationRecords((prev) => [record, ...prev].slice(0, 60));
+  };
+
   return {
     recentOutcomeSummary,
     personalizedSupports,
@@ -131,5 +150,6 @@ export const useHelpNowFeatureController = ({
     handleApplyRouteState,
     handleLogOutcome,
     handleReviewTransfer,
+    handleRevalidateSupport,
   };
 };
