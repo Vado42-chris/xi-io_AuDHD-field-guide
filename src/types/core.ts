@@ -17,6 +17,7 @@ export type LearningKind = 'stressor' | 'destresser' | 'sensory';
 export type ConfidenceLevel = 'early' | 'learning' | 'trusted';
 export type PersonalizationReadiness = 'not_ready' | 'warming_up' | 'ready';
 export type MemoryEntryStatus = 'suggested' | 'confirmed' | 'outdated' | 'superseded';
+export type PatternResolutionStatus = 'active' | 'under_review' | 'retired';
 
 export interface CurrentState {
   canonicalId: CanonicalStateId;
@@ -129,6 +130,15 @@ export interface PatternEvidenceReference {
   createdAt: number;
 }
 
+export interface PatternResolutionEvent {
+  id: string;
+  changedAt: number;
+  actor: 'user' | 'system';
+  previousStatus: PatternResolutionStatus;
+  nextStatus: PatternResolutionStatus;
+  reason: string;
+}
+
 export interface PatternEvidenceItem {
   id: string;
   label: string;
@@ -136,12 +146,17 @@ export interface PatternEvidenceItem {
   confidence: 'emerging' | 'repeated' | 'gated';
   references: PatternEvidenceReference[];
   contested: boolean;
+  resolutionStatus: PatternResolutionStatus;
+  resolutionNote?: string;
+  resolutionHistory: PatternResolutionEvent[];
 }
 
 export interface PatternEvidenceSummary {
   totalItems: number;
   contestedItems: number;
   repeatedItems: number;
+  underReviewItems: number;
+  retiredItems: number;
 }
 
 export interface JournalThread {
