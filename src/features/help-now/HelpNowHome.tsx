@@ -84,7 +84,8 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   const [selectedSupportTitle, setSelectedSupportTitle] = useState<string | null>(null);
 
   const activeSupports = useMemo(() => STARTER_SUPPORTS[selectedRoute] || STARTER_SUPPORTS.unclear, [selectedRoute]);
-  const activeRecommendations = recommendationLedger.filter((item) => item.availability !== 'avoid_for_now');
+  const primaryRecommendations = recommendationLedger.filter((item) => item.availability === 'active' || item.availability === 'recovering');
+  const coolingOffRecommendations = recommendationLedger.filter((item) => item.availability === 'cooling_off');
   const avoidForNowRecommendations = recommendationLedger.filter((item) => item.availability === 'avoid_for_now');
   const selectedLedgerItem = recommendationLedger.find((item) => item.title === selectedSupportTitle);
 
@@ -109,7 +110,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <h1 className="fg-section-title">A calmer first action, not a dashboard.</h1>
         <p className="fg-section-body">
           Pick what feels closest right now, get a low-demand starter support, and log whether it helped.
-          Recommendations now re-rank based on real outcomes, and repeated worse outcomes can push a suggestion into cooling off or avoid-for-now states.
+          Recommendations now re-rank based on real outcomes, and later positive outcomes can move a support back into recovery and reinstatement instead of burying it forever.
         </p>
       </div>
 
@@ -140,10 +141,10 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <section className="fg-panel-stack">
           <div className="fg-kicker">{isCautious ? 'Cautious supports' : 'Tailored supports'}</div>
           <div className="fg-grid">
-            {activeRecommendations.map((item) => (
+            {primaryRecommendations.map((item) => (
               <SupportCard
                 key={item.id}
-                kicker={item.availability === 'cooling_off' ? 'Cooling off' : item.stability === 'cautious' ? 'Use gently' : 'Tailored support'}
+                kicker={item.availability === 'recovering' ? 'Recovering' : item.stability === 'cautious' ? 'Use gently' : 'Tailored support'}
                 title={item.title}
                 body={`${item.body} ${item.reason}`}
                 active={selectedSupportTitle === item.title}
@@ -152,6 +153,15 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
             ))}
           </div>
           {selectedLedgerItem ? <RecommendationLedgerCard item={selectedLedgerItem} /> : null}
+          {coolingOffRecommendations.length > 0 ? (
+            <div className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
+              <div className="fg-kicker">Cooling off</div>
+              <div className="fg-state-meta">These recommendations are still available, but recent mixed or negative outcomes are keeping them lower in priority for now.</div>
+              {coolingOffRecommendations.map((item) => (
+                <div key={item.id} className="fg-card-copy">• {item.title}</div>
+              ))}
+            </div>
+          ) : null}
           {avoidForNowRecommendations.length > 0 ? (
             <div className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
               <div className="fg-kicker">Avoid for now</div>
