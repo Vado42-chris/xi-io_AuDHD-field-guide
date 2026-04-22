@@ -7,6 +7,7 @@ import {
   CustomStateLabel,
   DEFAULT_CUSTOM_STATES,
   DEFAULT_IDENTITY,
+  EvidenceContribution,
   JournalThread,
   LearningSignal,
   MemoryEntryStatus,
@@ -30,6 +31,7 @@ import {
 } from '../types/core';
 import { readLocal, writeLocal } from '../lib/storage/localStore';
 import { deriveLearningSignals, deriveSensorySupports } from '../lib/patterns/learningSignals';
+import { deriveEvidenceContributions } from '../lib/patterns/evidenceContributions';
 import { makeDefaultThreads, makeInitialCurrentState } from './appShellDefaults';
 import { useJournalFeatureController } from './useJournalFeatureController';
 import { useLearningFeatureController } from './useLearningFeatureController';
@@ -48,6 +50,7 @@ export interface AppShellController {
   recentOutcomeSummary?: string;
   activeTrial: ActiveTrial | null;
   trialReflections: TrialReflectionRecord[];
+  evidenceContributions: EvidenceContribution[];
   memoryEntries: MemoryVaultEntry[];
   memorySummary: MemoryVaultSummary;
   evidenceItems: PatternEvidenceItem[];
@@ -96,6 +99,7 @@ export const useAppShellController = (): AppShellController => {
   const [revalidationRecords, setRevalidationRecords] = useState<RevalidationRecord[]>(() => readLocal<RevalidationRecord[]>('fg_revalidation_records_v1', []));
   const [activeTrial, setActiveTrial] = useState<ActiveTrial | null>(() => readLocal<ActiveTrial | null>('fg_active_trial_v1', null));
   const [trialReflections, setTrialReflections] = useState<TrialReflectionRecord[]>(() => readLocal<TrialReflectionRecord[]>('fg_trial_reflections_v1', []));
+  const [evidenceContributions, setEvidenceContributions] = useState<EvidenceContribution[]>(() => readLocal<EvidenceContribution[]>('fg_evidence_contributions_v1', []));
   const [learningSignals, setLearningSignals] = useState<LearningSignal[]>(() => readLocal<LearningSignal[]>('fg_learning_signals_v2', []));
   const [sensorySupports, setSensorySupports] = useState<SensorySupportRecord[]>(() => readLocal<SensorySupportRecord[]>('fg_sensory_supports_v2', []));
   const [selectorOpen, setSelectorOpen] = useState(false);
@@ -107,6 +111,7 @@ export const useAppShellController = (): AppShellController => {
   useEffect(() => { writeLocal('fg_revalidation_records_v1', revalidationRecords); }, [revalidationRecords]);
   useEffect(() => { writeLocal('fg_active_trial_v1', activeTrial); }, [activeTrial]);
   useEffect(() => { writeLocal('fg_trial_reflections_v1', trialReflections); }, [trialReflections]);
+  useEffect(() => { writeLocal('fg_evidence_contributions_v1', evidenceContributions); }, [evidenceContributions]);
   useEffect(() => { writeLocal('fg_journal_threads_v2', journalThreads); }, [journalThreads]);
   useEffect(() => { writeLocal('fg_learning_signals_v2', learningSignals); }, [learningSignals]);
   useEffect(() => { writeLocal('fg_sensory_supports_v2', sensorySupports); }, [sensorySupports]);
@@ -132,6 +137,10 @@ export const useAppShellController = (): AppShellController => {
       });
     });
   }, [journalThreads, supportLog]);
+
+  useEffect(() => {
+    setEvidenceContributions(deriveEvidenceContributions(supportLog, trialReflections, revalidationRecords));
+  }, [supportLog, trialReflections, revalidationRecords]);
 
   const journalFeature = useJournalFeatureController({
     currentState,
@@ -188,6 +197,7 @@ export const useAppShellController = (): AppShellController => {
     recentOutcomeSummary: helpNowFeature.recentOutcomeSummary,
     activeTrial,
     trialReflections,
+    evidenceContributions,
     memoryEntries: learningFeature.memoryEntries,
     memorySummary: learningFeature.memorySummary,
     evidenceItems: learningFeature.evidenceItems,
