@@ -5,7 +5,7 @@ import MemoryVaultSummaryCard from '../../components/learn-me/MemoryVaultSummary
 import PatternReviewSummaryCard from '../../components/learn-me/PatternReviewSummaryCard';
 import SensorySupportCard from '../../components/learn-me/SensorySupportCard';
 import ThresholdSummaryCard from '../../components/learn-me/ThresholdSummaryCard';
-import { LearningSignal, MemoryVaultEntry, MemoryVaultSummary, PatternReviewSummary, SensorySupportRecord, ThresholdSummary } from '../../types/core';
+import { LearningSignal, MemoryEntryStatus, MemoryVaultEntry, MemoryVaultSummary, PatternReviewSummary, SensorySupportRecord, ThresholdSummary } from '../../types/core';
 
 interface LearnMeHomeProps {
   signals: LearningSignal[];
@@ -16,7 +16,7 @@ interface LearnMeHomeProps {
   thresholdSummary: ThresholdSummary;
   onConfirmSignal: (signalId: string) => void;
   onConfirmSensory: (recordId: string) => void;
-  onConfirmMemoryEntry: (entryId: string) => void;
+  onSaveMemoryEntry: (entryId: string, summary: string, confirmedTags: string[], status: MemoryEntryStatus, notes: string) => void;
 }
 
 export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
@@ -28,7 +28,7 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
   thresholdSummary,
   onConfirmSignal,
   onConfirmSensory,
-  onConfirmMemoryEntry,
+  onSaveMemoryEntry,
 }) => {
   const stressors = signals.filter((signal) => signal.kind === 'stressor');
   const destressers = signals.filter((signal) => signal.kind === 'destresser');
@@ -39,8 +39,8 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
         <div className="fg-kicker">Learn Me</div>
         <h1 className="fg-section-title">Readable patterns, without pretending certainty.</h1>
         <p className="fg-section-body">
-          This slice adds a cross-thread memory vault. Structured memory from individual threads can now be reviewed together,
-          confirmed, and used to make pattern evidence more legible across the whole product.
+          This slice turns the memory vault into an editing studio. Cross-thread memory can now be revised, marked outdated,
+          or flagged as superseded, while conflicts stay visible instead of being hidden.
         </p>
       </div>
 
@@ -53,7 +53,7 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
         <div className="fg-grid">
           {memoryEntries.length > 0 ? (
             memoryEntries.map((entry) => (
-              <MemoryVaultEntryCard key={entry.id} entry={entry} onConfirm={() => onConfirmMemoryEntry(entry.id)} />
+              <MemoryVaultEntryCard key={entry.id} entry={entry} onSave={onSaveMemoryEntry} />
             ))
           ) : (
             <div className="fg-state-meta">No memory entries yet. Structured thread memory will appear here as journal threads build up.</div>
