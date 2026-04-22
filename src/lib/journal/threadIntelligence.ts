@@ -43,6 +43,9 @@ export const buildThreadMemoryEntry = (thread: JournalThread): ThreadMemoryEntry
     destresserTags,
     status: thread.memory?.status ?? 'suggested',
     notes: thread.memory?.notes,
+    provenanceSource: 'thread',
+    supersedesEntryId: thread.memory?.supersedesEntryId,
+    revisionHistory: thread.memory?.revisionHistory ?? [],
     lastStructuredAt: Date.now(),
   };
 };
