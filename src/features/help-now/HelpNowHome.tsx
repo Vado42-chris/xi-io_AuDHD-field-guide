@@ -94,6 +94,9 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
     onLogOutcome(selectedSupportTitle, selectedRoute, outcome);
   };
 
+  const hasTailoredSupports = personalizedSupports.length > 0;
+  const isCautious = thresholdSummary.suggestionStability === 'cautious' || !thresholdSummary.canPersonalize;
+
   return (
     <div className="fg-content-card fg-glass fg-help-layout">
       <div className="fg-header">
@@ -101,13 +104,14 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <h1 className="fg-section-title">A calmer first action, not a dashboard.</h1>
         <p className="fg-section-body">
           Pick what feels closest right now, get a low-demand starter support, and log whether it helped.
-          Tailored support only appears once the threshold says the app has earned that level of specificity.
+          Tailored support becomes more specific only when the evidence has earned it, and stays cautious when the evidence is unstable.
         </p>
       </div>
 
       <div className="fg-help-meta">
         <div className="fg-meta-pill fg-glass">Current state: {currentState.label} · {currentState.intensity}</div>
         <div className="fg-meta-pill fg-glass">Threshold: {thresholdSummary.readiness}</div>
+        <div className="fg-meta-pill fg-glass">Suggestion mode: {thresholdSummary.suggestionStability}</div>
         {recentOutcomeSummary ? <div className="fg-meta-pill fg-glass">Latest outcome: {recentOutcomeSummary}</div> : null}
       </div>
 
@@ -127,14 +131,14 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         </div>
       </section>
 
-      {thresholdSummary.canPersonalize && personalizedSupports.length > 0 ? (
+      {hasTailoredSupports ? (
         <section className="fg-panel-stack">
-          <div className="fg-kicker">Tailored supports</div>
+          <div className="fg-kicker">{isCautious ? 'Cautious supports' : 'Tailored supports'}</div>
           <div className="fg-grid">
             {personalizedSupports.map((support) => (
               <SupportCard
                 key={support.title}
-                kicker="Tailored support"
+                kicker={support.stability === 'cautious' ? 'Use gently' : 'Tailored support'}
                 title={support.title}
                 body={`${support.body} ${support.reason}`}
                 active={selectedSupportTitle === support.title}
