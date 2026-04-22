@@ -53,10 +53,13 @@ export const AppShell: React.FC = () => {
             sensorySupports={controller.sensorySupports}
             memoryEntries={controller.memoryEntries}
             memorySummary={controller.memorySummary}
+            evidenceItems={controller.evidenceItems}
+            evidenceSummary={controller.evidenceSummary}
             summary={controller.patternSummary}
             thresholdSummary={controller.thresholdSummary}
             onConfirmSignal={controller.handleConfirmSignal}
             onConfirmSensory={controller.handleConfirmSensory}
+            onToggleEvidenceContested={controller.handleToggleEvidenceContested}
             onSaveMemoryEntry={controller.handleSaveMemoryEntry}
           />
         );
