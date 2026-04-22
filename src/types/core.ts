@@ -18,6 +18,8 @@ export type ConfidenceLevel = 'early' | 'learning' | 'trusted';
 export type PersonalizationReadiness = 'not_ready' | 'warming_up' | 'ready';
 export type MemoryEntryStatus = 'suggested' | 'confirmed' | 'outdated' | 'superseded';
 export type PatternResolutionStatus = 'active' | 'under_review' | 'retired';
+export type SuggestionStability = 'stable' | 'cautious';
+export type RecommendationConfidence = 'low' | 'medium' | 'high';
 
 export interface CurrentState {
   canonicalId: CanonicalStateId;
@@ -159,6 +161,19 @@ export interface PatternEvidenceSummary {
   retiredItems: number;
 }
 
+export interface RecommendationLedgerItem {
+  id: string;
+  title: string;
+  state: CanonicalStateId;
+  body: string;
+  confidence: RecommendationConfidence;
+  stability: SuggestionStability;
+  reason: string;
+  appearedBecause: string;
+  supportingEvidence: PatternEvidenceReference[];
+  weakeningEvidence: PatternEvidenceReference[];
+}
+
 export interface JournalThread {
   id: string;
   title: string;
@@ -229,7 +244,10 @@ export interface ThresholdSummary {
   confirmedEvidence: number;
   targetEvidence: number;
   contradictionCount: number;
+  unstableEvidenceCount: number;
+  retiredEvidenceCount: number;
   canPersonalize: boolean;
+  suggestionStability: SuggestionStability;
   message: string;
 }
 
@@ -238,6 +256,7 @@ export interface PersonalizedSupportSuggestion {
   body: string;
   reason: string;
   state: CanonicalStateId;
+  stability: SuggestionStability;
 }
 
 export const DEFAULT_CUSTOM_STATES: CustomStateLabel[] = [
