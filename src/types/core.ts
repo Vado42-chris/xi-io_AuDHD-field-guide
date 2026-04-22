@@ -16,6 +16,7 @@ export type SupportOutcome = 'helped' | 'a_little' | 'no_change' | 'worse' | 'sk
 export type LearningKind = 'stressor' | 'destresser' | 'sensory';
 export type ConfidenceLevel = 'early' | 'learning' | 'trusted';
 export type PersonalizationReadiness = 'not_ready' | 'warming_up' | 'ready';
+export type MemoryEntryStatus = 'suggested' | 'confirmed' | 'outdated' | 'superseded';
 
 export interface CurrentState {
   canonicalId: CanonicalStateId;
@@ -69,6 +70,8 @@ export interface ThreadMemoryEntry {
   confirmedTags: string[];
   stressorTags: string[];
   destresserTags: string[];
+  status: MemoryEntryStatus;
+  notes?: string;
   lastStructuredAt: number;
 }
 
@@ -82,6 +85,9 @@ export interface MemoryVaultEntry {
   destresserTags: string[];
   createdAt: number;
   confirmed: boolean;
+  status: MemoryEntryStatus;
+  notes?: string;
+  hasConflict: boolean;
 }
 
 export interface MemoryVaultSummary {
@@ -90,6 +96,7 @@ export interface MemoryVaultSummary {
   repeatedTags: string[];
   repeatedStressors: string[];
   repeatedDestressers: string[];
+  conflictEntries: number;
 }
 
 export interface JournalThread {
