@@ -12,6 +12,7 @@ import {
   CurrentState,
   RecommendationLedgerItem,
   RevalidationResult,
+  SensorySupportRecord,
   SupportOutcome,
   ThresholdSummary,
   TransferDecision,
@@ -24,6 +25,7 @@ interface HelpNowHomeProps {
   personalizedSupports: Array<unknown>;
   recommendationLedger: RecommendationLedgerItem[];
   activeTrial: ActiveTrial | null;
+  favoriteComfortTools: SensorySupportRecord[];
   onApplyRouteState: (canonicalId: CanonicalStateId) => void;
   onStartTrial: (recommendationId: string, supportTitle: string) => void;
   onClearTrial: () => void;
@@ -137,6 +139,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   thresholdSummary,
   recommendationLedger,
   activeTrial,
+  favoriteComfortTools,
   onApplyRouteState,
   onStartTrial,
   onClearTrial,
@@ -248,6 +251,22 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
           body={buildReadinessGuideBody(thresholdSummary)}
           actions={[{ label: 'Got it', onClick: () => setReadinessGuideDismissed(true) }]}
         />
+      ) : null}
+
+      {favoriteComfortTools.length > 0 ? (
+        <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
+          <div className="fg-kicker">Pinned comforts</div>
+          <div className="fg-state-meta">These come from Customize, so the support flow can keep your preferred comfort tools closer at hand.</div>
+          <div className="fg-grid">
+            {favoriteComfortTools.slice(0, 4).map((tool) => (
+              <article key={tool.id} className="fg-card fg-glass">
+                <h2 className="fg-card-title">{tool.label}</h2>
+                <p className="fg-card-copy">Category: {tool.category}</p>
+                <p className="fg-card-copy">Helpful states: {tool.helpfulStates.length > 0 ? tool.helpfulStates.map((state) => state.replace('_', ' ')).join(', ') : 'not learned yet'}</p>
+              </article>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       {activeTrial ? (
