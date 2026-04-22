@@ -14,6 +14,7 @@ export const RecommendationLedgerCard: React.FC<RecommendationLedgerCardProps> =
         <div className="fg-meta-pill fg-glass">Confidence: {item.confidence}</div>
         <div className="fg-meta-pill fg-glass">Stability: {item.stability}</div>
         <div className="fg-meta-pill fg-glass">State: {item.state}</div>
+        <div className="fg-meta-pill fg-glass">Performance: {item.performanceScore}</div>
       </div>
       <p className="fg-card-copy" style={{ marginTop: 12 }}>{item.appearedBecause}</p>
       <p className="fg-card-copy">{item.reason}</p>
@@ -29,6 +30,12 @@ export const RecommendationLedgerCard: React.FC<RecommendationLedgerCardProps> =
           {item.weakeningEvidence.length > 0 ? item.weakeningEvidence.map((ref) => (
             <div key={ref.id} className="fg-card-copy">• {ref.title}, {ref.detail}</div>
           )) : <div className="fg-card-copy">No active weakening evidence is currently attached.</div>}
+        </div>
+        <div>
+          <div className="fg-kicker">Outcome history</div>
+          {item.outcomeHistory.length > 0 ? item.outcomeHistory.map((event) => (
+            <div key={event.id} className="fg-card-copy">• {new Date(event.createdAt).toLocaleString()}, {event.outcome}, {event.stateLabel}</div>
+          )) : <div className="fg-card-copy">No recommendation-specific outcomes logged yet.</div>}
         </div>
       </div>
     </section>
