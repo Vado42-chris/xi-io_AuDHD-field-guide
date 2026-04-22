@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { MemoryEntryStatus, MemoryVaultEntry } from '../../types/core';
+import MemoryAuditTrailCard from './MemoryAuditTrailCard';
 
 interface MemoryVaultEntryCardProps {
   entry: MemoryVaultEntry;
@@ -58,12 +59,14 @@ export const MemoryVaultEntryCard: React.FC<MemoryVaultEntryCardProps> = ({ entr
           <div className="fg-kicker">Notes</div>
           <textarea className="fg-textarea" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="why this memory was revised, outdated, or needs caution" />
         </div>
+        <div className="fg-state-meta">Source: {entry.provenanceSource} {entry.supersedesEntryId ? `· supersedes ${entry.supersedesEntryId}` : ''}</div>
         {entry.hasConflict ? (
           <div className="fg-glass" style={{ padding: 12, borderRadius: 14 }}>
             <div className="fg-kicker">Conflict detected</div>
             <p className="fg-card-copy">This entry currently contains overlapping stressor and de-stresser language. Review before trusting it.</p>
           </div>
         ) : null}
+        <MemoryAuditTrailCard revisions={entry.revisionHistory} />
       </div>
       <div style={{ marginTop: 14 }}>
         <button type="button" className="fg-choice-chip fg-glass" onClick={handleSave}>
