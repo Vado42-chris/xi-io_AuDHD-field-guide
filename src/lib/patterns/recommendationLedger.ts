@@ -6,6 +6,7 @@ import {
   RecommendationConfidence,
   RecommendationLedgerItem,
   RecommendationStateTrust,
+  RecommendationStatus,
   RevalidationRecord,
   SupportLogEntry,
   TransferReviewRecord,
@@ -205,6 +206,20 @@ const buildTrustSummary = (directTrustPercent: number, transferTrustPercent: num
   return `${directTrustPercent}% earned from normal use, ${transferTrustPercent}% learned from supervised retries`;
 };
 
+const buildRecommendationStatus = (
+  availability: RecommendationAvailability,
+  confidence: RecommendationConfidence,
+  trustMaturity: TrustMaturity,
+  trustFreshness: TrustFreshness,
+  priorityReason: string
+): RecommendationStatus => ({
+  availability,
+  confidence,
+  trustMaturity,
+  trustFreshness,
+  priorityReason,
+});
+
 const buildStateTrust = (
   recommendationId: string,
   stability: PersonalizedSupportSuggestion['stability'],
@@ -242,9 +257,11 @@ const buildStateTrust = (
     const recheckBoost = relevantRechecks[0]?.result === 'still_helps' ? 2 : relevantRechecks[0]?.result === 'helps_a_little' ? 1 : relevantRechecks[0]?.result === 'no_longer_helps' ? -2 : 0;
     const rankScore = performanceScore + recoveryScore + Math.min(learnedTransferTrust, directTrustWeight) + recheckBoost - freshnessPenalty + (confidence === 'high' ? 3 : confidence === 'medium' ? 1 : 0) - (availability === 'cooling_off' ? 4 : availability === 'avoid_for_now' ? 8 : 0);
     const priorityReason = derivePriorityReason(trustFreshness, relevantRechecks, availability, trustMaturity);
+    const status = buildRecommendationStatus(availability, confidence, trustMaturity, trustFreshness, priorityReason);
 
     return {
       state,
+      status,
       confidence,
       availability,
       performanceScore,
@@ -270,27 +287,27 @@ const buildStateTrust = (
 const deriveTransferSafety = (currentState: CanonicalStateId, stateTrustMap: RecommendationStateTrust[]): { transferSafety: TransferSafety; transferWarning?: string } => {
   const current = stateTrustMap.find((entry) => entry.state === currentState);
   const otherStates = stateTrustMap.filter((entry) => entry.state !== currentState);
-  const strongElsewhere = otherStates.some((entry) => entry.availability === 'active' && entry.rankScore >= 3);
+  const strongElsewhere = otherStates.some((entry) => entry.status.availability === 'active' && entry.rankScore >= 3);
 
   if (!current) {
     return { transferSafety: 'caution', transferWarning: 'No current-state history is available for this support yet.' };
   }
 
-  if ((current.availability === 'avoid_for_now' || current.availability === 'cooling_off') && strongElsewhere) {
+  if ((current.status.availability === 'avoid_for_now' || current.status.availability === 'cooling_off') && strongElsewhere) {
     return {
-      transferSafety: current.availability === 'avoid_for_now' ? 'avoid' : 'caution',
-      transferWarning: `This support looks better in other states, but it is ${current.availability.replace('_', ' ')} for ${currentState.replace('_', ' ')}. Do not assume it will transfer cleanly.`,
+      transferSafety: current.status.availability === 'avoid_for_now' ? 'avoid' : 'caution',
+      transferWarning: `This support looks better in other states, but it is ${current.status.availability.replace('_', ' ')} for ${currentState.replace('_', ' ')}. Do not assume it will transfer cleanly.`,
     };
   }
 
-  if (current.availability === 'recovering') {
+  if (current.status.availability === 'recovering') {
     return {
       transferSafety: 'caution',
       transferWarning: `This support is still rebuilding trust for ${currentState.replace('_', ' ')}. Treat it like a careful retry, not a fully proven option yet.`,
     };
   }
 
-  if (current.availability === 'avoid_for_now') {
+  if (current.status.availability === 'avoid_for_now') {
     return {
       transferSafety: 'avoid',
       transferWarning: `This support is still avoid for now in ${currentState.replace('_', ' ')} even if it works better elsewhere.`,
@@ -328,27 +345,28 @@ export const buildRecommendationLedger = (
       title: suggestion.title,
       state: suggestion.state,
       body: suggestion.body,
-      confidence: currentStateTrust.confidence,
+      status: currentStateTrust.status,
+      confidence: currentStateTrust.status.confidence,
       stability: suggestion.stability,
-      availability: currentStateTrust.availability,
+      availability: currentStateTrust.status.availability,
       transferSafety: transfer.transferSafety,
       transferWarning: transfer.transferWarning,
       reason: suggestion.reason,
       appearedBecause:
-        currentStateTrust.trustFreshness === 'needs_recheck'
+        currentStateTrust.status.trustFreshness === 'needs_recheck'
           ? 'This used to work here, but it has been a while and it needs a fresh check before you lean on it too hard.'
-          : currentStateTrust.trustFreshness === 'aging'
+          : currentStateTrust.status.trustFreshness === 'aging'
             ? 'This still has some value here, but the trust is getting older and should be re-checked soon.'
-            : currentStateTrust.trustMaturity === 'proven_in_normal_use'
+            : currentStateTrust.status.trustMaturity === 'proven_in_normal_use'
               ? 'This lane is now mostly backed by what happened when it was used in the same state over time.'
-              : currentStateTrust.trustMaturity === 'mostly_retry_based'
+              : currentStateTrust.status.trustMaturity === 'mostly_retry_based'
                 ? 'This lane still depends a lot on careful retry history, so it is not as grounded in normal same-state use yet.'
                 : 'This lane is being shaped by both normal use and careful retry history, and it is moving toward stronger same-state proof.',
-      priorityReason: currentStateTrust.priorityReason,
+      priorityReason: currentStateTrust.status.priorityReason,
       trustSummary,
-      trustMaturity: currentStateTrust.trustMaturity,
+      trustMaturity: currentStateTrust.status.trustMaturity,
       maturitySummary: currentStateTrust.maturitySummary,
-      trustFreshness: currentStateTrust.trustFreshness,
+      trustFreshness: currentStateTrust.status.trustFreshness,
       freshnessSummary: currentStateTrust.freshnessSummary,
       lastUsedAt: currentStateTrust.lastUsedAt,
       revalidationHistory,
