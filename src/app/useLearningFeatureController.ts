@@ -41,7 +41,9 @@ export interface LearningFeatureController {
   thresholdSummary: ThresholdSummary;
   evidenceItems: PatternEvidenceItem[];
   evidenceSummary: PatternEvidenceSummary;
+  journalEvidence: EvidenceContribution[];
   supportEvidence: EvidenceContribution[];
+  evidenceIntakeSummary: { total: number; journal: number; support: number; confirmed: number; latestSource?: string };
   supportEvidenceSummary: { total: number; confirmed: number; latestSource?: string };
   handleToggleEvidenceContested: (itemId: string) => void;
   handleResolveEvidence: (itemId: string, nextStatus: PatternResolutionStatus, note: string) => void;
@@ -60,9 +62,23 @@ export const useLearningFeatureController = ({
   const memorySummary = useMemo(() => buildMemoryVaultSummary(memoryEntries), [memoryEntries]);
   const patternSummary = useMemo(() => buildPatternReviewSummary(learningSignals, sensorySupports), [learningSignals, sensorySupports]);
   const baseEvidenceItems = useMemo(() => buildPatternEvidenceItems(memoryEntries, supportLog), [memoryEntries, supportLog]);
+  const journalEvidence = useMemo(
+    () => evidenceContributions.filter((item) => item.source === 'journal'),
+    [evidenceContributions]
+  );
   const supportEvidence = useMemo(
     () => evidenceContributions.filter((item) => item.source === 'support_outcome' || item.source === 'trial_reflection' || item.source === 'revalidation'),
     [evidenceContributions]
+  );
+  const evidenceIntakeSummary = useMemo(
+    () => ({
+      total: evidenceContributions.length,
+      journal: journalEvidence.length,
+      support: supportEvidence.length,
+      confirmed: evidenceContributions.filter((item) => item.confidence === 'confirmed').length,
+      latestSource: evidenceContributions[0]?.source,
+    }),
+    [evidenceContributions, journalEvidence, supportEvidence]
   );
   const supportEvidenceSummary = useMemo(
     () => ({
@@ -145,7 +161,9 @@ export const useLearningFeatureController = ({
     thresholdSummary,
     evidenceItems,
     evidenceSummary,
+    journalEvidence,
     supportEvidence,
+    evidenceIntakeSummary,
     supportEvidenceSummary,
     handleToggleEvidenceContested,
     handleResolveEvidence,
