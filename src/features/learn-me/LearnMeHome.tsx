@@ -14,7 +14,8 @@ interface LearnMeHomeProps {
   sensorySupports: SensorySupportRecord[];
   memoryEntries: MemoryVaultEntry[];
   memorySummary: MemoryVaultSummary;
-  evidenceContributions: EvidenceContribution[];
+  supportEvidence: EvidenceContribution[];
+  supportEvidenceSummary: { total: number; confirmed: number; latestSource?: string };
   evidenceItems: PatternEvidenceItem[];
   evidenceSummary: PatternEvidenceSummary;
   summary: PatternReviewSummary;
@@ -43,7 +44,8 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
   sensorySupports,
   memoryEntries,
   memorySummary,
-  evidenceContributions,
+  supportEvidence,
+  supportEvidenceSummary,
   evidenceItems,
   evidenceSummary,
   summary,
@@ -56,7 +58,6 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
 }) => {
   const stressors = signals.filter((signal) => signal.kind === 'stressor');
   const destressers = signals.filter((signal) => signal.kind === 'destresser');
-  const supportEvidence = evidenceContributions.filter((item) => item.source === 'support_outcome' || item.source === 'trial_reflection' || item.source === 'revalidation');
 
   return (
     <div className="fg-content-card fg-glass fg-help-layout">
@@ -64,7 +65,7 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
         <div className="fg-kicker">Learn Me</div>
         <h1 className="fg-section-title">Readable patterns, without pretending certainty.</h1>
         <p className="fg-section-body">
-          This slice adds a visible support-evidence stream. Outcomes, optional notes, and fresh checks from Help Now now show up here in plain language so the learning loop is easier to see.
+          Support evidence is now a real Learn Me input, not just a side stream. Outcomes, optional notes, and fresh checks from Help Now are being read here through the shared evidence contribution domain.
         </p>
       </div>
 
@@ -75,7 +76,11 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
 
       <section className="fg-panel-stack">
         <div className="fg-kicker">Support evidence coming in</div>
-        <div className="fg-state-meta">This is what the app is learning from recent support attempts, optional notes, and fresh checks.</div>
+        <div className="fg-state-meta">
+          {supportEvidenceSummary.total > 0
+            ? `${supportEvidenceSummary.total} support-derived evidence items are in view, with ${supportEvidenceSummary.confirmed} already at confirmed strength.`
+            : 'This is what the app is learning from recent support attempts, optional notes, and fresh checks.'}
+        </div>
         <div className="fg-grid">
           {supportEvidence.length > 0 ? (
             supportEvidence.map((item) => (
