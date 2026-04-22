@@ -13,6 +13,9 @@ export const ThresholdSummaryCard: React.FC<ThresholdSummaryCardProps> = ({ summ
       <div className="fg-help-meta" style={{ marginTop: 12 }}>
         <div className="fg-meta-pill fg-glass">Confirmed evidence: {summary.confirmedEvidence}/{summary.targetEvidence}</div>
         <div className="fg-meta-pill fg-glass">Contradictions: {summary.contradictionCount}</div>
+        <div className="fg-meta-pill fg-glass">Unstable: {summary.unstableEvidenceCount}</div>
+        <div className="fg-meta-pill fg-glass">Retired: {summary.retiredEvidenceCount}</div>
+        <div className="fg-meta-pill fg-glass">Suggestion mode: {summary.suggestionStability}</div>
       </div>
       <p className="fg-card-copy" style={{ marginTop: 12 }}>{summary.message}</p>
     </section>
