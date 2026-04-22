@@ -180,6 +180,8 @@ export interface RecommendationStateTrust {
   performanceScore: number;
   recoveryScore: number;
   rankScore: number;
+  transferLearningScore: number;
+  learnedTransferTrust: number;
   outcomeHistory: RecommendationOutcomeEvent[];
 }
 
@@ -214,6 +216,8 @@ export interface RecommendationLedgerItem {
   performanceScore: number;
   rankScore: number;
   recoveryScore: number;
+  transferLearningScore: number;
+  learnedTransferTrust: number;
   stateTrustMap: RecommendationStateTrust[];
   transferReviews: TransferReviewRecord[];
 }
