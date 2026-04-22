@@ -98,6 +98,17 @@ const groupRecommendations = (items: RecommendationLedgerItem[]) => {
   return { bestFitNow, worthTryingCarefully, needsFreshCheck, avoidForNow };
 };
 
+const formatTrialElapsed = (startedAt: number) => {
+  const diffMs = Date.now() - startedAt;
+  const minutes = Math.max(0, Math.floor(diffMs / (60 * 1000)));
+  if (minutes <= 0) return 'Started just now';
+  if (minutes === 1) return 'Started 1 minute ago';
+  if (minutes < 60) return `Started ${minutes} minutes ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours === 1) return 'Started 1 hour ago';
+  return `Started ${hours} hours ago`;
+};
+
 export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   currentState,
   thresholdSummary,
@@ -117,6 +128,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   const activeSupports = useMemo(() => STARTER_SUPPORTS[selectedRoute] || STARTER_SUPPORTS.unclear, [selectedRoute]);
   const groupedRecommendations = useMemo(() => groupRecommendations(recommendationLedger), [recommendationLedger]);
   const selectedLedgerItem = recommendationLedger.find((item) => item.title === selectedSupportTitle);
+  const activeTrialElapsed = useMemo(() => (activeTrial ? formatTrialElapsed(activeTrial.startedAt) : null), [activeTrial]);
 
   const handleRouteSelect = (routeId: CanonicalStateId) => {
     setSelectedRoute(routeId);
@@ -179,7 +191,8 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
       {activeTrial ? (
         <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
           <div className="fg-kicker">Currently trying</div>
-          <div className="fg-card-copy">You are currently trying “{activeTrial.supportTitle}”. When you are done, log whether it helped.</div>
+          <div className="fg-card-copy">You are currently trying “{activeTrial.supportTitle}”. {activeTrialElapsed}.</div>
+          <div className="fg-state-meta">When you feel ready, tell the app how it went. There is no rush.</div>
           <div className="fg-chip-row">
             <button type="button" className="fg-choice-chip fg-glass" onClick={onClearTrial}>Clear</button>
           </div>
@@ -245,9 +258,11 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <div>
           <div className="fg-kicker">Did it help?</div>
           <div className="fg-state-meta">
-            {selectedSupportTitle || activeTrial?.supportTitle
-              ? `Log what happened after trying “${selectedSupportTitle || activeTrial?.supportTitle}”.`
-              : 'Pick a support first, then log whether it helped.'}
+            {activeTrial?.supportTitle
+              ? `When you are done with “${activeTrial.supportTitle}”, tell the app how it went.`
+              : selectedSupportTitle
+                ? `Log what happened after trying “${selectedSupportTitle}”.`
+                : 'Pick a support first, then log whether it helped.'}
           </div>
         </div>
         <div className="fg-outcome-row">
