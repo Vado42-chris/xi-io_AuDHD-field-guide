@@ -2,18 +2,22 @@ import { Dispatch, SetStateAction, useMemo } from 'react';
 import {
   CurrentState,
   CustomStateLabel,
+  PatternEvidenceItem,
+  RecommendationLedgerItem,
   SensorySupportRecord,
   StateIntensity,
   SupportLogEntry,
   SupportOutcome,
 } from '../types/core';
 import { buildPersonalizedSuggestions } from '../lib/patterns/personalizationThreshold';
+import { buildRecommendationLedger } from '../lib/patterns/recommendationLedger';
 
 interface HelpNowFeatureControllerArgs {
   currentState: CurrentState;
   customStates: CustomStateLabel[];
   sensorySupports: SensorySupportRecord[];
   thresholdSummary: Parameters<typeof buildPersonalizedSuggestions>[1];
+  evidenceItems: PatternEvidenceItem[];
   supportLog: SupportLogEntry[];
   setCurrentState: Dispatch<SetStateAction<CurrentState>>;
   setSupportLog: Dispatch<SetStateAction<SupportLogEntry[]>>;
@@ -23,6 +27,7 @@ interface HelpNowFeatureControllerArgs {
 export interface HelpNowFeatureController {
   recentOutcomeSummary?: string;
   personalizedSupports: ReturnType<typeof buildPersonalizedSuggestions>;
+  recommendationLedger: RecommendationLedgerItem[];
   handleSelectState: (stateId: string) => void;
   handleSelectIntensity: (intensity: StateIntensity) => void;
   handleApplyRouteState: (canonicalId: CurrentState['canonicalId']) => void;
@@ -34,6 +39,7 @@ export const useHelpNowFeatureController = ({
   customStates,
   sensorySupports,
   thresholdSummary,
+  evidenceItems,
   supportLog,
   setCurrentState,
   setSupportLog,
@@ -52,6 +58,11 @@ export const useHelpNowFeatureController = ({
   const personalizedSupports = useMemo(
     () => buildPersonalizedSuggestions(currentState.canonicalId, thresholdSummary, sensorySupports),
     [currentState.canonicalId, thresholdSummary, sensorySupports]
+  );
+
+  const recommendationLedger = useMemo(
+    () => buildRecommendationLedger(currentState.canonicalId, personalizedSupports, evidenceItems),
+    [currentState.canonicalId, personalizedSupports, evidenceItems]
   );
 
   const handleSelectState = (stateId: string) => {
@@ -85,6 +96,7 @@ export const useHelpNowFeatureController = ({
   return {
     recentOutcomeSummary,
     personalizedSupports,
+    recommendationLedger,
     handleSelectState,
     handleSelectIntensity,
     handleApplyRouteState,
