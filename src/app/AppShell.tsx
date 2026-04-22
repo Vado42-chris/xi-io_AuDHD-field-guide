@@ -86,6 +86,7 @@ export const AppShell: React.FC = () => {
             recommendationLedger={controller.recommendationLedger}
             onApplyRouteState={controller.handleApplyRouteState}
             onLogOutcome={controller.handleLogOutcome}
+            onReviewTransfer={controller.handleReviewTransfer}
             recentOutcomeSummary={controller.recentOutcomeSummary}
           />
         );
