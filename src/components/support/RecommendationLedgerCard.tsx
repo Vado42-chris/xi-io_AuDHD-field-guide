@@ -16,6 +16,7 @@ export const RecommendationLedgerCard: React.FC<RecommendationLedgerCardProps> =
         <div className="fg-meta-pill fg-glass">Availability: {item.availability}</div>
         <div className="fg-meta-pill fg-glass">Rank: {item.rankScore}</div>
         <div className="fg-meta-pill fg-glass">Performance: {item.performanceScore}</div>
+        <div className="fg-meta-pill fg-glass">Recovery: {item.recoveryScore}</div>
       </div>
       <p className="fg-card-copy" style={{ marginTop: 12 }}>{item.appearedBecause}</p>
       <p className="fg-card-copy">{item.reason}</p>
