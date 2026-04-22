@@ -26,6 +26,7 @@ export type TransferDecision = 'approved' | 'rejected';
 export type TransferOutcomeAssessment = 'pending' | 'justified' | 'not_justified';
 export type TrustMaturity = 'mostly_retry_based' | 'blended' | 'proven_in_normal_use';
 export type TrustFreshness = 'fresh' | 'aging' | 'needs_recheck';
+export type RevalidationResult = 'still_helps' | 'helps_a_little' | 'no_longer_helps';
 
 export interface CurrentState {
   canonicalId: CanonicalStateId;
@@ -175,6 +176,15 @@ export interface RecommendationOutcomeEvent {
   supportRoute: string;
 }
 
+export interface RevalidationRecord {
+  id: string;
+  recommendationId: string;
+  currentState: CanonicalStateId;
+  createdAt: number;
+  result: RevalidationResult;
+  note?: string;
+}
+
 export interface RecommendationStateTrust {
   state: CanonicalStateId;
   confidence: RecommendationConfidence;
@@ -227,6 +237,7 @@ export interface RecommendationLedgerItem {
   trustFreshness: TrustFreshness;
   freshnessSummary: string;
   lastUsedAt?: number;
+  revalidationHistory: RevalidationRecord[];
   supportingEvidence: PatternEvidenceReference[];
   weakeningEvidence: PatternEvidenceReference[];
   outcomeHistory: RecommendationOutcomeEvent[];
