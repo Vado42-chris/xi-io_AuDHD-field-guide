@@ -121,6 +121,29 @@ export interface MemoryVaultSummary {
   revisedEntries: number;
 }
 
+export interface PatternEvidenceReference {
+  type: 'memory' | 'support_log';
+  id: string;
+  title: string;
+  detail: string;
+  createdAt: number;
+}
+
+export interface PatternEvidenceItem {
+  id: string;
+  label: string;
+  kind: 'stressor' | 'destresser' | 'threshold';
+  confidence: 'emerging' | 'repeated' | 'gated';
+  references: PatternEvidenceReference[];
+  contested: boolean;
+}
+
+export interface PatternEvidenceSummary {
+  totalItems: number;
+  contestedItems: number;
+  repeatedItems: number;
+}
+
 export interface JournalThread {
   id: string;
   title: string;
