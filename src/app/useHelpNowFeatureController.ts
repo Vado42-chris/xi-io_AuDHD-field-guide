@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import {
+  ActiveTrial,
   CurrentState,
   CustomStateLabel,
   PatternEvidenceItem,
@@ -25,10 +26,12 @@ interface HelpNowFeatureControllerArgs {
   supportLog: SupportLogEntry[];
   transferReviews: TransferReviewRecord[];
   revalidationRecords: RevalidationRecord[];
+  activeTrial: ActiveTrial | null;
   setCurrentState: Dispatch<SetStateAction<CurrentState>>;
   setSupportLog: Dispatch<SetStateAction<SupportLogEntry[]>>;
   setTransferReviews: Dispatch<SetStateAction<TransferReviewRecord[]>>;
   setRevalidationRecords: Dispatch<SetStateAction<RevalidationRecord[]>>;
+  setActiveTrial: Dispatch<SetStateAction<ActiveTrial | null>>;
   setActiveSection: (section: 'help_now') => void;
 }
 
@@ -36,9 +39,12 @@ export interface HelpNowFeatureController {
   recentOutcomeSummary?: string;
   personalizedSupports: ReturnType<typeof buildPersonalizedSuggestions>;
   recommendationLedger: RecommendationLedgerItem[];
+  activeTrial: ActiveTrial | null;
   handleSelectState: (stateId: string) => void;
   handleSelectIntensity: (intensity: StateIntensity) => void;
   handleApplyRouteState: (canonicalId: CurrentState['canonicalId']) => void;
+  handleStartTrial: (recommendationId: string, supportTitle: string) => void;
+  handleClearTrial: () => void;
   handleLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => void;
   handleReviewTransfer: (recommendationId: string, transferSafety: RecommendationLedgerItem['transferSafety'], transferWarning: string | undefined, decision: TransferDecision, reason: string) => void;
   handleRevalidateSupport: (recommendationId: string, result: RevalidationResult, note: string) => void;
@@ -53,10 +59,12 @@ export const useHelpNowFeatureController = ({
   supportLog,
   transferReviews,
   revalidationRecords,
+  activeTrial,
   setCurrentState,
   setSupportLog,
   setTransferReviews,
   setRevalidationRecords,
+  setActiveTrial,
   setActiveSection,
 }: HelpNowFeatureControllerArgs): HelpNowFeatureController => {
   const updateCurrentState = (partial: Partial<CurrentState>) => {
@@ -94,6 +102,17 @@ export const useHelpNowFeatureController = ({
     updateCurrentState({ canonicalId: matching.canonicalId, label: matching.label, source: 'support_flow' });
   };
 
+  const handleStartTrial = (recommendationId: string, supportTitle: string) => {
+    setActiveTrial({
+      recommendationId,
+      supportTitle,
+      stateCanonicalId: currentState.canonicalId,
+      startedAt: Date.now(),
+    });
+  };
+
+  const handleClearTrial = () => setActiveTrial(null);
+
   const handleLogOutcome = (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => {
     const entry: SupportLogEntry = {
       id: `${Date.now()}`,
@@ -106,6 +125,9 @@ export const useHelpNowFeatureController = ({
       createdAt: Date.now(),
     };
     setSupportLog((prev) => [entry, ...prev].slice(0, 40));
+    if (activeTrial && (!recommendationId || activeTrial.recommendationId === recommendationId)) {
+      setActiveTrial(null);
+    }
   };
 
   const handleReviewTransfer = (
@@ -145,9 +167,12 @@ export const useHelpNowFeatureController = ({
     recentOutcomeSummary,
     personalizedSupports,
     recommendationLedger,
+    activeTrial,
     handleSelectState,
     handleSelectIntensity,
     handleApplyRouteState,
+    handleStartTrial,
+    handleClearTrial,
     handleLogOutcome,
     handleReviewTransfer,
     handleRevalidateSupport,
