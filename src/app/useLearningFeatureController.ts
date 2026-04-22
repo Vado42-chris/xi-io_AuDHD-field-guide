@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
+  EvidenceContribution,
   JournalThread,
   LearningSignal,
   MemoryVaultEntry,
@@ -23,6 +24,7 @@ interface LearningFeatureControllerArgs {
   learningSignals: LearningSignal[];
   sensorySupports: SensorySupportRecord[];
   supportLog: SupportLogEntry[];
+  evidenceContributions: EvidenceContribution[];
 }
 
 interface EvidenceOverride {
@@ -39,6 +41,8 @@ export interface LearningFeatureController {
   thresholdSummary: ThresholdSummary;
   evidenceItems: PatternEvidenceItem[];
   evidenceSummary: PatternEvidenceSummary;
+  supportEvidence: EvidenceContribution[];
+  supportEvidenceSummary: { total: number; confirmed: number; latestSource?: string };
   handleToggleEvidenceContested: (itemId: string) => void;
   handleResolveEvidence: (itemId: string, nextStatus: PatternResolutionStatus, note: string) => void;
 }
@@ -48,6 +52,7 @@ export const useLearningFeatureController = ({
   learningSignals,
   sensorySupports,
   supportLog,
+  evidenceContributions,
 }: LearningFeatureControllerArgs): LearningFeatureController => {
   const [overrides, setOverrides] = useState<Record<string, EvidenceOverride>>({});
 
@@ -55,6 +60,18 @@ export const useLearningFeatureController = ({
   const memorySummary = useMemo(() => buildMemoryVaultSummary(memoryEntries), [memoryEntries]);
   const patternSummary = useMemo(() => buildPatternReviewSummary(learningSignals, sensorySupports), [learningSignals, sensorySupports]);
   const baseEvidenceItems = useMemo(() => buildPatternEvidenceItems(memoryEntries, supportLog), [memoryEntries, supportLog]);
+  const supportEvidence = useMemo(
+    () => evidenceContributions.filter((item) => item.source === 'support_outcome' || item.source === 'trial_reflection' || item.source === 'revalidation'),
+    [evidenceContributions]
+  );
+  const supportEvidenceSummary = useMemo(
+    () => ({
+      total: supportEvidence.length,
+      confirmed: supportEvidence.filter((item) => item.confidence === 'confirmed').length,
+      latestSource: supportEvidence[0]?.source,
+    }),
+    [supportEvidence]
+  );
 
   const evidenceItems = useMemo(
     () => baseEvidenceItems.map((item) => {
@@ -128,6 +145,8 @@ export const useLearningFeatureController = ({
     thresholdSummary,
     evidenceItems,
     evidenceSummary,
+    supportEvidence,
+    supportEvidenceSummary,
     handleToggleEvidenceContested,
     handleResolveEvidence,
   };
