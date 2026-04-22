@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
-import { CurrentState, JournalThread, MemoryEntryStatus } from '../types/core';
+import { CurrentState, JournalThread, MemoryEntryStatus, MemoryRevision } from '../types/core';
 import { buildThreadMemoryEntry } from '../lib/journal/threadIntelligence';
 import { makeStateSnapshot } from './appShellDefaults';
 
@@ -58,7 +58,17 @@ export const useJournalFeatureController = ({
       const ibalMessage = { id: `m-${Date.now()}-i`, role: 'ibal' as const, text: 'Noted. I will treat this as part of the same thread and keep the context connected. After this send, check whether your state still fits.', createdAt: Date.now() + 1 };
       const nextThread: JournalThread = { ...thread, updatedAt: Date.now(), summary: text.length > 120 ? `${text.slice(0, 117)}...` : text, messages: [...thread.messages, userMessage, ibalMessage] };
       const rebuilt = buildThreadMemoryEntry(nextThread);
-      return { ...nextThread, memory: { ...rebuilt, status: thread.memory?.status ?? rebuilt.status, notes: thread.memory?.notes ?? rebuilt.notes } };
+      return {
+        ...nextThread,
+        memory: {
+          ...rebuilt,
+          status: thread.memory?.status ?? rebuilt.status,
+          notes: thread.memory?.notes ?? rebuilt.notes,
+          provenanceSource: thread.memory?.provenanceSource ?? rebuilt.provenanceSource,
+          supersedesEntryId: thread.memory?.supersedesEntryId,
+          revisionHistory: thread.memory?.revisionHistory ?? rebuilt.revisionHistory,
+        },
+      };
     }));
   };
 
@@ -94,16 +104,35 @@ export const useJournalFeatureController = ({
       if (thread.id !== threadId) return thread;
       const baseMemory = thread.memory ?? buildThreadMemoryEntry(thread);
       const mergedTags = Array.from(new Set(confirmedTags));
+      const nextSummary = summary || baseMemory.summary;
+      const nextTags = mergedTags;
+      const nextNotes = notes;
+      const revision: MemoryRevision = {
+        id: `revision-${Date.now()}`,
+        changedAt: Date.now(),
+        actor: 'user',
+        previousSummary: baseMemory.summary,
+        previousConfirmedTags: baseMemory.confirmedTags,
+        previousStatus: baseMemory.status,
+        previousNotes: baseMemory.notes,
+        nextSummary,
+        nextConfirmedTags: nextTags,
+        nextStatus: status,
+        nextNotes,
+        reason: nextNotes || 'Memory entry edited by user.',
+      };
       return {
         ...thread,
         updatedAt: Date.now(),
-        tags: mergedTags.length > 0 ? mergedTags : thread.tags,
+        tags: nextTags.length > 0 ? nextTags : thread.tags,
         memory: {
           ...baseMemory,
-          summary: summary || baseMemory.summary,
-          confirmedTags: mergedTags,
+          summary: nextSummary,
+          confirmedTags: nextTags,
           status,
-          notes,
+          notes: nextNotes,
+          supersedesEntryId: status === 'superseded' ? entryId : baseMemory.supersedesEntryId,
+          revisionHistory: [...baseMemory.revisionHistory, revision],
           lastStructuredAt: Date.now(),
         },
       };
