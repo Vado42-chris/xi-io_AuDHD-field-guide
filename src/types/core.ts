@@ -72,6 +72,14 @@ export interface ActiveTrial {
   startedAt: number;
 }
 
+export interface RecommendationStatus {
+  availability: RecommendationAvailability;
+  confidence: RecommendationConfidence;
+  trustMaturity: TrustMaturity;
+  trustFreshness: TrustFreshness;
+  priorityReason: string;
+}
+
 export interface EvidenceContribution {
   id: string;
   source: EvidenceSource;
@@ -229,6 +237,7 @@ export interface RevalidationRecord {
 
 export interface RecommendationStateTrust {
   state: CanonicalStateId;
+  status: RecommendationStatus;
   confidence: RecommendationConfidence;
   availability: RecommendationAvailability;
   performanceScore: number;
@@ -267,6 +276,7 @@ export interface RecommendationLedgerItem {
   title: string;
   state: CanonicalStateId;
   body: string;
+  status: RecommendationStatus;
   confidence: RecommendationConfidence;
   stability: SuggestionStability;
   availability: RecommendationAvailability;
