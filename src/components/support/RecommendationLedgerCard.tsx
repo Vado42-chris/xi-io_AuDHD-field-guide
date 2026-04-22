@@ -17,12 +17,14 @@ export const RecommendationLedgerCard: React.FC<RecommendationLedgerCardProps> =
         <div className="fg-meta-pill fg-glass">Confidence: {item.confidence}</div>
         <div className="fg-meta-pill fg-glass">Current status: {item.availability.replace('_', ' ')}</div>
         <div className="fg-meta-pill fg-glass">Trust stage: {item.trustMaturity.replace(/_/g, ' ')}</div>
+        <div className="fg-meta-pill fg-glass">Freshness: {item.trustFreshness.replace(/_/g, ' ')}</div>
         <div className="fg-meta-pill fg-glass">Transfer warning: {item.transferSafety}</div>
       </div>
       <p className="fg-card-copy" style={{ marginTop: 12 }}>{item.appearedBecause}</p>
       <p className="fg-card-copy">{item.reason}</p>
       <p className="fg-card-copy">Trust mix: {item.trustSummary}.</p>
       <p className="fg-card-copy">{item.maturitySummary}</p>
+      <p className="fg-card-copy">{item.freshnessSummary}</p>
       {item.transferWarning ? <p className="fg-card-copy">{item.transferWarning}</p> : null}
       {item.transferSafety !== 'safe' ? (
         <div className="fg-panel-stack fg-glass" style={{ padding: 14, borderRadius: 14, marginTop: 14 }}>
