@@ -87,6 +87,7 @@ export const AppShell: React.FC = () => {
             onApplyRouteState={controller.handleApplyRouteState}
             onLogOutcome={controller.handleLogOutcome}
             onReviewTransfer={controller.handleReviewTransfer}
+            onRevalidateSupport={controller.handleRevalidateSupport}
             recentOutcomeSummary={controller.recentOutcomeSummary}
           />
         );
