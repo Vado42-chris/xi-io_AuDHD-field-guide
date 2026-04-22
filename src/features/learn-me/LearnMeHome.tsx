@@ -7,13 +7,14 @@ import PatternEvidenceSummaryCard from '../../components/learn-me/PatternEvidenc
 import PatternReviewSummaryCard from '../../components/learn-me/PatternReviewSummaryCard';
 import SensorySupportCard from '../../components/learn-me/SensorySupportCard';
 import ThresholdSummaryCard from '../../components/learn-me/ThresholdSummaryCard';
-import { LearningSignal, MemoryEntryStatus, MemoryVaultEntry, MemoryVaultSummary, PatternEvidenceItem, PatternEvidenceSummary, PatternResolutionStatus, PatternReviewSummary, SensorySupportRecord, ThresholdSummary } from '../../types/core';
+import { EvidenceContribution, LearningSignal, MemoryEntryStatus, MemoryVaultEntry, MemoryVaultSummary, PatternEvidenceItem, PatternEvidenceSummary, PatternResolutionStatus, PatternReviewSummary, SensorySupportRecord, ThresholdSummary } from '../../types/core';
 
 interface LearnMeHomeProps {
   signals: LearningSignal[];
   sensorySupports: SensorySupportRecord[];
   memoryEntries: MemoryVaultEntry[];
   memorySummary: MemoryVaultSummary;
+  evidenceContributions: EvidenceContribution[];
   evidenceItems: PatternEvidenceItem[];
   evidenceSummary: PatternEvidenceSummary;
   summary: PatternReviewSummary;
@@ -25,11 +26,24 @@ interface LearnMeHomeProps {
   onSaveMemoryEntry: (entryId: string, summary: string, confirmedTags: string[], status: MemoryEntryStatus, notes: string) => void;
 }
 
+const sourceLabel = (source: EvidenceContribution['source']) => {
+  switch (source) {
+    case 'support_outcome': return 'Support outcome';
+    case 'trial_reflection': return 'Optional note';
+    case 'revalidation': return 'Fresh check';
+    case 'journal': return 'Journal';
+    case 'manual': return 'Manual';
+    case 'customization': return 'Customization';
+    default: return 'Evidence';
+  }
+};
+
 export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
   signals,
   sensorySupports,
   memoryEntries,
   memorySummary,
+  evidenceContributions,
   evidenceItems,
   evidenceSummary,
   summary,
@@ -42,6 +56,7 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
 }) => {
   const stressors = signals.filter((signal) => signal.kind === 'stressor');
   const destressers = signals.filter((signal) => signal.kind === 'destresser');
+  const supportEvidence = evidenceContributions.filter((item) => item.source === 'support_outcome' || item.source === 'trial_reflection' || item.source === 'revalidation');
 
   return (
     <div className="fg-content-card fg-glass fg-help-layout">
@@ -49,8 +64,7 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
         <div className="fg-kicker">Learn Me</div>
         <h1 className="fg-section-title">Readable patterns, without pretending certainty.</h1>
         <p className="fg-section-body">
-          This slice adds an evidence resolution workflow. Contested patterns can now move into under review or retirement,
-          and those decisions are visible instead of living only as loose evidence flags.
+          This slice adds a visible support-evidence stream. Outcomes, optional notes, and fresh checks from Help Now now show up here in plain language so the learning loop is easier to see.
         </p>
       </div>
 
@@ -58,6 +72,25 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
       <PatternReviewSummaryCard summary={summary} />
       <MemoryVaultSummaryCard summary={memorySummary} />
       <PatternEvidenceSummaryCard summary={evidenceSummary} />
+
+      <section className="fg-panel-stack">
+        <div className="fg-kicker">Support evidence coming in</div>
+        <div className="fg-state-meta">This is what the app is learning from recent support attempts, optional notes, and fresh checks.</div>
+        <div className="fg-grid">
+          {supportEvidence.length > 0 ? (
+            supportEvidence.map((item) => (
+              <div key={item.id} className="fg-card fg-glass fg-learning-card">
+                <div className="fg-kicker">{sourceLabel(item.source)}</div>
+                <h2 className="fg-card-title">{item.summary}</h2>
+                <p className="fg-card-copy">Confidence: {item.confidence}</p>
+                {item.tags.length > 0 ? <p className="fg-card-copy">Tags: {item.tags.join(', ')}</p> : null}
+              </div>
+            ))
+          ) : (
+            <div className="fg-state-meta">No support evidence yet. As Help Now outcomes, notes, and fresh checks build up, they will appear here.</div>
+          )}
+        </div>
+      </section>
 
       <section className="fg-panel-stack">
         <div className="fg-kicker">Pattern evidence inspector</div>
