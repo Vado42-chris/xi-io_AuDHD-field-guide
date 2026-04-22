@@ -78,6 +78,22 @@ const OUTCOMES: Array<{ id: SupportOutcome; label: string }> = [
   { id: 'skipped', label: 'Skipped' },
 ];
 
+const buildWhyTheseFirst = (items: RecommendationLedgerItem[]) => {
+  const first = items[0];
+  if (!first) return 'No tailored supports are ready yet.';
+  if (first.trustFreshness === 'fresh') return 'These come first because they are the strongest current fit and have been confirmed more recently.';
+  if (first.availability === 'recovering') return 'These come first because they still fit now, even though they are being re-tested carefully.';
+  return 'These come first because they are the safest current fit from what the app knows right now.';
+};
+
+const groupRecommendations = (items: RecommendationLedgerItem[]) => {
+  const bestFitNow = items.filter((item) => item.availability === 'active' && item.trustFreshness === 'fresh');
+  const worthTryingCarefully = items.filter((item) => item.availability === 'recovering' || (item.availability === 'active' && item.trustFreshness === 'aging'));
+  const needsFreshCheck = items.filter((item) => item.trustFreshness === 'needs_recheck' && item.availability !== 'avoid_for_now');
+  const avoidForNow = items.filter((item) => item.availability === 'avoid_for_now');
+  return { bestFitNow, worthTryingCarefully, needsFreshCheck, avoidForNow };
+};
+
 export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   currentState,
   thresholdSummary,
@@ -92,9 +108,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   const [selectedSupportTitle, setSelectedSupportTitle] = useState<string | null>(null);
 
   const activeSupports = useMemo(() => STARTER_SUPPORTS[selectedRoute] || STARTER_SUPPORTS.unclear, [selectedRoute]);
-  const primaryRecommendations = recommendationLedger.filter((item) => item.availability === 'active' || item.availability === 'recovering');
-  const coolingOffRecommendations = recommendationLedger.filter((item) => item.availability === 'cooling_off');
-  const avoidForNowRecommendations = recommendationLedger.filter((item) => item.availability === 'avoid_for_now');
+  const groupedRecommendations = useMemo(() => groupRecommendations(recommendationLedger), [recommendationLedger]);
   const selectedLedgerItem = recommendationLedger.find((item) => item.title === selectedSupportTitle);
 
   const handleRouteSelect = (routeId: CanonicalStateId) => {
@@ -110,6 +124,28 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
 
   const hasTailoredSupports = recommendationLedger.length > 0;
   const isCautious = thresholdSummary.suggestionStability === 'cautious' || !thresholdSummary.canPersonalize;
+
+  const renderRecommendationGroup = (title: string, description: string, items: RecommendationLedgerItem[]) => {
+    if (items.length === 0) return null;
+    return (
+      <div className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
+        <div className="fg-kicker">{title}</div>
+        <div className="fg-state-meta">{description}</div>
+        <div className="fg-grid" style={{ marginTop: 12 }}>
+          {items.map((item) => (
+            <SupportCard
+              key={item.id}
+              kicker={item.priorityReason}
+              title={item.title}
+              body={item.body}
+              active={selectedSupportTitle === item.title}
+              onSelect={() => setSelectedSupportTitle(item.title)}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="fg-content-card fg-glass fg-help-layout">
@@ -148,42 +184,17 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
       {hasTailoredSupports ? (
         <section className="fg-panel-stack">
           <div className="fg-kicker">{isCautious ? 'Cautious supports' : 'Tailored supports'}</div>
-          <div className="fg-grid">
-            {primaryRecommendations.map((item) => (
-              <SupportCard
-                key={item.id}
-                kicker={item.availability === 'recovering' ? 'Recovering' : item.stability === 'cautious' ? 'Use gently' : 'Tailored support'}
-                title={item.title}
-                body={`${item.body} ${item.priorityReason}`}
-                active={selectedSupportTitle === item.title}
-                onSelect={() => setSelectedSupportTitle(item.title)}
-              />
-            ))}
-          </div>
+          <div className="fg-state-meta">Why these first: {buildWhyTheseFirst(recommendationLedger)}</div>
+          {renderRecommendationGroup('Best fit now', 'These are the strongest current fit and need the least extra interpretation.', groupedRecommendations.bestFitNow)}
+          {renderRecommendationGroup('Worth trying carefully', 'These may still help, but they need a little more care or a gentler retry.', groupedRecommendations.worthTryingCarefully)}
+          {renderRecommendationGroup('Needs a fresh check', 'These used to help or still look promising, but they need a quick re-check before leaning on them.', groupedRecommendations.needsFreshCheck)}
+          {renderRecommendationGroup('Avoid for now', 'These have enough recent friction or failed checks that they should stay out of the active queue for now.', groupedRecommendations.avoidForNow)}
           {selectedLedgerItem ? (
             <>
               <RecommendationLedgerCard item={selectedLedgerItem} onReviewTransfer={onReviewTransfer} onRevalidateSupport={onRevalidateSupport} />
               <RecommendationStateMatrix item={selectedLedgerItem} />
               <TransferTrustLegend />
             </>
-          ) : null}
-          {coolingOffRecommendations.length > 0 ? (
-            <div className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
-              <div className="fg-kicker">Cooling off</div>
-              <div className="fg-state-meta">These recommendations are still available, but recent mixed or negative outcomes are keeping them lower in priority for now.</div>
-              {coolingOffRecommendations.map((item) => (
-                <div key={item.id} className="fg-card-copy">• {item.title}</div>
-              ))}
-            </div>
-          ) : null}
-          {avoidForNowRecommendations.length > 0 ? (
-            <div className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
-              <div className="fg-kicker">Avoid for now</div>
-              <div className="fg-state-meta">These recommendations matched the state at some point, but repeated worse outcomes have pushed them out of the active queue for now.</div>
-              {avoidForNowRecommendations.map((item) => (
-                <div key={item.id} className="fg-card-copy">• {item.title}</div>
-              ))}
-            </div>
           ) : null}
         </section>
       ) : (
