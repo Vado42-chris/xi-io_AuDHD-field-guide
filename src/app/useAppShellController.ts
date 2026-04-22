@@ -53,6 +53,8 @@ export interface AppShellController {
   activeAttempt: SupportAttempt | null;
   trialReflections: TrialReflectionRecord[];
   evidenceContributions: EvidenceContribution[];
+  supportEvidence: EvidenceContribution[];
+  supportEvidenceSummary: { total: number; confirmed: number; latestSource?: string };
   memoryEntries: MemoryVaultEntry[];
   memorySummary: MemoryVaultSummary;
   evidenceItems: PatternEvidenceItem[];
@@ -164,6 +166,7 @@ export const useAppShellController = (): AppShellController => {
     learningSignals,
     sensorySupports,
     supportLog,
+    evidenceContributions,
   });
 
   const helpNowFeature = useHelpNowFeatureController({
@@ -210,6 +213,8 @@ export const useAppShellController = (): AppShellController => {
     activeAttempt,
     trialReflections,
     evidenceContributions,
+    supportEvidence: learningFeature.supportEvidence,
+    supportEvidenceSummary: learningFeature.supportEvidenceSummary,
     memoryEntries: learningFeature.memoryEntries,
     memorySummary: learningFeature.memorySummary,
     evidenceItems: learningFeature.evidenceItems,
