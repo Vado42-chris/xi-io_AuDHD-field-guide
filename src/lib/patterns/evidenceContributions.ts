@@ -1,5 +1,6 @@
 import {
   EvidenceContribution,
+  JournalThread,
   RevalidationRecord,
   SupportLogEntry,
   TrialReflectionRecord,
@@ -21,11 +22,34 @@ const confidenceFromRevalidation = (result: RevalidationRecord['result']): Evide
   return 'repeated';
 };
 
+const confidenceFromJournalThread = (thread: JournalThread): EvidenceContribution['confidence'] => {
+  if (thread.memory?.confirmedTags?.length) return 'confirmed';
+  if (thread.memory?.suggestedTags?.length) return 'repeated';
+  return 'emerging';
+};
+
 export const deriveEvidenceContributions = (
+  journalThreads: JournalThread[],
   supportLog: SupportLogEntry[],
   trialReflections: TrialReflectionRecord[],
   revalidationRecords: RevalidationRecord[]
 ): EvidenceContribution[] => {
+  const fromJournal: EvidenceContribution[] = journalThreads
+    .filter((thread) => thread.memory?.summary)
+    .map((thread) => ({
+      id: `evidence-journal-${thread.id}`,
+      source: 'journal',
+      stateCanonicalId: thread.currentState.canonicalId,
+      tags: [
+        ...(thread.memory?.confirmedTags ?? []),
+        ...(thread.memory?.stressorTags ?? []),
+        ...(thread.memory?.destresserTags ?? []),
+      ].map((tag) => tag.toLowerCase()),
+      summary: thread.memory?.summary ?? thread.summary ?? thread.title,
+      confidence: confidenceFromJournalThread(thread),
+      createdAt: thread.updatedAt,
+    }));
+
   const fromOutcomes: EvidenceContribution[] = supportLog.map((entry) => ({
     id: `evidence-outcome-${entry.id}`,
     source: 'support_outcome',
@@ -61,7 +85,7 @@ export const deriveEvidenceContributions = (
     createdAt: entry.createdAt,
   }));
 
-  return [...fromOutcomes, ...fromReflections, ...fromRevalidation].sort((a, b) => b.createdAt - a.createdAt);
+  return [...fromJournal, ...fromOutcomes, ...fromReflections, ...fromRevalidation].sort((a, b) => b.createdAt - a.createdAt);
 };
 
 export default deriveEvidenceContributions;
