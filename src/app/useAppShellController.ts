@@ -53,7 +53,9 @@ export interface AppShellController {
   activeAttempt: SupportAttempt | null;
   trialReflections: TrialReflectionRecord[];
   evidenceContributions: EvidenceContribution[];
+  journalEvidence: EvidenceContribution[];
   supportEvidence: EvidenceContribution[];
+  evidenceIntakeSummary: { total: number; journal: number; support: number; confirmed: number; latestSource?: string };
   supportEvidenceSummary: { total: number; confirmed: number; latestSource?: string };
   memoryEntries: MemoryVaultEntry[];
   memorySummary: MemoryVaultSummary;
@@ -152,8 +154,8 @@ export const useAppShellController = (): AppShellController => {
   }, [journalThreads, supportLog]);
 
   useEffect(() => {
-    setEvidenceContributions(deriveEvidenceContributions(supportLog, trialReflections, revalidationRecords));
-  }, [supportLog, trialReflections, revalidationRecords]);
+    setEvidenceContributions(deriveEvidenceContributions(journalThreads, supportLog, trialReflections, revalidationRecords));
+  }, [journalThreads, supportLog, trialReflections, revalidationRecords]);
 
   const journalFeature = useJournalFeatureController({
     currentState,
@@ -213,7 +215,9 @@ export const useAppShellController = (): AppShellController => {
     activeAttempt,
     trialReflections,
     evidenceContributions,
+    journalEvidence: learningFeature.journalEvidence,
     supportEvidence: learningFeature.supportEvidence,
+    evidenceIntakeSummary: learningFeature.evidenceIntakeSummary,
     supportEvidenceSummary: learningFeature.supportEvidenceSummary,
     memoryEntries: learningFeature.memoryEntries,
     memorySummary: learningFeature.memorySummary,
