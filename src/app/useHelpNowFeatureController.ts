@@ -13,6 +13,7 @@ import {
   SupportOutcome,
   TransferDecision,
   TransferReviewRecord,
+  TrialReflectionRecord,
 } from '../types/core';
 import { buildPersonalizedSuggestions } from '../lib/patterns/personalizationThreshold';
 import { buildRecommendationLedger } from '../lib/patterns/recommendationLedger';
@@ -27,11 +28,13 @@ interface HelpNowFeatureControllerArgs {
   transferReviews: TransferReviewRecord[];
   revalidationRecords: RevalidationRecord[];
   activeTrial: ActiveTrial | null;
+  trialReflections: TrialReflectionRecord[];
   setCurrentState: Dispatch<SetStateAction<CurrentState>>;
   setSupportLog: Dispatch<SetStateAction<SupportLogEntry[]>>;
   setTransferReviews: Dispatch<SetStateAction<TransferReviewRecord[]>>;
   setRevalidationRecords: Dispatch<SetStateAction<RevalidationRecord[]>>;
   setActiveTrial: Dispatch<SetStateAction<ActiveTrial | null>>;
+  setTrialReflections: Dispatch<SetStateAction<TrialReflectionRecord[]>>;
   setActiveSection: (section: 'help_now') => void;
 }
 
@@ -46,6 +49,7 @@ export interface HelpNowFeatureController {
   handleStartTrial: (recommendationId: string, supportTitle: string) => void;
   handleClearTrial: () => void;
   handleLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => void;
+  handleSaveTrialReflection: (supportTitle: string, outcome: SupportOutcome, prompt: TrialReflectionRecord['prompt'], note: string, recommendationId?: string) => void;
   handleReviewTransfer: (recommendationId: string, transferSafety: RecommendationLedgerItem['transferSafety'], transferWarning: string | undefined, decision: TransferDecision, reason: string) => void;
   handleRevalidateSupport: (recommendationId: string, result: RevalidationResult, note: string) => void;
 }
@@ -60,11 +64,13 @@ export const useHelpNowFeatureController = ({
   transferReviews,
   revalidationRecords,
   activeTrial,
+  trialReflections,
   setCurrentState,
   setSupportLog,
   setTransferReviews,
   setRevalidationRecords,
   setActiveTrial,
+  setTrialReflections,
   setActiveSection,
 }: HelpNowFeatureControllerArgs): HelpNowFeatureController => {
   const updateCurrentState = (partial: Partial<CurrentState>) => {
@@ -84,7 +90,7 @@ export const useHelpNowFeatureController = ({
 
   const recommendationLedger = useMemo(
     () => buildRecommendationLedger(currentState.canonicalId, personalizedSupports, evidenceItems, supportLog, transferReviews, revalidationRecords),
-    [currentState.canonicalId, personalizedSupports, evidenceItems, supportLog, transferReviews, revalidationRecords]
+    [currentState.canonicalId, personalizedSupports, evidenceItems, supportLog, transferReviews, revalidationRecords, trialReflections]
   );
 
   const handleSelectState = (stateId: string) => {
@@ -128,6 +134,27 @@ export const useHelpNowFeatureController = ({
     if (activeTrial && (!recommendationId || activeTrial.recommendationId === recommendationId)) {
       setActiveTrial(null);
     }
+  };
+
+  const handleSaveTrialReflection = (
+    supportTitle: string,
+    outcome: SupportOutcome,
+    prompt: TrialReflectionRecord['prompt'],
+    note: string,
+    recommendationId?: string
+  ) => {
+    if (!note.trim()) return;
+    const record: TrialReflectionRecord = {
+      id: `reflection-${Date.now()}`,
+      recommendationId,
+      supportTitle,
+      stateCanonicalId: currentState.canonicalId,
+      outcome,
+      prompt,
+      note: note.trim(),
+      createdAt: Date.now(),
+    };
+    setTrialReflections((prev) => [record, ...prev].slice(0, 80));
   };
 
   const handleReviewTransfer = (
@@ -174,6 +201,7 @@ export const useHelpNowFeatureController = ({
     handleStartTrial,
     handleClearTrial,
     handleLogOutcome,
+    handleSaveTrialReflection,
     handleReviewTransfer,
     handleRevalidateSupport,
   };
