@@ -182,6 +182,10 @@ export interface RecommendationStateTrust {
   rankScore: number;
   transferLearningScore: number;
   learnedTransferTrust: number;
+  directTrustWeight: number;
+  transferTrustWeight: number;
+  directTrustPercent: number;
+  transferTrustPercent: number;
   outcomeHistory: RecommendationOutcomeEvent[];
 }
 
@@ -210,6 +214,7 @@ export interface RecommendationLedgerItem {
   transferWarning?: string;
   reason: string;
   appearedBecause: string;
+  trustSummary: string;
   supportingEvidence: PatternEvidenceReference[];
   weakeningEvidence: PatternEvidenceReference[];
   outcomeHistory: RecommendationOutcomeEvent[];
@@ -218,6 +223,10 @@ export interface RecommendationLedgerItem {
   recoveryScore: number;
   transferLearningScore: number;
   learnedTransferTrust: number;
+  directTrustWeight: number;
+  transferTrustWeight: number;
+  directTrustPercent: number;
+  transferTrustPercent: number;
   stateTrustMap: RecommendationStateTrust[];
   transferReviews: TransferReviewRecord[];
 }
