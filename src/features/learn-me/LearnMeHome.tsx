@@ -2,20 +2,25 @@ import React from 'react';
 import LearningSignalCard from '../../components/learn-me/LearningSignalCard';
 import MemoryVaultEntryCard from '../../components/learn-me/MemoryVaultEntryCard';
 import MemoryVaultSummaryCard from '../../components/learn-me/MemoryVaultSummaryCard';
+import PatternEvidenceItemCard from '../../components/learn-me/PatternEvidenceItemCard';
+import PatternEvidenceSummaryCard from '../../components/learn-me/PatternEvidenceSummaryCard';
 import PatternReviewSummaryCard from '../../components/learn-me/PatternReviewSummaryCard';
 import SensorySupportCard from '../../components/learn-me/SensorySupportCard';
 import ThresholdSummaryCard from '../../components/learn-me/ThresholdSummaryCard';
-import { LearningSignal, MemoryEntryStatus, MemoryVaultEntry, MemoryVaultSummary, PatternReviewSummary, SensorySupportRecord, ThresholdSummary } from '../../types/core';
+import { LearningSignal, MemoryEntryStatus, MemoryVaultEntry, MemoryVaultSummary, PatternEvidenceItem, PatternEvidenceSummary, PatternReviewSummary, SensorySupportRecord, ThresholdSummary } from '../../types/core';
 
 interface LearnMeHomeProps {
   signals: LearningSignal[];
   sensorySupports: SensorySupportRecord[];
   memoryEntries: MemoryVaultEntry[];
   memorySummary: MemoryVaultSummary;
+  evidenceItems: PatternEvidenceItem[];
+  evidenceSummary: PatternEvidenceSummary;
   summary: PatternReviewSummary;
   thresholdSummary: ThresholdSummary;
   onConfirmSignal: (signalId: string) => void;
   onConfirmSensory: (recordId: string) => void;
+  onToggleEvidenceContested: (itemId: string) => void;
   onSaveMemoryEntry: (entryId: string, summary: string, confirmedTags: string[], status: MemoryEntryStatus, notes: string) => void;
 }
 
@@ -24,10 +29,13 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
   sensorySupports,
   memoryEntries,
   memorySummary,
+  evidenceItems,
+  evidenceSummary,
   summary,
   thresholdSummary,
   onConfirmSignal,
   onConfirmSensory,
+  onToggleEvidenceContested,
   onSaveMemoryEntry,
 }) => {
   const stressors = signals.filter((signal) => signal.kind === 'stressor');
@@ -39,14 +47,28 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
         <div className="fg-kicker">Learn Me</div>
         <h1 className="fg-section-title">Readable patterns, without pretending certainty.</h1>
         <p className="fg-section-body">
-          This slice turns the memory vault into an editing studio. Cross-thread memory can now be revised, marked outdated,
-          or flagged as superseded, while conflicts stay visible instead of being hidden.
+          This slice adds a pattern evidence inspector. Repeated patterns can now show the memory entries and support outcomes backing them,
+          and that evidence can be contested directly instead of treated like hidden system reasoning.
         </p>
       </div>
 
       <ThresholdSummaryCard summary={thresholdSummary} />
       <PatternReviewSummaryCard summary={summary} />
       <MemoryVaultSummaryCard summary={memorySummary} />
+      <PatternEvidenceSummaryCard summary={evidenceSummary} />
+
+      <section className="fg-panel-stack">
+        <div className="fg-kicker">Pattern evidence inspector</div>
+        <div className="fg-grid">
+          {evidenceItems.length > 0 ? (
+            evidenceItems.map((item) => (
+              <PatternEvidenceItemCard key={item.id} item={item} onToggleContested={() => onToggleEvidenceContested(item.id)} />
+            ))
+          ) : (
+            <div className="fg-state-meta">No pattern evidence items yet. More memory and support history will make this layer useful.</div>
+          )}
+        </div>
+      </section>
 
       <section className="fg-panel-stack">
         <div className="fg-kicker">Memory vault entries</div>
