@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AppIdentity,
   AppSection,
@@ -19,10 +19,11 @@ import {
 } from '../types/core';
 import { readLocal, writeLocal } from '../lib/storage/localStore';
 import { deriveLearningSignals, deriveSensorySupports } from '../lib/patterns/learningSignals';
-import { buildPersonalizedSuggestions } from '../lib/patterns/personalizationThreshold';
 import { makeDefaultThreads, makeInitialCurrentState } from './appShellDefaults';
 import { useJournalFeatureController } from './useJournalFeatureController';
 import { useLearningFeatureController } from './useLearningFeatureController';
+import { useHelpNowFeatureController } from './useHelpNowFeatureController';
+import { useCustomizeFeatureController } from './useCustomizeFeatureController';
 
 export interface AppShellController {
   activeSection: AppSection;
@@ -38,7 +39,7 @@ export interface AppShellController {
   memorySummary: MemoryVaultSummary;
   patternSummary: PatternReviewSummary;
   thresholdSummary: ThresholdSummary;
-  personalizedSupports: ReturnType<typeof buildPersonalizedSuggestions>;
+  personalizedSupports: ReturnType<typeof useHelpNowFeatureController>['personalizedSupports'];
   setActiveSection: (section: AppSection) => void;
   setSelectorOpen: (open: boolean) => void;
   handleSelectState: (stateId: string) => void;
@@ -100,44 +101,6 @@ export const useAppShellController = (): AppShellController => {
     });
   }, [journalThreads, supportLog]);
 
-  const recentOutcomeSummary = useMemo(() => {
-    const latest = supportLog[0];
-    if (!latest) return undefined;
-    return `${latest.supportTitle} · ${latest.outcome.replace('_', ' ')}`;
-  }, [supportLog]);
-
-  const updateCurrentState = (partial: Partial<CurrentState>) => {
-    setCurrentState((prev) => ({ ...prev, ...partial, updatedAt: Date.now(), source: partial.source ?? 'user' }));
-  };
-
-  const handleSelectState = (stateId: string) => {
-    const next = customStates.find((state) => state.id === stateId);
-    if (!next) return;
-    updateCurrentState({ canonicalId: next.canonicalId, label: next.label, source: 'user' });
-  };
-
-  const handleSelectIntensity = (intensity: StateIntensity) => updateCurrentState({ intensity, source: 'user' });
-
-  const handleApplyRouteState = (canonicalId: CurrentState['canonicalId']) => {
-    const matching = customStates.find((state) => state.canonicalId === canonicalId && !state.hidden) || customStates.find((state) => state.canonicalId === canonicalId);
-    if (!matching) return;
-    setActiveSection('help_now');
-    updateCurrentState({ canonicalId: matching.canonicalId, label: matching.label, source: 'support_flow' });
-  };
-
-  const handleLogOutcome = (supportTitle: string, supportRoute: string, outcome: SupportOutcome) => {
-    const entry: SupportLogEntry = {
-      id: `${Date.now()}`,
-      stateLabel: currentState.label,
-      stateCanonicalId: currentState.canonicalId,
-      supportTitle,
-      supportRoute,
-      outcome,
-      createdAt: Date.now(),
-    };
-    setSupportLog((prev) => [entry, ...prev].slice(0, 20));
-  };
-
   const journalFeature = useJournalFeatureController({
     currentState,
     setJournalThreads,
@@ -150,30 +113,26 @@ export const useAppShellController = (): AppShellController => {
     sensorySupports,
   });
 
-  const personalizedSupports = useMemo(
-    () => buildPersonalizedSuggestions(currentState.canonicalId, learningFeature.thresholdSummary, sensorySupports),
-    [currentState.canonicalId, learningFeature.thresholdSummary, sensorySupports]
-  );
+  const helpNowFeature = useHelpNowFeatureController({
+    currentState,
+    customStates,
+    sensorySupports,
+    thresholdSummary: learningFeature.thresholdSummary,
+    supportLog,
+    setCurrentState,
+    setSupportLog,
+    setActiveSection: () => setActiveSection('help_now'),
+  });
+
+  const customizeFeature = useCustomizeFeatureController({
+    currentState,
+    setCurrentState,
+    setCustomStates,
+    setSensorySupports,
+  });
 
   const handleConfirmSignal = (signalId: string) => setLearningSignals((prev) => prev.map((signal) => (signal.id === signalId ? { ...signal, confirmed: true } : signal)));
   const handleConfirmSensory = (recordId: string) => setSensorySupports((prev) => prev.map((record) => (record.id === recordId ? { ...record, confirmed: true } : record)));
-
-  const handleRenameState = (stateId: string, label: string) => {
-    const cleaned = label.trimStart();
-    setCustomStates((prev) => {
-      const target = prev.find((state) => state.id === stateId);
-      const nextStates = prev.map((state) => (state.id === stateId ? { ...state, label: cleaned } : state));
-      if (target && currentState.canonicalId === target.canonicalId && currentState.label === target.label) {
-        setCurrentState((current) => ({ ...current, label: cleaned, updatedAt: Date.now() }));
-      }
-      return nextStates;
-    });
-  };
-
-  const handleToggleStateFavorite = (stateId: string) => setCustomStates((prev) => prev.map((state) => (state.id === stateId ? { ...state, favorite: !state.favorite } : state)));
-  const handleToggleStateHidden = (stateId: string) => setCustomStates((prev) => prev.map((state) => (state.id === stateId ? { ...state, hidden: !state.hidden } : state)));
-  const handleToggleComfortFavorite = (recordId: string) => setSensorySupports((prev) => prev.map((record) => (record.id === recordId ? { ...record, favorite: !record.favorite } : record)));
-  const handleToggleComfortHidden = (recordId: string) => setSensorySupports((prev) => prev.map((record) => (record.id === recordId ? { ...record, hidden: !record.hidden } : record)));
 
   return {
     activeSection,
@@ -184,18 +143,18 @@ export const useAppShellController = (): AppShellController => {
     learningSignals,
     sensorySupports,
     selectorOpen,
-    recentOutcomeSummary,
+    recentOutcomeSummary: helpNowFeature.recentOutcomeSummary,
     memoryEntries: learningFeature.memoryEntries,
     memorySummary: learningFeature.memorySummary,
     patternSummary: learningFeature.patternSummary,
     thresholdSummary: learningFeature.thresholdSummary,
-    personalizedSupports,
+    personalizedSupports: helpNowFeature.personalizedSupports,
     setActiveSection,
     setSelectorOpen,
-    handleSelectState,
-    handleSelectIntensity,
-    handleApplyRouteState,
-    handleLogOutcome,
+    handleSelectState: helpNowFeature.handleSelectState,
+    handleSelectIntensity: helpNowFeature.handleSelectIntensity,
+    handleApplyRouteState: helpNowFeature.handleApplyRouteState,
+    handleLogOutcome: helpNowFeature.handleLogOutcome,
     handleCreateThread: journalFeature.handleCreateThread,
     handleOpenThread: journalFeature.handleOpenThread,
     handleSendMessage: journalFeature.handleSendMessage,
@@ -204,10 +163,10 @@ export const useAppShellController = (): AppShellController => {
     handleConfirmSignal,
     handleConfirmSensory,
     handleConfirmMemoryEntry: journalFeature.handleConfirmMemoryEntry,
-    handleRenameState,
-    handleToggleStateFavorite,
-    handleToggleStateHidden,
-    handleToggleComfortFavorite,
-    handleToggleComfortHidden,
+    handleRenameState: customizeFeature.handleRenameState,
+    handleToggleStateFavorite: customizeFeature.handleToggleStateFavorite,
+    handleToggleStateHidden: customizeFeature.handleToggleStateHidden,
+    handleToggleComfortFavorite: customizeFeature.handleToggleComfortFavorite,
+    handleToggleComfortHidden: customizeFeature.handleToggleComfortHidden,
   };
 };
