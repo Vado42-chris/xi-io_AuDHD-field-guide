@@ -16,6 +16,8 @@ import {
   PatternResolutionStatus,
   PatternReviewSummary,
   RecommendationLedgerItem,
+  RevalidationRecord,
+  RevalidationResult,
   SensorySupportRecord,
   StateIntensity,
   SupportLogEntry,
@@ -57,6 +59,7 @@ export interface AppShellController {
   handleApplyRouteState: (canonicalId: CurrentState['canonicalId']) => void;
   handleLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => void;
   handleReviewTransfer: (recommendationId: string, transferSafety: RecommendationLedgerItem['transferSafety'], transferWarning: string | undefined, decision: TransferDecision, reason: string) => void;
+  handleRevalidateSupport: (recommendationId: string, result: RevalidationResult, note: string) => void;
   handleCreateThread: () => void;
   handleOpenThread: (threadId: string) => void;
   handleSendMessage: (threadId: string, text: string) => void;
@@ -83,6 +86,7 @@ export const useAppShellController = (): AppShellController => {
   const [journalThreads, setJournalThreads] = useState<JournalThread[]>(() => readLocal<JournalThread[]>('fg_journal_threads_v2', makeDefaultThreads()));
   const [supportLog, setSupportLog] = useState<SupportLogEntry[]>(() => readLocal<SupportLogEntry[]>('fg_support_log_v2', []));
   const [transferReviews, setTransferReviews] = useState<TransferReviewRecord[]>(() => readLocal<TransferReviewRecord[]>('fg_transfer_reviews_v1', []));
+  const [revalidationRecords, setRevalidationRecords] = useState<RevalidationRecord[]>(() => readLocal<RevalidationRecord[]>('fg_revalidation_records_v1', []));
   const [learningSignals, setLearningSignals] = useState<LearningSignal[]>(() => readLocal<LearningSignal[]>('fg_learning_signals_v2', []));
   const [sensorySupports, setSensorySupports] = useState<SensorySupportRecord[]>(() => readLocal<SensorySupportRecord[]>('fg_sensory_supports_v2', []));
   const [selectorOpen, setSelectorOpen] = useState(false);
@@ -91,6 +95,7 @@ export const useAppShellController = (): AppShellController => {
   useEffect(() => { writeLocal('fg_custom_states_v2', customStates); }, [customStates]);
   useEffect(() => { writeLocal('fg_support_log_v2', supportLog); }, [supportLog]);
   useEffect(() => { writeLocal('fg_transfer_reviews_v1', transferReviews); }, [transferReviews]);
+  useEffect(() => { writeLocal('fg_revalidation_records_v1', revalidationRecords); }, [revalidationRecords]);
   useEffect(() => { writeLocal('fg_journal_threads_v2', journalThreads); }, [journalThreads]);
   useEffect(() => { writeLocal('fg_learning_signals_v2', learningSignals); }, [learningSignals]);
   useEffect(() => { writeLocal('fg_sensory_supports_v2', sensorySupports); }, [sensorySupports]);
@@ -138,9 +143,11 @@ export const useAppShellController = (): AppShellController => {
     evidenceItems: learningFeature.evidenceItems,
     supportLog,
     transferReviews,
+    revalidationRecords,
     setCurrentState,
     setSupportLog,
     setTransferReviews,
+    setRevalidationRecords,
     setActiveSection: () => setActiveSection('help_now'),
   });
 
@@ -179,6 +186,7 @@ export const useAppShellController = (): AppShellController => {
     handleApplyRouteState: helpNowFeature.handleApplyRouteState,
     handleLogOutcome: helpNowFeature.handleLogOutcome,
     handleReviewTransfer: helpNowFeature.handleReviewTransfer,
+    handleRevalidateSupport: helpNowFeature.handleRevalidateSupport,
     handleCreateThread: journalFeature.handleCreateThread,
     handleOpenThread: journalFeature.handleOpenThread,
     handleSendMessage: journalFeature.handleSendMessage,
