@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import RecommendationLedgerCard from '../../components/support/RecommendationLedgerCard';
+import RecommendationStateMatrix from '../../components/support/RecommendationStateMatrix';
 import SupportCard from '../../components/support/SupportCard';
 import {
   CanonicalStateId,
@@ -110,7 +111,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <h1 className="fg-section-title">A calmer first action, not a dashboard.</h1>
         <p className="fg-section-body">
           Pick what feels closest right now, get a low-demand starter support, and log whether it helped.
-          Recommendations now re-rank based on real outcomes, and later positive outcomes can move a support back into recovery and reinstatement instead of burying it forever.
+          Recommendation trust is now state-specific, and the matrix view makes it possible to compare the same support across states without overgeneralizing one lane into every other lane.
         </p>
       </div>
 
@@ -152,7 +153,12 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
               />
             ))}
           </div>
-          {selectedLedgerItem ? <RecommendationLedgerCard item={selectedLedgerItem} /> : null}
+          {selectedLedgerItem ? (
+            <>
+              <RecommendationLedgerCard item={selectedLedgerItem} />
+              <RecommendationStateMatrix item={selectedLedgerItem} />
+            </>
+          ) : null}
           {coolingOffRecommendations.length > 0 ? (
             <div className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
               <div className="fg-kicker">Cooling off</div>
