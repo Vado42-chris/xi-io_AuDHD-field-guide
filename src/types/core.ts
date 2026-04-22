@@ -59,6 +59,17 @@ export interface ActiveTrial {
   startedAt: number;
 }
 
+export interface TrialReflectionRecord {
+  id: string;
+  recommendationId?: string;
+  supportTitle: string;
+  stateCanonicalId: CanonicalStateId;
+  outcome: SupportOutcome;
+  prompt: 'what_changed' | 'what_helped' | 'what_made_it_harder';
+  note: string;
+  createdAt: number;
+}
+
 export interface StateSnapshot {
   canonicalId: CanonicalStateId;
   label: string;
