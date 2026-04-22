@@ -184,6 +184,23 @@ const deriveConfidence = (
   return supportingCount > 0 ? 'medium' : 'low';
 };
 
+const derivePriorityReason = (
+  trustFreshness: TrustFreshness,
+  revalidationHistory: RevalidationRecord[],
+  availability: RecommendationAvailability,
+  trustMaturity: TrustMaturity
+) => {
+  const latest = revalidationHistory[0];
+  if (latest?.result === 'still_helps') return 'Higher because it was checked again recently and still helps.';
+  if (latest?.result === 'helps_a_little') return 'A bit higher because it was checked again recently and still helps a little.';
+  if (latest?.result === 'no_longer_helps') return 'Lower because a recent fresh check showed it no longer helps.';
+  if (trustFreshness === 'needs_recheck') return 'Lower because it has not been confirmed in a while.';
+  if (trustFreshness === 'aging') return 'A bit lower because it has not been confirmed recently.';
+  if (availability === 'recovering') return 'Still in view because it is rebuilding trust.';
+  if (trustMaturity === 'proven_in_normal_use') return 'Higher because it has solid same-state history.';
+  return 'Shown because it still matches the current state.';
+};
+
 const buildTrustSummary = (directTrustPercent: number, transferTrustPercent: number) => {
   return `${directTrustPercent}% earned from normal use, ${transferTrustPercent}% learned from supervised retries`;
 };
@@ -224,6 +241,7 @@ const buildStateTrust = (
     const freshnessPenalty = trustFreshness === 'needs_recheck' ? 2 : trustFreshness === 'aging' ? 1 : 0;
     const recheckBoost = relevantRechecks[0]?.result === 'still_helps' ? 2 : relevantRechecks[0]?.result === 'helps_a_little' ? 1 : relevantRechecks[0]?.result === 'no_longer_helps' ? -2 : 0;
     const rankScore = performanceScore + recoveryScore + Math.min(learnedTransferTrust, directTrustWeight) + recheckBoost - freshnessPenalty + (confidence === 'high' ? 3 : confidence === 'medium' ? 1 : 0) - (availability === 'cooling_off' ? 4 : availability === 'avoid_for_now' ? 8 : 0);
+    const priorityReason = derivePriorityReason(trustFreshness, relevantRechecks, availability, trustMaturity);
 
     return {
       state,
@@ -232,6 +250,7 @@ const buildStateTrust = (
       performanceScore,
       recoveryScore,
       rankScore,
+      priorityReason,
       transferLearningScore,
       learnedTransferTrust,
       directTrustWeight,
@@ -325,6 +344,7 @@ export const buildRecommendationLedger = (
               : currentStateTrust.trustMaturity === 'mostly_retry_based'
                 ? 'This lane still depends a lot on careful retry history, so it is not as grounded in normal same-state use yet.'
                 : 'This lane is being shaped by both normal use and careful retry history, and it is moving toward stronger same-state proof.',
+      priorityReason: currentStateTrust.priorityReason,
       trustSummary,
       trustMaturity: currentStateTrust.trustMaturity,
       maturitySummary: currentStateTrust.maturitySummary,
