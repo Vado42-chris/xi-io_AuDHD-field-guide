@@ -41,6 +41,72 @@ const sourceLabel = (source: EvidenceContribution['source']) => {
   }
 };
 
+const buildTakeaways = (
+  thresholdSummary: ThresholdSummary,
+  summary: PatternReviewSummary,
+  evidenceIntakeSummary: { total: number; journal: number; support: number; confirmed: number; latestSource?: string },
+  stressors: LearningSignal[],
+  destressers: LearningSignal[],
+  sensorySupports: SensorySupportRecord[]
+) => {
+  const items: string[] = [];
+
+  if (thresholdSummary.readiness === 'not_ready') {
+    items.push('The app is still early in its learning, so the safest value right now is logging what happened and letting patterns build slowly.');
+  } else if (thresholdSummary.readiness === 'warming_up') {
+    items.push('The app has started learning enough to spot patterns, but the strongest value still comes from checking whether those patterns hold up in real use.');
+  } else {
+    items.push('The app now has enough evidence to give more grounded guidance, but it still needs fresh outcomes to stay current as life changes.');
+  }
+
+  if (stressors.length > 0) {
+    items.push(`The strongest stressor signal right now is “${stressors[0].label}”, which means that theme is showing up repeatedly enough to pay attention to.`);
+  }
+  if (destressers.length > 0) {
+    items.push(`The clearest de-stresser so far is “${destressers[0].label}”, which is worth protecting and reusing when possible.`);
+  }
+  const confirmedSensory = sensorySupports.filter((record) => record.confirmed);
+  if (confirmedSensory.length > 0) {
+    items.push(`There are ${confirmedSensory.length} confirmed sensory supports in view, so the app is starting to learn what kinds of input actually help your system settle.`);
+  }
+  if (summary.cautionNotes.length > 0) {
+    items.push(`There is still some caution in the picture, especially around ${summary.cautionNotes[0].toLowerCase()}.`);
+  }
+  if (evidenceIntakeSummary.total > 0) {
+    items.push(`The learning intake currently combines ${evidenceIntakeSummary.journal} journal items and ${evidenceIntakeSummary.support} support items, which means the app is no longer learning from only one kind of signal.`);
+  }
+
+  return items.slice(0, 4);
+};
+
+const buildNextSteps = (
+  thresholdSummary: ThresholdSummary,
+  stressors: LearningSignal[],
+  destressers: LearningSignal[],
+  supportEvidenceSummary: { total: number; confirmed: number; latestSource?: string },
+  memoryEntries: MemoryVaultEntry[]
+) => {
+  const steps: string[] = [];
+
+  if (thresholdSummary.readiness !== 'ready') {
+    steps.push('Keep logging outcomes in Help Now after you try supports, because that is the fastest way to strengthen the learning.');
+  }
+  if (stressors.length > 0) {
+    steps.push(`Confirm or contest the stressor signals that feel most true, starting with “${stressors[0].label}”.`);
+  }
+  if (destressers.length > 0) {
+    steps.push(`Protect the de-stresser “${destressers[0].label}” by using it more deliberately and checking whether it still holds up.`);
+  }
+  if (supportEvidenceSummary.total > 0 && supportEvidenceSummary.confirmed < supportEvidenceSummary.total) {
+    steps.push('Keep using optional notes and fresh checks when something is uncertain, so the app can tell the difference between an early hunch and a pattern that holds.');
+  }
+  if (memoryEntries.length > 0) {
+    steps.push('Review your memory vault entries when something feels off, because updating them helps the app avoid learning from stale summaries.');
+  }
+
+  return steps.slice(0, 4);
+};
+
 export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
   signals,
   sensorySupports,
@@ -65,6 +131,8 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
   const sharedEvidencePreview = [...journalEvidence.slice(0, 3), ...supportEvidence.slice(0, 3)]
     .sort((a, b) => b.createdAt - a.createdAt)
     .slice(0, 6);
+  const takeaways = buildTakeaways(thresholdSummary, summary, evidenceIntakeSummary, stressors, destressers, sensorySupports);
+  const nextSteps = buildNextSteps(thresholdSummary, stressors, destressers, supportEvidenceSummary, memoryEntries);
 
   return (
     <div className="fg-content-card fg-glass fg-help-layout">
@@ -77,6 +145,39 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
       </div>
 
       <ThresholdSummaryCard summary={thresholdSummary} />
+
+      <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
+        <div className="fg-kicker">What seems most true right now</div>
+        <div className="fg-grid">
+          {takeaways.length > 0 ? (
+            takeaways.map((item) => (
+              <article key={item} className="fg-card fg-glass">
+                <h2 className="fg-card-title">Current takeaway</h2>
+                <p className="fg-card-copy">{item}</p>
+              </article>
+            ))
+          ) : (
+            <div className="fg-state-meta">Not enough information yet to summarize what seems most true.</div>
+          )}
+        </div>
+      </section>
+
+      <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
+        <div className="fg-kicker">What to do with this</div>
+        <div className="fg-grid">
+          {nextSteps.length > 0 ? (
+            nextSteps.map((item) => (
+              <article key={item} className="fg-card fg-glass">
+                <h2 className="fg-card-title">Next useful step</h2>
+                <p className="fg-card-copy">{item}</p>
+              </article>
+            ))
+          ) : (
+            <div className="fg-state-meta">As more evidence builds, this section will turn patterns into clearer next steps.</div>
+          )}
+        </div>
+      </section>
+
       <PatternReviewSummaryCard summary={summary} />
       <MemoryVaultSummaryCard summary={memorySummary} />
       <PatternEvidenceSummaryCard summary={evidenceSummary} />
