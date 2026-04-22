@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import GuidedActionPanel from '../../components/patterns/GuidedActionPanel';
 import OutcomeChooser from '../../components/patterns/OutcomeChooser';
 import TrialBanner from '../../components/patterns/TrialBanner';
@@ -38,6 +38,8 @@ interface StarterSupport {
   title: string;
   body: string;
 }
+
+const READINESS_DISMISSED_KEY = 'fg_help_now_readiness_guide_dismissed_v1';
 
 const ROUTES: Array<{ id: CanonicalStateId; title: string; body: string }> = [
   { id: 'in_pain', title: 'Pain spike', body: 'Pain-aware support comes first when the body is leading everything else.' },
@@ -95,6 +97,16 @@ const buildWhyTheseFirst = (items: RecommendationLedgerItem[]) => {
   return 'These come first because they are the safest current fit from what the app knows right now.';
 };
 
+const buildReadinessGuideBody = (thresholdSummary: ThresholdSummary) => {
+  if (thresholdSummary.readiness === 'not_ready') {
+    return 'The app can help you right away with starter supports, state check-ins, and gentle logging. Personalized suggestions are still warming up, so the safest path is to use the app, log what happened, and let the evidence build first.';
+  }
+  if (thresholdSummary.readiness === 'warming_up') {
+    return 'The app has started learning from your entries and support attempts. Personalized suggestions may appear, but they should still be treated as cautious and checked against what actually happens.';
+  }
+  return 'The app has enough evidence to start giving more grounded personalized suggestions. Keep logging outcomes so it can stay current and notice when something changes.';
+};
+
 const groupRecommendations = (items: RecommendationLedgerItem[]) => {
   const bestFitNow = items.filter((item) => item.status.availability === 'active' && item.status.trustFreshness === 'fresh');
   const worthTryingCarefully = items.filter((item) => item.status.availability === 'recovering' || (item.status.availability === 'active' && item.status.trustFreshness === 'aging'));
@@ -138,11 +150,27 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   const [selectedSupportTitle, setSelectedSupportTitle] = useState<string | null>(null);
   const [pendingReflection, setPendingReflection] = useState<{ supportTitle: string; outcome: SupportOutcome; recommendationId?: string } | null>(null);
   const [reflectionNote, setReflectionNote] = useState('');
+  const [readinessGuideDismissed, setReadinessGuideDismissed] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem(READINESS_DISMISSED_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(READINESS_DISMISSED_KEY, readinessGuideDismissed ? 'true' : 'false');
+    } catch {
+      // ignore storage failures in restricted environments
+    }
+  }, [readinessGuideDismissed]);
 
   const activeSupports = useMemo(() => STARTER_SUPPORTS[selectedRoute] || STARTER_SUPPORTS.unclear, [selectedRoute]);
   const groupedRecommendations = useMemo(() => groupRecommendations(recommendationLedger), [recommendationLedger]);
   const selectedLedgerItem = recommendationLedger.find((item) => item.title === selectedSupportTitle);
   const activeTrialElapsed = useMemo(() => (activeTrial ? formatTrialElapsed(activeTrial.startedAt) : null), [activeTrial]);
+  const showReadinessGuide = !readinessGuideDismissed;
 
   const handleRouteSelect = (routeId: CanonicalStateId) => {
     setSelectedRoute(routeId);
@@ -213,6 +241,14 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <div className="fg-meta-pill fg-glass">Suggestion mode: {thresholdSummary.suggestionStability}</div>
         {recentOutcomeSummary ? <div className="fg-meta-pill fg-glass">Latest outcome: {recentOutcomeSummary}</div> : null}
       </div>
+
+      {showReadinessGuide ? (
+        <GuidedActionPanel
+          kicker="How this works right now"
+          body={buildReadinessGuideBody(thresholdSummary)}
+          actions={[{ label: 'Got it', onClick: () => setReadinessGuideDismissed(true) }]}
+        />
+      ) : null}
 
       {activeTrial ? (
         <TrialBanner
