@@ -192,6 +192,7 @@ export interface RecommendationStateTrust {
   performanceScore: number;
   recoveryScore: number;
   rankScore: number;
+  priorityReason: string;
   transferLearningScore: number;
   learnedTransferTrust: number;
   directTrustWeight: number;
@@ -231,6 +232,7 @@ export interface RecommendationLedgerItem {
   transferWarning?: string;
   reason: string;
   appearedBecause: string;
+  priorityReason: string;
   trustSummary: string;
   trustMaturity: TrustMaturity;
   maturitySummary: string;
