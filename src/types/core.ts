@@ -21,6 +21,7 @@ export type PatternResolutionStatus = 'active' | 'under_review' | 'retired';
 export type SuggestionStability = 'stable' | 'cautious';
 export type RecommendationConfidence = 'low' | 'medium' | 'high';
 export type RecommendationAvailability = 'active' | 'recovering' | 'cooling_off' | 'avoid_for_now';
+export type TransferSafety = 'safe' | 'caution' | 'avoid';
 
 export interface CurrentState {
   canonicalId: CanonicalStateId;
@@ -170,6 +171,16 @@ export interface RecommendationOutcomeEvent {
   supportRoute: string;
 }
 
+export interface RecommendationStateTrust {
+  state: CanonicalStateId;
+  confidence: RecommendationConfidence;
+  availability: RecommendationAvailability;
+  performanceScore: number;
+  recoveryScore: number;
+  rankScore: number;
+  outcomeHistory: RecommendationOutcomeEvent[];
+}
+
 export interface RecommendationLedgerItem {
   id: string;
   title: string;
@@ -178,6 +189,8 @@ export interface RecommendationLedgerItem {
   confidence: RecommendationConfidence;
   stability: SuggestionStability;
   availability: RecommendationAvailability;
+  transferSafety: TransferSafety;
+  transferWarning?: string;
   reason: string;
   appearedBecause: string;
   supportingEvidence: PatternEvidenceReference[];
@@ -186,6 +199,7 @@ export interface RecommendationLedgerItem {
   performanceScore: number;
   rankScore: number;
   recoveryScore: number;
+  stateTrustMap: RecommendationStateTrust[];
 }
 
 export interface JournalThread {
