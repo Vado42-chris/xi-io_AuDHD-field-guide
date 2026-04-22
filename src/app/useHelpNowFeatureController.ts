@@ -8,6 +8,8 @@ import {
   StateIntensity,
   SupportLogEntry,
   SupportOutcome,
+  TransferDecision,
+  TransferReviewRecord,
 } from '../types/core';
 import { buildPersonalizedSuggestions } from '../lib/patterns/personalizationThreshold';
 import { buildRecommendationLedger } from '../lib/patterns/recommendationLedger';
@@ -19,8 +21,10 @@ interface HelpNowFeatureControllerArgs {
   thresholdSummary: Parameters<typeof buildPersonalizedSuggestions>[1];
   evidenceItems: PatternEvidenceItem[];
   supportLog: SupportLogEntry[];
+  transferReviews: TransferReviewRecord[];
   setCurrentState: Dispatch<SetStateAction<CurrentState>>;
   setSupportLog: Dispatch<SetStateAction<SupportLogEntry[]>>;
+  setTransferReviews: Dispatch<SetStateAction<TransferReviewRecord[]>>;
   setActiveSection: (section: 'help_now') => void;
 }
 
@@ -32,6 +36,7 @@ export interface HelpNowFeatureController {
   handleSelectIntensity: (intensity: StateIntensity) => void;
   handleApplyRouteState: (canonicalId: CurrentState['canonicalId']) => void;
   handleLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => void;
+  handleReviewTransfer: (recommendationId: string, transferSafety: RecommendationLedgerItem['transferSafety'], transferWarning: string | undefined, decision: TransferDecision, reason: string) => void;
 }
 
 export const useHelpNowFeatureController = ({
@@ -41,8 +46,10 @@ export const useHelpNowFeatureController = ({
   thresholdSummary,
   evidenceItems,
   supportLog,
+  transferReviews,
   setCurrentState,
   setSupportLog,
+  setTransferReviews,
   setActiveSection,
 }: HelpNowFeatureControllerArgs): HelpNowFeatureController => {
   const updateCurrentState = (partial: Partial<CurrentState>) => {
@@ -61,8 +68,8 @@ export const useHelpNowFeatureController = ({
   );
 
   const recommendationLedger = useMemo(
-    () => buildRecommendationLedger(currentState.canonicalId, personalizedSupports, evidenceItems, supportLog),
-    [currentState.canonicalId, personalizedSupports, evidenceItems, supportLog]
+    () => buildRecommendationLedger(currentState.canonicalId, personalizedSupports, evidenceItems, supportLog, transferReviews),
+    [currentState.canonicalId, personalizedSupports, evidenceItems, supportLog, transferReviews]
   );
 
   const handleSelectState = (stateId: string) => {
@@ -94,6 +101,27 @@ export const useHelpNowFeatureController = ({
     setSupportLog((prev) => [entry, ...prev].slice(0, 40));
   };
 
+  const handleReviewTransfer = (
+    recommendationId: string,
+    transferSafety: RecommendationLedgerItem['transferSafety'],
+    transferWarning: string | undefined,
+    decision: TransferDecision,
+    reason: string
+  ) => {
+    const record: TransferReviewRecord = {
+      id: `transfer-${Date.now()}`,
+      recommendationId,
+      currentState: currentState.canonicalId,
+      transferSafety,
+      transferWarning,
+      decision,
+      reason: reason || undefined,
+      createdAt: Date.now(),
+      outcomeAssessment: 'pending',
+    };
+    setTransferReviews((prev) => [record, ...prev].slice(0, 60));
+  };
+
   return {
     recentOutcomeSummary,
     personalizedSupports,
@@ -102,5 +130,6 @@ export const useHelpNowFeatureController = ({
     handleSelectIntensity,
     handleApplyRouteState,
     handleLogOutcome,
+    handleReviewTransfer,
   };
 };
