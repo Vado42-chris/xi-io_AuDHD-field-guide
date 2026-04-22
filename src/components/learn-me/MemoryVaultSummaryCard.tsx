@@ -14,6 +14,7 @@ export const MemoryVaultSummaryCard: React.FC<MemoryVaultSummaryCardProps> = ({ 
         <div className="fg-meta-pill fg-glass">Entries: {summary.totalEntries}</div>
         <div className="fg-meta-pill fg-glass">Confirmed: {summary.confirmedEntries}</div>
         <div className="fg-meta-pill fg-glass">Conflicts: {summary.conflictEntries}</div>
+        <div className="fg-meta-pill fg-glass">Revised: {summary.revisedEntries}</div>
       </div>
       <div className="fg-panel-stack" style={{ marginTop: 14 }}>
         <div>
