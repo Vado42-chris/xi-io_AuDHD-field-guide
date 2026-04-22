@@ -38,35 +38,6 @@ const deriveRecoveryScore = (outcomes: Array<{ outcome: SupportLogEntry['outcome
   return recent.reduce((sum, event) => sum + (event.outcome === 'helped' ? 2 : event.outcome === 'a_little' ? 1 : event.outcome === 'worse' ? -1 : 0), 0);
 };
 
-const deriveAvailability = (
-  performanceScore: number,
-  outcomeHistoryLength: number,
-  worseCount: number,
-  recoveryScore: number,
-  transferLearningScore: number
-): RecommendationAvailability => {
-  const adjustedPerformance = performanceScore + transferLearningScore;
-  if ((worseCount >= 2 || adjustedPerformance <= -4) && recoveryScore <= 1) return 'avoid_for_now';
-  if ((worseCount >= 1 || (outcomeHistoryLength >= 2 && adjustedPerformance < 0)) && recoveryScore < 2) return 'cooling_off';
-  if ((recoveryScore + transferLearningScore) >= 2 && (adjustedPerformance < 2 || worseCount >= 1)) return 'recovering';
-  return 'active';
-};
-
-const deriveConfidence = (
-  availability: RecommendationAvailability,
-  performanceScore: number,
-  stability: PersonalizedSupportSuggestion['stability'],
-  supportingCount: number,
-  learnedTransferTrust: number
-): RecommendationConfidence => {
-  const adjustedPerformance = performanceScore + learnedTransferTrust;
-  if (availability === 'avoid_for_now') return 'low';
-  if (adjustedPerformance >= 3) return 'high';
-  if (adjustedPerformance <= -2) return 'low';
-  if (stability === 'stable') return 'high';
-  return supportingCount > 0 ? 'medium' : 'low';
-};
-
 const assessTransferReviews = (
   recommendationId: string,
   currentState: CanonicalStateId,
@@ -100,6 +71,55 @@ const deriveTransferLearning = (reviews: TransferReviewRecord[]) => {
   return { transferLearningScore, learnedTransferTrust };
 };
 
+const deriveTrustWeights = (performanceScore: number, learnedTransferTrust: number) => {
+  const rawDirect = Math.max(1, Math.abs(performanceScore) + 2);
+  const rawTransfer = Math.min(rawDirect, Math.abs(learnedTransferTrust));
+  const total = rawDirect + rawTransfer;
+  const directTrustWeight = rawDirect;
+  const transferTrustWeight = rawTransfer;
+  const directTrustPercent = Math.round((directTrustWeight / total) * 100);
+  const transferTrustPercent = 100 - directTrustPercent;
+  return {
+    directTrustWeight,
+    transferTrustWeight,
+    directTrustPercent,
+    transferTrustPercent,
+  };
+};
+
+const deriveAvailability = (
+  performanceScore: number,
+  outcomeHistoryLength: number,
+  worseCount: number,
+  recoveryScore: number,
+  learnedTransferTrust: number
+): RecommendationAvailability => {
+  const adjustedPerformance = performanceScore + learnedTransferTrust;
+  if ((worseCount >= 2 || adjustedPerformance <= -4) && recoveryScore <= 1) return 'avoid_for_now';
+  if ((worseCount >= 1 || (outcomeHistoryLength >= 2 && adjustedPerformance < 0)) && recoveryScore < 2) return 'cooling_off';
+  if ((recoveryScore + Math.max(0, learnedTransferTrust)) >= 2 && (adjustedPerformance < 2 || worseCount >= 1)) return 'recovering';
+  return 'active';
+};
+
+const deriveConfidence = (
+  availability: RecommendationAvailability,
+  performanceScore: number,
+  stability: PersonalizedSupportSuggestion['stability'],
+  supportingCount: number,
+  learnedTransferTrust: number
+): RecommendationConfidence => {
+  const adjustedPerformance = performanceScore + learnedTransferTrust;
+  if (availability === 'avoid_for_now') return 'low';
+  if (adjustedPerformance >= 3) return 'high';
+  if (adjustedPerformance <= -2) return 'low';
+  if (stability === 'stable') return 'high';
+  return supportingCount > 0 ? 'medium' : 'low';
+};
+
+const buildTrustSummary = (directTrustPercent: number, transferTrustPercent: number) => {
+  return `${directTrustPercent}% earned from normal use, ${transferTrustPercent}% learned from supervised retries`;
+};
+
 const buildStateTrust = (
   recommendationId: string,
   stability: PersonalizedSupportSuggestion['stability'],
@@ -123,9 +143,10 @@ const buildStateTrust = (
     const performanceScore = outcomeHistory.reduce((sum, event) => sum + scoreOutcome(event.outcome), 0);
     const worseCount = outcomeHistory.filter((event) => event.outcome === 'worse').length;
     const recoveryScore = deriveRecoveryScore(outcomeHistory);
-    const availability = deriveAvailability(performanceScore, outcomeHistory.length, worseCount, recoveryScore, transferLearningScore);
+    const availability = deriveAvailability(performanceScore, outcomeHistory.length, worseCount, recoveryScore, learnedTransferTrust);
     const confidence = deriveConfidence(availability, performanceScore, stability, supportingCount, learnedTransferTrust);
-    const rankScore = performanceScore + recoveryScore + learnedTransferTrust + (confidence === 'high' ? 3 : confidence === 'medium' ? 1 : 0) - (availability === 'cooling_off' ? 4 : availability === 'avoid_for_now' ? 8 : 0);
+    const { directTrustWeight, transferTrustWeight, directTrustPercent, transferTrustPercent } = deriveTrustWeights(performanceScore, learnedTransferTrust);
+    const rankScore = performanceScore + recoveryScore + Math.min(learnedTransferTrust, directTrustWeight) + (confidence === 'high' ? 3 : confidence === 'medium' ? 1 : 0) - (availability === 'cooling_off' ? 4 : availability === 'avoid_for_now' ? 8 : 0);
 
     return {
       state,
@@ -136,6 +157,10 @@ const buildStateTrust = (
       rankScore,
       transferLearningScore,
       learnedTransferTrust,
+      directTrustWeight,
+      transferTrustWeight,
+      directTrustPercent,
+      transferTrustPercent,
       outcomeHistory,
     };
   });
@@ -147,27 +172,27 @@ const deriveTransferSafety = (currentState: CanonicalStateId, stateTrustMap: Rec
   const strongElsewhere = otherStates.some((entry) => entry.availability === 'active' && entry.rankScore >= 3);
 
   if (!current) {
-    return { transferSafety: 'caution', transferWarning: 'No current-state trust lane is available for this recommendation yet.' };
+    return { transferSafety: 'caution', transferWarning: 'No current-state history is available for this support yet.' };
   }
 
   if ((current.availability === 'avoid_for_now' || current.availability === 'cooling_off') && strongElsewhere) {
     return {
       transferSafety: current.availability === 'avoid_for_now' ? 'avoid' : 'caution',
-      transferWarning: `This support appears stronger in other states, but it is ${current.availability.replace('_', ' ')} for ${currentState.replace('_', ' ')}. Avoid transferring trust automatically.`,
+      transferWarning: `This support looks better in other states, but it is ${current.availability.replace('_', ' ')} for ${currentState.replace('_', ' ')}. Do not assume it will transfer cleanly.`,
     };
   }
 
   if (current.availability === 'recovering') {
     return {
       transferSafety: 'caution',
-      transferWarning: `This support is recovering for ${currentState.replace('_', ' ')}. Use it as a cautious re-test, not as a fully trusted transfer from another state.`,
+      transferWarning: `This support is still rebuilding trust for ${currentState.replace('_', ' ')}. Treat it like a careful retry, not a fully proven option yet.`,
     };
   }
 
   if (current.availability === 'avoid_for_now') {
     return {
       transferSafety: 'avoid',
-      transferWarning: `This support is currently avoid for now in ${currentState.replace('_', ' ')} even if it performs better elsewhere.`,
+      transferWarning: `This support is still avoid for now in ${currentState.replace('_', ' ')} even if it works better elsewhere.`,
     };
   }
 
@@ -191,6 +216,7 @@ export const buildRecommendationLedger = (
     const currentStateTrust = stateTrustMap.find((entry) => entry.state === currentState)!;
     const transfer = deriveTransferSafety(currentState, stateTrustMap);
     const assessedTransferReviews = assessTransferReviews(recommendationId, currentState, transferReviews, supportLog);
+    const trustSummary = buildTrustSummary(currentStateTrust.directTrustPercent, currentStateTrust.transferTrustPercent);
 
     return {
       id: recommendationId,
@@ -205,9 +231,9 @@ export const buildRecommendationLedger = (
       reason: suggestion.reason,
       appearedBecause:
         currentStateTrust.transferLearningScore > 0
-          ? 'This lane has learned trust from justified supervised transfer attempts, which is now strengthening the recommendation alongside direct evidence.'
+          ? 'This state has gained some trust from supervised retries that turned out well, but normal same-state use still carries most of the weight.'
           : currentStateTrust.transferLearningScore < 0
-            ? 'This lane has been weakened by supervised transfer attempts that did not hold up, so caution has increased beyond the direct-use history alone.'
+            ? 'This state has been weakened by supervised retries that did not hold up, so caution is stronger here now.'
             : currentStateTrust.availability === 'avoid_for_now'
               ? 'This matched your current state before, but repeated negative outcomes in this same state have pushed it into an avoid-for-now state.'
               : currentStateTrust.availability === 'cooling_off'
@@ -217,6 +243,7 @@ export const buildRecommendationLedger = (
                   : suggestion.stability === 'stable'
                     ? 'It matched active evidence for your current state and did not hit active instability warnings.'
                     : 'It matched your current state, but some related evidence is still under review or retired, so it is shown cautiously.',
+      trustSummary,
       supportingEvidence: supporting.flatMap((item) => item.references).slice(0, 4),
       weakeningEvidence: weakening.flatMap((item) => item.references).slice(0, 4),
       outcomeHistory: currentStateTrust.outcomeHistory,
@@ -225,6 +252,10 @@ export const buildRecommendationLedger = (
       recoveryScore: currentStateTrust.recoveryScore,
       transferLearningScore: currentStateTrust.transferLearningScore,
       learnedTransferTrust: currentStateTrust.learnedTransferTrust,
+      directTrustWeight: currentStateTrust.directTrustWeight,
+      transferTrustWeight: currentStateTrust.transferTrustWeight,
+      directTrustPercent: currentStateTrust.directTrustPercent,
+      transferTrustPercent: currentStateTrust.transferTrustPercent,
       stateTrustMap,
       transferReviews: assessedTransferReviews,
     };
