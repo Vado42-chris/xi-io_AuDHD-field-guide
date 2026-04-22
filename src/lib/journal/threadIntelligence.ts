@@ -41,6 +41,8 @@ export const buildThreadMemoryEntry = (thread: JournalThread): ThreadMemoryEntry
     confirmedTags: thread.memory?.confirmedTags ?? thread.tags,
     stressorTags,
     destresserTags,
+    status: thread.memory?.status ?? 'suggested',
+    notes: thread.memory?.notes,
     lastStructuredAt: Date.now(),
   };
 };
