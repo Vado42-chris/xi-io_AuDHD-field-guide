@@ -9,6 +9,7 @@ import { LearnMeHome } from '../features/learn-me/LearnMeHome';
 import { AppSection } from '../types/core';
 import { APP_SECTIONS, SECTION_LABELS } from './appShellConfig';
 import { useAppShellController } from './useAppShellController';
+import { useFeatureViewProps } from './useFeatureViewProps';
 
 const NavButton: React.FC<{
   section: AppSection;
@@ -30,75 +31,21 @@ const NavButton: React.FC<{
 
 export const AppShell: React.FC = () => {
   const controller = useAppShellController();
+  const viewProps = useFeatureViewProps(controller, controller.setSelectorOpen);
 
   const activeView = useMemo(() => {
     switch (controller.activeSection) {
       case 'journal':
-        return (
-          <JournalHome
-            threads={controller.journalThreads}
-            currentState={controller.currentState}
-            onCreateThread={controller.handleCreateThread}
-            onOpenThread={controller.handleOpenThread}
-            onSendMessage={controller.handleSendMessage}
-            onKeepThreadState={controller.handleKeepThreadState}
-            onApplySuggestedTags={controller.handleApplySuggestedTags}
-            onRequestStateUpdate={() => controller.setSelectorOpen(true)}
-          />
-        );
+        return <JournalHome {...viewProps.journalProps} />;
       case 'learn_me':
-        return (
-          <LearnMeHome
-            signals={controller.learningSignals}
-            sensorySupports={controller.sensorySupports}
-            memoryEntries={controller.memoryEntries}
-            memorySummary={controller.memorySummary}
-            supportEvidence={controller.supportEvidence}
-            supportEvidenceSummary={controller.supportEvidenceSummary}
-            evidenceItems={controller.evidenceItems}
-            evidenceSummary={controller.evidenceSummary}
-            summary={controller.patternSummary}
-            thresholdSummary={controller.thresholdSummary}
-            onConfirmSignal={controller.handleConfirmSignal}
-            onConfirmSensory={controller.handleConfirmSensory}
-            onToggleEvidenceContested={controller.handleToggleEvidenceContested}
-            onResolveEvidence={controller.handleResolveEvidence}
-            onSaveMemoryEntry={controller.handleSaveMemoryEntry}
-          />
-        );
+        return <LearnMeHome {...viewProps.learnMeProps} />;
       case 'customize':
-        return (
-          <CustomizeHome
-            customStates={controller.customStates}
-            sensorySupports={controller.sensorySupports}
-            onRenameState={controller.handleRenameState}
-            onToggleStateFavorite={controller.handleToggleStateFavorite}
-            onToggleStateHidden={controller.handleToggleStateHidden}
-            onToggleComfortFavorite={controller.handleToggleComfortFavorite}
-            onToggleComfortHidden={controller.handleToggleComfortHidden}
-          />
-        );
+        return <CustomizeHome {...viewProps.customizeProps} />;
       case 'help_now':
       default:
-        return (
-          <HelpNowHome
-            currentState={controller.currentState}
-            thresholdSummary={controller.thresholdSummary}
-            personalizedSupports={controller.personalizedSupports}
-            recommendationLedger={controller.recommendationLedger}
-            activeTrial={controller.activeTrial}
-            onApplyRouteState={controller.handleApplyRouteState}
-            onStartTrial={controller.handleStartTrial}
-            onClearTrial={controller.handleClearTrial}
-            onLogOutcome={controller.handleLogOutcome}
-            onSaveTrialReflection={controller.handleSaveTrialReflection}
-            onReviewTransfer={controller.handleReviewTransfer}
-            onRevalidateSupport={controller.handleRevalidateSupport}
-            recentOutcomeSummary={controller.recentOutcomeSummary}
-          />
-        );
+        return <HelpNowHome {...viewProps.helpNowProps} />;
     }
-  }, [controller]);
+  }, [controller.activeSection, viewProps]);
 
   return (
     <div className="fg-app-shell">
