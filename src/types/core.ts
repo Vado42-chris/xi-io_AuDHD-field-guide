@@ -170,6 +170,16 @@ export interface RecommendationOutcomeEvent {
   supportRoute: string;
 }
 
+export interface RecommendationStateTrust {
+  state: CanonicalStateId;
+  confidence: RecommendationConfidence;
+  availability: RecommendationAvailability;
+  performanceScore: number;
+  recoveryScore: number;
+  rankScore: number;
+  outcomeHistory: RecommendationOutcomeEvent[];
+}
+
 export interface RecommendationLedgerItem {
   id: string;
   title: string;
@@ -186,6 +196,7 @@ export interface RecommendationLedgerItem {
   performanceScore: number;
   rankScore: number;
   recoveryScore: number;
+  stateTrustMap: RecommendationStateTrust[];
 }
 
 export interface JournalThread {
