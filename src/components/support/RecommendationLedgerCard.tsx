@@ -13,7 +13,8 @@ export const RecommendationLedgerCard: React.FC<RecommendationLedgerCardProps> =
       <div className="fg-help-meta" style={{ marginTop: 12 }}>
         <div className="fg-meta-pill fg-glass">Confidence: {item.confidence}</div>
         <div className="fg-meta-pill fg-glass">Stability: {item.stability}</div>
-        <div className="fg-meta-pill fg-glass">State: {item.state}</div>
+        <div className="fg-meta-pill fg-glass">Availability: {item.availability}</div>
+        <div className="fg-meta-pill fg-glass">Rank: {item.rankScore}</div>
         <div className="fg-meta-pill fg-glass">Performance: {item.performanceScore}</div>
       </div>
       <p className="fg-card-copy" style={{ marginTop: 12 }}>{item.appearedBecause}</p>
