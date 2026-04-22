@@ -45,6 +45,7 @@ export interface FeatureViewProps {
     personalizedSupports: AppShellController['personalizedSupports'];
     recommendationLedger: AppShellController['recommendationLedger'];
     activeTrial: AppShellController['activeTrial'];
+    favoriteComfortTools: AppShellController['sensorySupports'];
     onApplyRouteState: AppShellController['handleApplyRouteState'];
     onStartTrial: AppShellController['handleStartTrial'];
     onClearTrial: AppShellController['handleClearTrial'];
@@ -105,6 +106,7 @@ export const useFeatureViewProps = (
       personalizedSupports: controller.personalizedSupports,
       recommendationLedger: controller.recommendationLedger,
       activeTrial: controller.activeTrial,
+      favoriteComfortTools: controller.sensorySupports.filter((record) => record.favorite && !record.hidden),
       onApplyRouteState: controller.handleApplyRouteState,
       onStartTrial: controller.handleStartTrial,
       onClearTrial: controller.handleClearTrial,
