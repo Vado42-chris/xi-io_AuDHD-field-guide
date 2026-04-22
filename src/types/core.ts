@@ -25,6 +25,7 @@ export type TransferSafety = 'safe' | 'caution' | 'avoid';
 export type TransferDecision = 'approved' | 'rejected';
 export type TransferOutcomeAssessment = 'pending' | 'justified' | 'not_justified';
 export type TrustMaturity = 'mostly_retry_based' | 'blended' | 'proven_in_normal_use';
+export type TrustFreshness = 'fresh' | 'aging' | 'needs_recheck';
 
 export interface CurrentState {
   canonicalId: CanonicalStateId;
@@ -189,6 +190,9 @@ export interface RecommendationStateTrust {
   transferTrustPercent: number;
   trustMaturity: TrustMaturity;
   maturitySummary: string;
+  trustFreshness: TrustFreshness;
+  freshnessSummary: string;
+  lastUsedAt?: number;
   outcomeHistory: RecommendationOutcomeEvent[];
 }
 
@@ -220,6 +224,9 @@ export interface RecommendationLedgerItem {
   trustSummary: string;
   trustMaturity: TrustMaturity;
   maturitySummary: string;
+  trustFreshness: TrustFreshness;
+  freshnessSummary: string;
+  lastUsedAt?: number;
   supportingEvidence: PatternEvidenceReference[];
   weakeningEvidence: PatternEvidenceReference[];
   outcomeHistory: RecommendationOutcomeEvent[];
