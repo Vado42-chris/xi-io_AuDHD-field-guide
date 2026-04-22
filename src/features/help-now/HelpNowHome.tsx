@@ -16,7 +16,7 @@ interface HelpNowHomeProps {
   personalizedSupports: PersonalizedSupportSuggestion[];
   recommendationLedger: RecommendationLedgerItem[];
   onApplyRouteState: (canonicalId: CanonicalStateId) => void;
-  onLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome) => void;
+  onLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => void;
   recentOutcomeSummary?: string;
 }
 
@@ -96,7 +96,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
 
   const handleOutcome = (outcome: SupportOutcome) => {
     if (!selectedSupportTitle) return;
-    onLogOutcome(selectedSupportTitle, selectedRoute, outcome);
+    onLogOutcome(selectedSupportTitle, selectedRoute, outcome, selectedLedgerItem?.id);
   };
 
   const hasTailoredSupports = personalizedSupports.length > 0;
@@ -109,7 +109,8 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <h1 className="fg-section-title">A calmer first action, not a dashboard.</h1>
         <p className="fg-section-body">
           Pick what feels closest right now, get a low-demand starter support, and log whether it helped.
-          Supports can now explain why they appeared, what evidence is backing them, and what evidence is weakening confidence.
+          Supports can now explain why they appeared, what evidence is backing them, what evidence is weakening confidence,
+          and whether that exact recommendation has helped before.
         </p>
       </div>
 
