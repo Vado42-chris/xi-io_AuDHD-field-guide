@@ -8,6 +8,7 @@ import {
   DEFAULT_IDENTITY,
   JournalThread,
   LearningSignal,
+  MemoryEntryStatus,
   MemoryVaultEntry,
   MemoryVaultSummary,
   PatternReviewSummary,
@@ -54,6 +55,7 @@ export interface AppShellController {
   handleConfirmSignal: (signalId: string) => void;
   handleConfirmSensory: (recordId: string) => void;
   handleConfirmMemoryEntry: (entryId: string) => void;
+  handleSaveMemoryEntry: (entryId: string, summary: string, confirmedTags: string[], status: MemoryEntryStatus, notes: string) => void;
   handleRenameState: (stateId: string, label: string) => void;
   handleToggleStateFavorite: (stateId: string) => void;
   handleToggleStateHidden: (stateId: string) => void;
@@ -163,6 +165,7 @@ export const useAppShellController = (): AppShellController => {
     handleConfirmSignal,
     handleConfirmSensory,
     handleConfirmMemoryEntry: journalFeature.handleConfirmMemoryEntry,
+    handleSaveMemoryEntry: journalFeature.handleSaveMemoryEntry,
     handleRenameState: customizeFeature.handleRenameState,
     handleToggleStateFavorite: customizeFeature.handleToggleStateFavorite,
     handleToggleStateHidden: customizeFeature.handleToggleStateHidden,
