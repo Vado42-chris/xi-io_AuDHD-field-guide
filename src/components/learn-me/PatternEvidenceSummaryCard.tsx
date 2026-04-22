@@ -14,6 +14,8 @@ export const PatternEvidenceSummaryCard: React.FC<PatternEvidenceSummaryCardProp
         <div className="fg-meta-pill fg-glass">Items: {summary.totalItems}</div>
         <div className="fg-meta-pill fg-glass">Repeated: {summary.repeatedItems}</div>
         <div className="fg-meta-pill fg-glass">Contested: {summary.contestedItems}</div>
+        <div className="fg-meta-pill fg-glass">Under review: {summary.underReviewItems}</div>
+        <div className="fg-meta-pill fg-glass">Retired: {summary.retiredItems}</div>
       </div>
     </section>
   );
