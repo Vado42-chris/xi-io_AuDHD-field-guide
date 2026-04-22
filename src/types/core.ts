@@ -20,6 +20,7 @@ export type MemoryEntryStatus = 'suggested' | 'confirmed' | 'outdated' | 'supers
 export type PatternResolutionStatus = 'active' | 'under_review' | 'retired';
 export type SuggestionStability = 'stable' | 'cautious';
 export type RecommendationConfidence = 'low' | 'medium' | 'high';
+export type RecommendationAvailability = 'active' | 'cooling_off' | 'avoid_for_now';
 
 export interface CurrentState {
   canonicalId: CanonicalStateId;
@@ -176,12 +177,14 @@ export interface RecommendationLedgerItem {
   body: string;
   confidence: RecommendationConfidence;
   stability: SuggestionStability;
+  availability: RecommendationAvailability;
   reason: string;
   appearedBecause: string;
   supportingEvidence: PatternEvidenceReference[];
   weakeningEvidence: PatternEvidenceReference[];
   outcomeHistory: RecommendationOutcomeEvent[];
   performanceScore: number;
+  rankScore: number;
 }
 
 export interface JournalThread {
