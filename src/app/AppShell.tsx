@@ -60,6 +60,7 @@ export const AppShell: React.FC = () => {
             onConfirmSignal={controller.handleConfirmSignal}
             onConfirmSensory={controller.handleConfirmSensory}
             onToggleEvidenceContested={controller.handleToggleEvidenceContested}
+            onResolveEvidence={controller.handleResolveEvidence}
             onSaveMemoryEntry={controller.handleSaveMemoryEntry}
           />
         );
