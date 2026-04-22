@@ -19,11 +19,10 @@ import {
 } from '../types/core';
 import { readLocal, writeLocal } from '../lib/storage/localStore';
 import { deriveLearningSignals, deriveSensorySupports } from '../lib/patterns/learningSignals';
-import { buildPatternReviewSummary } from '../lib/patterns/patternReview';
-import { buildPersonalizedSuggestions, buildThresholdSummary } from '../lib/patterns/personalizationThreshold';
-import { buildThreadMemoryEntry } from '../lib/journal/threadIntelligence';
-import { buildMemoryVaultEntries, buildMemoryVaultSummary } from '../lib/memory/memoryVault';
-import { makeDefaultThreads, makeInitialCurrentState, makeStateSnapshot } from './appShellDefaults';
+import { buildPersonalizedSuggestions } from '../lib/patterns/personalizationThreshold';
+import { makeDefaultThreads, makeInitialCurrentState } from './appShellDefaults';
+import { useJournalFeatureController } from './useJournalFeatureController';
+import { useLearningFeatureController } from './useLearningFeatureController';
 
 export interface AppShellController {
   activeSection: AppSection;
@@ -107,12 +106,6 @@ export const useAppShellController = (): AppShellController => {
     return `${latest.supportTitle} · ${latest.outcome.replace('_', ' ')}`;
   }, [supportLog]);
 
-  const memoryEntries = useMemo(() => buildMemoryVaultEntries(journalThreads), [journalThreads]);
-  const memorySummary = useMemo(() => buildMemoryVaultSummary(memoryEntries), [memoryEntries]);
-  const patternSummary = useMemo(() => buildPatternReviewSummary(learningSignals, sensorySupports), [learningSignals, sensorySupports]);
-  const thresholdSummary = useMemo(() => buildThresholdSummary(learningSignals, sensorySupports), [learningSignals, sensorySupports]);
-  const personalizedSupports = useMemo(() => buildPersonalizedSuggestions(currentState.canonicalId, thresholdSummary, sensorySupports), [currentState.canonicalId, thresholdSummary, sensorySupports]);
-
   const updateCurrentState = (partial: Partial<CurrentState>) => {
     setCurrentState((prev) => ({ ...prev, ...partial, updatedAt: Date.now(), source: partial.source ?? 'user' }));
   };
@@ -145,71 +138,25 @@ export const useAppShellController = (): AppShellController => {
     setSupportLog((prev) => [entry, ...prev].slice(0, 20));
   };
 
-  const handleCreateThread = () => {
-    const snapshot = makeStateSnapshot(currentState);
-    const baseThread: JournalThread = {
-      id: `thread-${Date.now()}`,
-      title: `${currentState.label} check-in`,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      startingState: snapshot,
-      currentState: snapshot,
-      summary: `Started from ${currentState.label.toLowerCase()} · ${currentState.intensity}.`,
-      tags: [currentState.canonicalId],
-      messages: [{ id: `m-${Date.now()}`, role: 'ibal', text: `Starting from ${currentState.label.toLowerCase()} · ${currentState.intensity}. You can keep this brief. What feels most important to capture right now?`, createdAt: Date.now() }],
-      transitions: [],
-    };
-    const newThread = { ...baseThread, memory: buildThreadMemoryEntry(baseThread) };
-    setJournalThreads((prev) => [newThread, ...prev]);
-    setActiveSection('journal');
-  };
+  const journalFeature = useJournalFeatureController({
+    currentState,
+    setJournalThreads,
+    setActiveSection: () => setActiveSection('journal'),
+  });
 
-  const handleOpenThread = (threadId: string) => {
-    setJournalThreads((prev) => {
-      const found = prev.find((thread) => thread.id === threadId);
-      if (!found) return prev;
-      return [found, ...prev.filter((thread) => thread.id !== threadId)];
-    });
-  };
+  const learningFeature = useLearningFeatureController({
+    journalThreads,
+    learningSignals,
+    sensorySupports,
+  });
 
-  const handleSendMessage = (threadId: string, text: string) => {
-    setJournalThreads((prev) => prev.map((thread) => {
-      if (thread.id !== threadId) return thread;
-      const userMessage = { id: `m-${Date.now()}-u`, role: 'user' as const, text, createdAt: Date.now() };
-      const ibalMessage = { id: `m-${Date.now()}-i`, role: 'ibal' as const, text: 'Noted. I will treat this as part of the same thread and keep the context connected. After this send, check whether your state still fits.', createdAt: Date.now() + 1 };
-      const nextThread: JournalThread = { ...thread, updatedAt: Date.now(), summary: text.length > 120 ? `${text.slice(0, 117)}...` : text, messages: [...thread.messages, userMessage, ibalMessage] };
-      return { ...nextThread, memory: buildThreadMemoryEntry(nextThread) };
-    }));
-  };
-
-  const handleKeepThreadState = (threadId: string) => {
-    setJournalThreads((prev) => prev.map((thread) => {
-      if (thread.id !== threadId) return thread;
-      const nextState = makeStateSnapshot(currentState);
-      const transition = { id: `transition-${Date.now()}`, from: thread.currentState, to: nextState, createdAt: Date.now(), source: 'post_send' as const };
-      return { ...thread, updatedAt: Date.now(), currentState: nextState, transitions: [...thread.transitions, transition] };
-    }));
-  };
-
-  const handleApplySuggestedTags = (threadId: string) => {
-    setJournalThreads((prev) => prev.map((thread) => {
-      if (thread.id !== threadId || !thread.memory) return thread;
-      const mergedTags = Array.from(new Set([...thread.tags, ...thread.memory.suggestedTags]));
-      return { ...thread, tags: mergedTags, memory: { ...thread.memory, confirmedTags: mergedTags } };
-    }));
-  };
+  const personalizedSupports = useMemo(
+    () => buildPersonalizedSuggestions(currentState.canonicalId, learningFeature.thresholdSummary, sensorySupports),
+    [currentState.canonicalId, learningFeature.thresholdSummary, sensorySupports]
+  );
 
   const handleConfirmSignal = (signalId: string) => setLearningSignals((prev) => prev.map((signal) => (signal.id === signalId ? { ...signal, confirmed: true } : signal)));
   const handleConfirmSensory = (recordId: string) => setSensorySupports((prev) => prev.map((record) => (record.id === recordId ? { ...record, confirmed: true } : record)));
-
-  const handleConfirmMemoryEntry = (entryId: string) => {
-    const threadId = entryId.replace('memory-', '');
-    setJournalThreads((prev) => prev.map((thread) => {
-      if (thread.id !== threadId || !thread.memory) return thread;
-      const mergedTags = Array.from(new Set([...thread.tags, ...thread.memory.confirmedTags]));
-      return { ...thread, tags: mergedTags, memory: { ...thread.memory, confirmedTags: mergedTags } };
-    }));
-  };
 
   const handleRenameState = (stateId: string, label: string) => {
     const cleaned = label.trimStart();
@@ -238,10 +185,10 @@ export const useAppShellController = (): AppShellController => {
     sensorySupports,
     selectorOpen,
     recentOutcomeSummary,
-    memoryEntries,
-    memorySummary,
-    patternSummary,
-    thresholdSummary,
+    memoryEntries: learningFeature.memoryEntries,
+    memorySummary: learningFeature.memorySummary,
+    patternSummary: learningFeature.patternSummary,
+    thresholdSummary: learningFeature.thresholdSummary,
     personalizedSupports,
     setActiveSection,
     setSelectorOpen,
@@ -249,14 +196,14 @@ export const useAppShellController = (): AppShellController => {
     handleSelectIntensity,
     handleApplyRouteState,
     handleLogOutcome,
-    handleCreateThread,
-    handleOpenThread,
-    handleSendMessage,
-    handleKeepThreadState,
-    handleApplySuggestedTags,
+    handleCreateThread: journalFeature.handleCreateThread,
+    handleOpenThread: journalFeature.handleOpenThread,
+    handleSendMessage: journalFeature.handleSendMessage,
+    handleKeepThreadState: journalFeature.handleKeepThreadState,
+    handleApplySuggestedTags: journalFeature.handleApplySuggestedTags,
     handleConfirmSignal,
     handleConfirmSensory,
-    handleConfirmMemoryEntry,
+    handleConfirmMemoryEntry: journalFeature.handleConfirmMemoryEntry,
     handleRenameState,
     handleToggleStateFavorite,
     handleToggleStateHidden,
