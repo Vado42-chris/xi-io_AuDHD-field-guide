@@ -89,6 +89,7 @@ export const AppShell: React.FC = () => {
             onStartTrial={controller.handleStartTrial}
             onClearTrial={controller.handleClearTrial}
             onLogOutcome={controller.handleLogOutcome}
+            onSaveTrialReflection={controller.handleSaveTrialReflection}
             onReviewTransfer={controller.handleReviewTransfer}
             onRevalidateSupport={controller.handleRevalidateSupport}
             recentOutcomeSummary={controller.recentOutcomeSummary}
