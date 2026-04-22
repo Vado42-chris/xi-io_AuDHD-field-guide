@@ -161,6 +161,14 @@ export interface PatternEvidenceSummary {
   retiredItems: number;
 }
 
+export interface RecommendationOutcomeEvent {
+  id: string;
+  outcome: SupportOutcome;
+  createdAt: number;
+  stateLabel: string;
+  supportRoute: string;
+}
+
 export interface RecommendationLedgerItem {
   id: string;
   title: string;
@@ -172,6 +180,8 @@ export interface RecommendationLedgerItem {
   appearedBecause: string;
   supportingEvidence: PatternEvidenceReference[];
   weakeningEvidence: PatternEvidenceReference[];
+  outcomeHistory: RecommendationOutcomeEvent[];
+  performanceScore: number;
 }
 
 export interface JournalThread {
@@ -202,6 +212,7 @@ export interface SupportLogEntry {
   stateCanonicalId: CanonicalStateId;
   supportTitle: string;
   supportRoute: string;
+  recommendationId?: string;
   outcome: SupportOutcome;
   createdAt: number;
 }
