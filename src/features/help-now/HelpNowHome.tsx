@@ -12,6 +12,7 @@ import {
   SupportOutcome,
   ThresholdSummary,
   TransferDecision,
+  TrialReflectionRecord,
 } from '../../types/core';
 
 interface HelpNowHomeProps {
@@ -24,6 +25,7 @@ interface HelpNowHomeProps {
   onStartTrial: (recommendationId: string, supportTitle: string) => void;
   onClearTrial: () => void;
   onLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => void;
+  onSaveTrialReflection: (supportTitle: string, outcome: SupportOutcome, prompt: TrialReflectionRecord['prompt'], note: string, recommendationId?: string) => void;
   onReviewTransfer: (recommendationId: string, transferSafety: RecommendationLedgerItem['transferSafety'], transferWarning: string | undefined, decision: TransferDecision, reason: string) => void;
   onRevalidateSupport: (recommendationId: string, result: RevalidationResult, note: string) => void;
   recentOutcomeSummary?: string;
@@ -109,6 +111,12 @@ const formatTrialElapsed = (startedAt: number) => {
   return `Started ${hours} hours ago`;
 };
 
+const getReflectionPrompt = (outcome: SupportOutcome): { id: TrialReflectionRecord['prompt']; label: string } => {
+  if (outcome === 'helped') return { id: 'what_helped', label: 'What part helped?' };
+  if (outcome === 'worse') return { id: 'what_made_it_harder', label: 'What made it harder?' };
+  return { id: 'what_changed', label: 'What changed?' };
+};
+
 export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   currentState,
   thresholdSummary,
@@ -118,12 +126,15 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   onStartTrial,
   onClearTrial,
   onLogOutcome,
+  onSaveTrialReflection,
   onReviewTransfer,
   onRevalidateSupport,
   recentOutcomeSummary,
 }) => {
   const [selectedRoute, setSelectedRoute] = useState<CanonicalStateId>(currentState.canonicalId);
   const [selectedSupportTitle, setSelectedSupportTitle] = useState<string | null>(null);
+  const [pendingReflection, setPendingReflection] = useState<{ supportTitle: string; outcome: SupportOutcome; recommendationId?: string } | null>(null);
+  const [reflectionNote, setReflectionNote] = useState('');
 
   const activeSupports = useMemo(() => STARTER_SUPPORTS[selectedRoute] || STARTER_SUPPORTS.unclear, [selectedRoute]);
   const groupedRecommendations = useMemo(() => groupRecommendations(recommendationLedger), [recommendationLedger]);
@@ -141,6 +152,16 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
     const recommendationIdToUse = selectedLedgerItem?.id || activeTrial?.recommendationId;
     if (!titleToUse) return;
     onLogOutcome(titleToUse, selectedRoute, outcome, recommendationIdToUse);
+    setPendingReflection({ supportTitle: titleToUse, outcome, recommendationId: recommendationIdToUse });
+    setReflectionNote('');
+  };
+
+  const handleSaveReflection = () => {
+    if (!pendingReflection || !reflectionNote.trim()) return;
+    const prompt = getReflectionPrompt(pendingReflection.outcome);
+    onSaveTrialReflection(pendingReflection.supportTitle, pendingReflection.outcome, prompt.id, reflectionNote, pendingReflection.recommendationId);
+    setPendingReflection(null);
+    setReflectionNote('');
   };
 
   const hasTailoredSupports = recommendationLedger.length > 0;
@@ -169,6 +190,8 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
       </div>
     );
   };
+
+  const reflectionPrompt = pendingReflection ? getReflectionPrompt(pendingReflection.outcome) : null;
 
   return (
     <div className="fg-content-card fg-glass fg-help-layout">
@@ -278,6 +301,22 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
             </button>
           ))}
         </div>
+        {pendingReflection && reflectionPrompt ? (
+          <div className="fg-panel-stack fg-glass" style={{ padding: 14, borderRadius: 14, marginTop: 14 }}>
+            <div className="fg-kicker">Optional note</div>
+            <div className="fg-card-copy">{reflectionPrompt.label}</div>
+            <textarea
+              className="fg-textarea"
+              value={reflectionNote}
+              onChange={(e) => setReflectionNote(e.target.value)}
+              placeholder="You can leave a short note here, or skip it."
+            />
+            <div className="fg-chip-row">
+              <button type="button" className="fg-choice-chip fg-glass" onClick={handleSaveReflection}>Save note</button>
+              <button type="button" className="fg-choice-chip fg-glass" onClick={() => { setPendingReflection(null); setReflectionNote(''); }}>Skip</button>
+            </div>
+          </div>
+        ) : null}
       </section>
     </div>
   );
