@@ -11,6 +11,8 @@ import {
   MemoryEntryStatus,
   MemoryVaultEntry,
   MemoryVaultSummary,
+  PatternEvidenceItem,
+  PatternEvidenceSummary,
   PatternReviewSummary,
   SensorySupportRecord,
   StateIntensity,
@@ -38,6 +40,8 @@ export interface AppShellController {
   recentOutcomeSummary?: string;
   memoryEntries: MemoryVaultEntry[];
   memorySummary: MemoryVaultSummary;
+  evidenceItems: PatternEvidenceItem[];
+  evidenceSummary: PatternEvidenceSummary;
   patternSummary: PatternReviewSummary;
   thresholdSummary: ThresholdSummary;
   personalizedSupports: ReturnType<typeof useHelpNowFeatureController>['personalizedSupports'];
@@ -55,6 +59,7 @@ export interface AppShellController {
   handleConfirmSignal: (signalId: string) => void;
   handleConfirmSensory: (recordId: string) => void;
   handleConfirmMemoryEntry: (entryId: string) => void;
+  handleToggleEvidenceContested: (itemId: string) => void;
   handleSaveMemoryEntry: (entryId: string, summary: string, confirmedTags: string[], status: MemoryEntryStatus, notes: string) => void;
   handleRenameState: (stateId: string, label: string) => void;
   handleToggleStateFavorite: (stateId: string) => void;
@@ -113,6 +118,7 @@ export const useAppShellController = (): AppShellController => {
     journalThreads,
     learningSignals,
     sensorySupports,
+    supportLog,
   });
 
   const helpNowFeature = useHelpNowFeatureController({
@@ -148,6 +154,8 @@ export const useAppShellController = (): AppShellController => {
     recentOutcomeSummary: helpNowFeature.recentOutcomeSummary,
     memoryEntries: learningFeature.memoryEntries,
     memorySummary: learningFeature.memorySummary,
+    evidenceItems: learningFeature.evidenceItems,
+    evidenceSummary: learningFeature.evidenceSummary,
     patternSummary: learningFeature.patternSummary,
     thresholdSummary: learningFeature.thresholdSummary,
     personalizedSupports: helpNowFeature.personalizedSupports,
@@ -165,6 +173,7 @@ export const useAppShellController = (): AppShellController => {
     handleConfirmSignal,
     handleConfirmSensory,
     handleConfirmMemoryEntry: journalFeature.handleConfirmMemoryEntry,
+    handleToggleEvidenceContested: learningFeature.handleToggleEvidenceContested,
     handleSaveMemoryEntry: journalFeature.handleSaveMemoryEntry,
     handleRenameState: customizeFeature.handleRenameState,
     handleToggleStateFavorite: customizeFeature.handleToggleStateFavorite,
