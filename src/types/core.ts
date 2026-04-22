@@ -18,6 +18,7 @@ export type ConfidenceLevel = 'early' | 'learning' | 'trusted';
 export type PersonalizationReadiness = 'not_ready' | 'warming_up' | 'ready';
 export type MemoryEntryStatus = 'suggested' | 'confirmed' | 'outdated' | 'superseded';
 export type PatternResolutionStatus = 'active' | 'under_review' | 'retired';
+export type SuggestionStability = 'stable' | 'cautious';
 
 export interface CurrentState {
   canonicalId: CanonicalStateId;
@@ -229,7 +230,10 @@ export interface ThresholdSummary {
   confirmedEvidence: number;
   targetEvidence: number;
   contradictionCount: number;
+  unstableEvidenceCount: number;
+  retiredEvidenceCount: number;
   canPersonalize: boolean;
+  suggestionStability: SuggestionStability;
   message: string;
 }
 
@@ -238,6 +242,7 @@ export interface PersonalizedSupportSuggestion {
   body: string;
   reason: string;
   state: CanonicalStateId;
+  stability: SuggestionStability;
 }
 
 export const DEFAULT_CUSTOM_STATES: CustomStateLabel[] = [
