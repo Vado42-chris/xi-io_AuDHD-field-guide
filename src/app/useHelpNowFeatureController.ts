@@ -9,6 +9,7 @@ import {
   RevalidationResult,
   SensorySupportRecord,
   StateIntensity,
+  SupportAttempt,
   SupportLogEntry,
   SupportOutcome,
   TransferDecision,
@@ -27,13 +28,13 @@ interface HelpNowFeatureControllerArgs {
   supportLog: SupportLogEntry[];
   transferReviews: TransferReviewRecord[];
   revalidationRecords: RevalidationRecord[];
-  activeTrial: ActiveTrial | null;
+  activeAttempt: SupportAttempt | null;
   trialReflections: TrialReflectionRecord[];
   setCurrentState: Dispatch<SetStateAction<CurrentState>>;
   setSupportLog: Dispatch<SetStateAction<SupportLogEntry[]>>;
   setTransferReviews: Dispatch<SetStateAction<TransferReviewRecord[]>>;
   setRevalidationRecords: Dispatch<SetStateAction<RevalidationRecord[]>>;
-  setActiveTrial: Dispatch<SetStateAction<ActiveTrial | null>>;
+  setActiveAttempt: Dispatch<SetStateAction<SupportAttempt | null>>;
   setTrialReflections: Dispatch<SetStateAction<TrialReflectionRecord[]>>;
   setActiveSection: (section: 'help_now') => void;
 }
@@ -63,19 +64,28 @@ export const useHelpNowFeatureController = ({
   supportLog,
   transferReviews,
   revalidationRecords,
-  activeTrial,
+  activeAttempt,
   trialReflections,
   setCurrentState,
   setSupportLog,
   setTransferReviews,
   setRevalidationRecords,
-  setActiveTrial,
+  setActiveAttempt,
   setTrialReflections,
   setActiveSection,
 }: HelpNowFeatureControllerArgs): HelpNowFeatureController => {
   const updateCurrentState = (partial: Partial<CurrentState>) => {
     setCurrentState((prev) => ({ ...prev, ...partial, updatedAt: Date.now(), source: partial.source ?? 'user' }));
   };
+
+  const activeTrial: ActiveTrial | null = activeAttempt
+    ? {
+        recommendationId: activeAttempt.recommendationId ?? '',
+        supportTitle: activeAttempt.supportTitle,
+        stateCanonicalId: activeAttempt.stateCanonicalId,
+        startedAt: activeAttempt.startedAt,
+      }
+    : null;
 
   const recentOutcomeSummary = useMemo(() => {
     const latest = supportLog[0];
@@ -109,15 +119,17 @@ export const useHelpNowFeatureController = ({
   };
 
   const handleStartTrial = (recommendationId: string, supportTitle: string) => {
-    setActiveTrial({
+    setActiveAttempt({
+      id: `attempt-${Date.now()}`,
       recommendationId,
       supportTitle,
+      kind: 'normal',
       stateCanonicalId: currentState.canonicalId,
       startedAt: Date.now(),
     });
   };
 
-  const handleClearTrial = () => setActiveTrial(null);
+  const handleClearTrial = () => setActiveAttempt(null);
 
   const handleLogOutcome = (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => {
     const entry: SupportLogEntry = {
@@ -131,8 +143,17 @@ export const useHelpNowFeatureController = ({
       createdAt: Date.now(),
     };
     setSupportLog((prev) => [entry, ...prev].slice(0, 40));
-    if (activeTrial && (!recommendationId || activeTrial.recommendationId === recommendationId)) {
-      setActiveTrial(null);
+    if (activeAttempt && (!recommendationId || activeAttempt.recommendationId === recommendationId)) {
+      setActiveAttempt((prev) =>
+        prev
+          ? {
+              ...prev,
+              outcome,
+              finishedAt: Date.now(),
+            }
+          : null
+      );
+      setActiveAttempt(null);
     }
   };
 
