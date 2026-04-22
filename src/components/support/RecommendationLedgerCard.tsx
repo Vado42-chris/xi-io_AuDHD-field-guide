@@ -14,12 +14,14 @@ export const RecommendationLedgerCard: React.FC<RecommendationLedgerCardProps> =
         <div className="fg-meta-pill fg-glass">Confidence: {item.confidence}</div>
         <div className="fg-meta-pill fg-glass">Stability: {item.stability}</div>
         <div className="fg-meta-pill fg-glass">Availability: {item.availability}</div>
+        <div className="fg-meta-pill fg-glass">Transfer: {item.transferSafety}</div>
         <div className="fg-meta-pill fg-glass">Rank: {item.rankScore}</div>
         <div className="fg-meta-pill fg-glass">Performance: {item.performanceScore}</div>
         <div className="fg-meta-pill fg-glass">Recovery: {item.recoveryScore}</div>
       </div>
       <p className="fg-card-copy" style={{ marginTop: 12 }}>{item.appearedBecause}</p>
       <p className="fg-card-copy">{item.reason}</p>
+      {item.transferWarning ? <p className="fg-card-copy">{item.transferWarning}</p> : null}
       <div className="fg-panel-stack" style={{ marginTop: 14 }}>
         <div>
           <div className="fg-kicker">Supporting evidence</div>
