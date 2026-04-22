@@ -32,6 +32,9 @@ export const buildMemoryVaultEntries = (threads: JournalThread[]): MemoryVaultEn
         status: thread.memory?.status ?? 'suggested',
         notes: thread.memory?.notes,
         hasConflict: false,
+        provenanceSource: thread.memory?.provenanceSource ?? 'thread',
+        supersedesEntryId: thread.memory?.supersedesEntryId,
+        revisionHistory: thread.memory?.revisionHistory ?? [],
       };
       return { ...entry, hasConflict: hasConflict(entry) };
     })
@@ -46,5 +49,6 @@ export const buildMemoryVaultSummary = (entries: MemoryVaultEntry[]): MemoryVaul
     repeatedStressors: repeatedValues(entries.flatMap((entry) => entry.stressorTags)),
     repeatedDestressers: repeatedValues(entries.flatMap((entry) => entry.destresserTags)),
     conflictEntries: entries.filter((entry) => entry.hasConflict).length,
+    revisedEntries: entries.filter((entry) => entry.revisionHistory.length > 0).length,
   };
 };
