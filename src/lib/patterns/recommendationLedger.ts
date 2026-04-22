@@ -7,6 +7,7 @@ import {
   RecommendationLedgerItem,
   RecommendationStateTrust,
   SupportLogEntry,
+  TransferReviewRecord,
   TransferSafety,
 } from '../../types/core';
 
@@ -131,11 +132,37 @@ const deriveTransferSafety = (currentState: CanonicalStateId, stateTrustMap: Rec
   return { transferSafety: 'safe' };
 };
 
+const assessTransferReviews = (
+  recommendationId: string,
+  currentState: CanonicalStateId,
+  transferReviews: TransferReviewRecord[],
+  supportLog: SupportLogEntry[]
+): TransferReviewRecord[] => {
+  return transferReviews
+    .filter((review) => review.recommendationId === recommendationId && review.currentState === currentState)
+    .map((review) => {
+      if (review.outcomeAssessment !== 'pending') return review;
+      const laterOutcomes = supportLog.filter(
+        (entry) => entry.recommendationId === recommendationId && entry.stateCanonicalId === currentState && entry.createdAt >= review.createdAt
+      );
+      const helped = laterOutcomes.some((entry) => entry.outcome === 'helped' || entry.outcome === 'a_little');
+      const worsened = laterOutcomes.some((entry) => entry.outcome === 'worse');
+      if (helped) {
+        return { ...review, outcomeAssessment: 'justified', assessedAt: laterOutcomes[0]?.createdAt ?? Date.now() };
+      }
+      if (worsened) {
+        return { ...review, outcomeAssessment: 'not_justified', assessedAt: laterOutcomes[0]?.createdAt ?? Date.now() };
+      }
+      return review;
+    });
+};
+
 export const buildRecommendationLedger = (
   currentState: CanonicalStateId,
   suggestions: PersonalizedSupportSuggestion[],
   evidenceItems: PatternEvidenceItem[],
-  supportLog: SupportLogEntry[] = []
+  supportLog: SupportLogEntry[] = [],
+  transferReviews: TransferReviewRecord[] = []
 ): RecommendationLedgerItem[] => {
   const relevantEvidence = supportRefsForState(evidenceItems, currentState);
   const supporting = relevantEvidence.filter((item) => item.resolutionStatus === 'active');
@@ -146,6 +173,7 @@ export const buildRecommendationLedger = (
     const stateTrustMap = buildStateTrust(recommendationId, suggestion.stability, supporting.length, supportLog);
     const currentStateTrust = stateTrustMap.find((entry) => entry.state === currentState)!;
     const transfer = deriveTransferSafety(currentState, stateTrustMap);
+    const assessedTransferReviews = assessTransferReviews(recommendationId, currentState, transferReviews, supportLog);
 
     return {
       id: recommendationId,
@@ -175,6 +203,7 @@ export const buildRecommendationLedger = (
       rankScore: currentStateTrust.rankScore,
       recoveryScore: currentStateTrust.recoveryScore,
       stateTrustMap,
+      transferReviews: assessedTransferReviews,
     };
   });
 
