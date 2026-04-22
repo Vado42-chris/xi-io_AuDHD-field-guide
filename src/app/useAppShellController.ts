@@ -22,6 +22,7 @@ import {
   RevalidationResult,
   SensorySupportRecord,
   StateIntensity,
+  SupportAttempt,
   SupportLogEntry,
   SupportOutcome,
   ThresholdSummary,
@@ -49,6 +50,7 @@ export interface AppShellController {
   selectorOpen: boolean;
   recentOutcomeSummary?: string;
   activeTrial: ActiveTrial | null;
+  activeAttempt: SupportAttempt | null;
   trialReflections: TrialReflectionRecord[];
   evidenceContributions: EvidenceContribution[];
   memoryEntries: MemoryVaultEntry[];
@@ -97,19 +99,28 @@ export const useAppShellController = (): AppShellController => {
   const [supportLog, setSupportLog] = useState<SupportLogEntry[]>(() => readLocal<SupportLogEntry[]>('fg_support_log_v2', []));
   const [transferReviews, setTransferReviews] = useState<TransferReviewRecord[]>(() => readLocal<TransferReviewRecord[]>('fg_transfer_reviews_v1', []));
   const [revalidationRecords, setRevalidationRecords] = useState<RevalidationRecord[]>(() => readLocal<RevalidationRecord[]>('fg_revalidation_records_v1', []));
-  const [activeTrial, setActiveTrial] = useState<ActiveTrial | null>(() => readLocal<ActiveTrial | null>('fg_active_trial_v1', null));
+  const [activeAttempt, setActiveAttempt] = useState<SupportAttempt | null>(() => readLocal<SupportAttempt | null>('fg_active_attempt_v1', null));
   const [trialReflections, setTrialReflections] = useState<TrialReflectionRecord[]>(() => readLocal<TrialReflectionRecord[]>('fg_trial_reflections_v1', []));
   const [evidenceContributions, setEvidenceContributions] = useState<EvidenceContribution[]>(() => readLocal<EvidenceContribution[]>('fg_evidence_contributions_v1', []));
   const [learningSignals, setLearningSignals] = useState<LearningSignal[]>(() => readLocal<LearningSignal[]>('fg_learning_signals_v2', []));
   const [sensorySupports, setSensorySupports] = useState<SensorySupportRecord[]>(() => readLocal<SensorySupportRecord[]>('fg_sensory_supports_v2', []));
   const [selectorOpen, setSelectorOpen] = useState(false);
 
+  const activeTrial: ActiveTrial | null = activeAttempt
+    ? {
+        recommendationId: activeAttempt.recommendationId ?? '',
+        supportTitle: activeAttempt.supportTitle,
+        stateCanonicalId: activeAttempt.stateCanonicalId,
+        startedAt: activeAttempt.startedAt,
+      }
+    : null;
+
   useEffect(() => { writeLocal('fg_current_state_v2', currentState); }, [currentState]);
   useEffect(() => { writeLocal('fg_custom_states_v2', customStates); }, [customStates]);
   useEffect(() => { writeLocal('fg_support_log_v2', supportLog); }, [supportLog]);
   useEffect(() => { writeLocal('fg_transfer_reviews_v1', transferReviews); }, [transferReviews]);
   useEffect(() => { writeLocal('fg_revalidation_records_v1', revalidationRecords); }, [revalidationRecords]);
-  useEffect(() => { writeLocal('fg_active_trial_v1', activeTrial); }, [activeTrial]);
+  useEffect(() => { writeLocal('fg_active_attempt_v1', activeAttempt); }, [activeAttempt]);
   useEffect(() => { writeLocal('fg_trial_reflections_v1', trialReflections); }, [trialReflections]);
   useEffect(() => { writeLocal('fg_evidence_contributions_v1', evidenceContributions); }, [evidenceContributions]);
   useEffect(() => { writeLocal('fg_journal_threads_v2', journalThreads); }, [journalThreads]);
@@ -164,13 +175,13 @@ export const useAppShellController = (): AppShellController => {
     supportLog,
     transferReviews,
     revalidationRecords,
-    activeTrial,
+    activeAttempt,
     trialReflections,
     setCurrentState,
     setSupportLog,
     setTransferReviews,
     setRevalidationRecords,
-    setActiveTrial,
+    setActiveAttempt,
     setTrialReflections,
     setActiveSection: () => setActiveSection('help_now'),
   });
@@ -196,6 +207,7 @@ export const useAppShellController = (): AppShellController => {
     selectorOpen,
     recentOutcomeSummary: helpNowFeature.recentOutcomeSummary,
     activeTrial,
+    activeAttempt,
     trialReflections,
     evidenceContributions,
     memoryEntries: learningFeature.memoryEntries,
