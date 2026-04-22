@@ -31,7 +31,7 @@ export interface HelpNowFeatureController {
   handleSelectState: (stateId: string) => void;
   handleSelectIntensity: (intensity: StateIntensity) => void;
   handleApplyRouteState: (canonicalId: CurrentState['canonicalId']) => void;
-  handleLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome) => void;
+  handleLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => void;
 }
 
 export const useHelpNowFeatureController = ({
@@ -61,8 +61,8 @@ export const useHelpNowFeatureController = ({
   );
 
   const recommendationLedger = useMemo(
-    () => buildRecommendationLedger(currentState.canonicalId, personalizedSupports, evidenceItems),
-    [currentState.canonicalId, personalizedSupports, evidenceItems]
+    () => buildRecommendationLedger(currentState.canonicalId, personalizedSupports, evidenceItems, supportLog),
+    [currentState.canonicalId, personalizedSupports, evidenceItems, supportLog]
   );
 
   const handleSelectState = (stateId: string) => {
@@ -80,17 +80,18 @@ export const useHelpNowFeatureController = ({
     updateCurrentState({ canonicalId: matching.canonicalId, label: matching.label, source: 'support_flow' });
   };
 
-  const handleLogOutcome = (supportTitle: string, supportRoute: string, outcome: SupportOutcome) => {
+  const handleLogOutcome = (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => {
     const entry: SupportLogEntry = {
       id: `${Date.now()}`,
       stateLabel: currentState.label,
       stateCanonicalId: currentState.canonicalId,
       supportTitle,
       supportRoute,
+      recommendationId,
       outcome,
       createdAt: Date.now(),
     };
-    setSupportLog((prev) => [entry, ...prev].slice(0, 20));
+    setSupportLog((prev) => [entry, ...prev].slice(0, 40));
   };
 
   return {
