@@ -160,6 +160,8 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
       return false;
     }
   });
+  const [showMoreRecommendations, setShowMoreRecommendations] = useState(false);
+  const [showSelectedRecommendationDetails, setShowSelectedRecommendationDetails] = useState(false);
 
   useEffect(() => {
     try {
@@ -174,10 +176,13 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   const selectedLedgerItem = recommendationLedger.find((item) => item.title === selectedSupportTitle);
   const activeTrialElapsed = useMemo(() => (activeTrial ? formatTrialElapsed(activeTrial.startedAt) : null), [activeTrial]);
   const showReadinessGuide = !readinessGuideDismissed;
+  const firstStarterSupport = activeSupports[0];
+  const secondaryStarterSupports = activeSupports.slice(1);
 
   const handleRouteSelect = (routeId: CanonicalStateId) => {
     setSelectedRoute(routeId);
     setSelectedSupportTitle(null);
+    setShowSelectedRecommendationDetails(false);
     onApplyRouteState(routeId);
   };
 
@@ -200,6 +205,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
 
   const hasTailoredSupports = recommendationLedger.length > 0;
   const isCautious = thresholdSummary.suggestionStability === 'cautious' || !thresholdSummary.canPersonalize;
+  const hasAdditionalRecommendationGroups = groupedRecommendations.worthTryingCarefully.length > 0 || groupedRecommendations.needsFreshCheck.length > 0 || groupedRecommendations.avoidForNow.length > 0;
 
   const renderRecommendationGroup = (title: string, description: string, items: RecommendationLedgerItem[], allowTryNow = false) => {
     if (items.length === 0) return null;
@@ -215,7 +221,10 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
               title={item.title}
               body={item.body}
               active={selectedSupportTitle === item.title || activeTrial?.recommendationId === item.id}
-              onSelect={() => setSelectedSupportTitle(item.title)}
+              onSelect={() => {
+                setSelectedSupportTitle(item.title);
+                setShowSelectedRecommendationDetails(false);
+              }}
               primaryActionLabel={allowTryNow ? (activeTrial?.recommendationId === item.id ? 'Trying now' : 'Try this now') : undefined}
               onPrimaryAction={allowTryNow ? () => onStartTrial(item.id, item.title) : undefined}
             />
@@ -258,7 +267,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
           <div className="fg-kicker">Pinned comforts</div>
           <div className="fg-state-meta">These come from Customize, so the support flow can keep your preferred comfort tools closer at hand.</div>
           <div className="fg-grid">
-            {favoriteComfortTools.slice(0, 4).map((tool) => (
+            {favoriteComfortTools.slice(0, 2).map((tool) => (
               <article key={tool.id} className="fg-card fg-glass">
                 <h2 className="fg-card-title">{tool.label}</h2>
                 <p className="fg-card-copy">Category: {tool.category}</p>
@@ -279,7 +288,8 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
       ) : null}
 
       <section className="fg-panel-stack">
-        <div className="fg-kicker">What feels closest right now?</div>
+        <div className="fg-kicker">Start here</div>
+        <div className="fg-state-meta">Choose the route that feels closest. Then use the first support before worrying about deeper options.</div>
         <div className="fg-grid">
           {ROUTES.map((route) => (
             <SupportCard
@@ -294,20 +304,79 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         </div>
       </section>
 
+      <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
+        <div className="fg-kicker">First support to try</div>
+        <div className="fg-state-meta">Keep the first move small. You can explore more options after that if needed.</div>
+        <div className="fg-grid" style={{ marginTop: 12 }}>
+          {firstStarterSupport ? (
+            <SupportCard
+              key={firstStarterSupport.title}
+              kicker="Safe first action"
+              title={firstStarterSupport.title}
+              body={firstStarterSupport.body}
+              active={selectedSupportTitle === firstStarterSupport.title}
+              onSelect={() => setSelectedSupportTitle(firstStarterSupport.title)}
+            />
+          ) : null}
+        </div>
+        {secondaryStarterSupports.length > 0 ? (
+          <div className="fg-panel-stack" style={{ marginTop: 12 }}>
+            <div className="fg-kicker">Other starter option</div>
+            <div className="fg-grid">
+              {secondaryStarterSupports.map((support) => (
+                <SupportCard
+                  key={support.title}
+                  kicker="Alternate first action"
+                  title={support.title}
+                  body={support.body}
+                  active={selectedSupportTitle === support.title}
+                  onSelect={() => setSelectedSupportTitle(support.title)}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </section>
+
       {hasTailoredSupports ? (
         <section className="fg-panel-stack">
-          <div className="fg-kicker">{isCautious ? 'Cautious supports' : 'Tailored supports'}</div>
+          <div className="fg-kicker">{isCautious ? 'Best cautious fit' : 'Best tailored fit'}</div>
           <div className="fg-state-meta">Why these first: {buildWhyTheseFirst(recommendationLedger)}</div>
           {renderRecommendationGroup('Best fit now', 'These are the strongest current fit and need the least extra interpretation.', groupedRecommendations.bestFitNow, true)}
-          {renderRecommendationGroup('Worth trying carefully', 'These may still help, but they need a little more care or a gentler retry.', groupedRecommendations.worthTryingCarefully)}
-          {renderRecommendationGroup('Needs a fresh check', 'These used to help or still look promising, but they need a quick re-check before leaning on them.', groupedRecommendations.needsFreshCheck)}
-          {renderRecommendationGroup('Avoid for now', 'These have enough recent friction or failed checks that they should stay out of the active queue for now.', groupedRecommendations.avoidForNow)}
-          {selectedLedgerItem ? (
+
+          {hasAdditionalRecommendationGroups ? (
+            <div className="fg-chip-row">
+              <button type="button" className="fg-choice-chip fg-glass" onClick={() => setShowMoreRecommendations((prev) => !prev)}>
+                {showMoreRecommendations ? 'Show fewer options' : 'Show more options'}
+              </button>
+            </div>
+          ) : null}
+
+          {showMoreRecommendations ? (
             <>
-              <RecommendationLedgerCard item={selectedLedgerItem} onReviewTransfer={onReviewTransfer} onRevalidateSupport={onRevalidateSupport} />
-              <RecommendationStateMatrix item={selectedLedgerItem} />
-              <TransferTrustLegend />
+              {renderRecommendationGroup('Worth trying carefully', 'These may still help, but they need a little more care or a gentler retry.', groupedRecommendations.worthTryingCarefully)}
+              {renderRecommendationGroup('Needs a fresh check', 'These used to help or still look promising, but they need a quick re-check before leaning on them.', groupedRecommendations.needsFreshCheck)}
+              {renderRecommendationGroup('Avoid for now', 'These have enough recent friction or failed checks that they should stay out of the active queue for now.', groupedRecommendations.avoidForNow)}
             </>
+          ) : null}
+
+          {selectedLedgerItem ? (
+            <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
+              <div className="fg-kicker">Selected support</div>
+              <div className="fg-state-meta">Open deeper detail only if you need the reasoning, transfer warnings, or fresh-check tools.</div>
+              <div className="fg-chip-row">
+                <button type="button" className="fg-choice-chip fg-glass" onClick={() => setShowSelectedRecommendationDetails((prev) => !prev)}>
+                  {showSelectedRecommendationDetails ? 'Hide deeper detail' : 'Show deeper detail'}
+                </button>
+              </div>
+              {showSelectedRecommendationDetails ? (
+                <>
+                  <RecommendationLedgerCard item={selectedLedgerItem} onReviewTransfer={onReviewTransfer} onRevalidateSupport={onRevalidateSupport} />
+                  <RecommendationStateMatrix item={selectedLedgerItem} />
+                  <TransferTrustLegend />
+                </>
+              ) : null}
+            </section>
           ) : null}
         </section>
       ) : (
@@ -316,22 +385,6 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
           <div className="fg-state-meta">{thresholdSummary.message}</div>
         </section>
       )}
-
-      <section className="fg-panel-stack">
-        <div className="fg-kicker">Starter supports</div>
-        <div className="fg-grid">
-          {activeSupports.map((support) => (
-            <SupportCard
-              key={support.title}
-              kicker="Safe first action"
-              title={support.title}
-              body={support.body}
-              active={selectedSupportTitle === support.title}
-              onSelect={() => setSelectedSupportTitle(support.title)}
-            />
-          ))}
-        </div>
-      </section>
 
       <section className="fg-outcome-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
         <div>
