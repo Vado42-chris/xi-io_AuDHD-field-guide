@@ -7,7 +7,7 @@ import PatternEvidenceSummaryCard from '../../components/learn-me/PatternEvidenc
 import PatternReviewSummaryCard from '../../components/learn-me/PatternReviewSummaryCard';
 import SensorySupportCard from '../../components/learn-me/SensorySupportCard';
 import ThresholdSummaryCard from '../../components/learn-me/ThresholdSummaryCard';
-import { LearningSignal, MemoryEntryStatus, MemoryVaultEntry, MemoryVaultSummary, PatternEvidenceItem, PatternEvidenceSummary, PatternReviewSummary, SensorySupportRecord, ThresholdSummary } from '../../types/core';
+import { LearningSignal, MemoryEntryStatus, MemoryVaultEntry, MemoryVaultSummary, PatternEvidenceItem, PatternEvidenceSummary, PatternResolutionStatus, PatternReviewSummary, SensorySupportRecord, ThresholdSummary } from '../../types/core';
 
 interface LearnMeHomeProps {
   signals: LearningSignal[];
@@ -21,6 +21,7 @@ interface LearnMeHomeProps {
   onConfirmSignal: (signalId: string) => void;
   onConfirmSensory: (recordId: string) => void;
   onToggleEvidenceContested: (itemId: string) => void;
+  onResolveEvidence: (itemId: string, nextStatus: PatternResolutionStatus, note: string) => void;
   onSaveMemoryEntry: (entryId: string, summary: string, confirmedTags: string[], status: MemoryEntryStatus, notes: string) => void;
 }
 
@@ -36,6 +37,7 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
   onConfirmSignal,
   onConfirmSensory,
   onToggleEvidenceContested,
+  onResolveEvidence,
   onSaveMemoryEntry,
 }) => {
   const stressors = signals.filter((signal) => signal.kind === 'stressor');
@@ -47,8 +49,8 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
         <div className="fg-kicker">Learn Me</div>
         <h1 className="fg-section-title">Readable patterns, without pretending certainty.</h1>
         <p className="fg-section-body">
-          This slice adds a pattern evidence inspector. Repeated patterns can now show the memory entries and support outcomes backing them,
-          and that evidence can be contested directly instead of treated like hidden system reasoning.
+          This slice adds an evidence resolution workflow. Contested patterns can now move into under review or retirement,
+          and those decisions are visible instead of living only as loose evidence flags.
         </p>
       </div>
 
@@ -62,7 +64,12 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
         <div className="fg-grid">
           {evidenceItems.length > 0 ? (
             evidenceItems.map((item) => (
-              <PatternEvidenceItemCard key={item.id} item={item} onToggleContested={() => onToggleEvidenceContested(item.id)} />
+              <PatternEvidenceItemCard
+                key={item.id}
+                item={item}
+                onToggleContested={() => onToggleEvidenceContested(item.id)}
+                onResolve={(nextStatus, note) => onResolveEvidence(item.id, nextStatus, note)}
+              />
             ))
           ) : (
             <div className="fg-state-meta">No pattern evidence items yet. More memory and support history will make this layer useful.</div>
