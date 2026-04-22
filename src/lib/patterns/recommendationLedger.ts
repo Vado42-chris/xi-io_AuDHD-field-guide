@@ -9,6 +9,7 @@ import {
   SupportLogEntry,
   TransferReviewRecord,
   TransferSafety,
+  TrustMaturity,
 } from '../../types/core';
 
 const ALL_STATES: CanonicalStateId[] = ['steady', 'overloaded', 'activated', 'shut_down', 'in_pain', 'stuck', 'unclear'];
@@ -71,9 +72,10 @@ const deriveTransferLearning = (reviews: TransferReviewRecord[]) => {
   return { transferLearningScore, learnedTransferTrust };
 };
 
-const deriveTrustWeights = (performanceScore: number, learnedTransferTrust: number) => {
-  const rawDirect = Math.max(1, Math.abs(performanceScore) + 2);
-  const rawTransfer = Math.min(rawDirect, Math.abs(learnedTransferTrust));
+const deriveTrustWeights = (performanceScore: number, learnedTransferTrust: number, normalUseCount: number) => {
+  const rawDirect = Math.max(1, Math.abs(performanceScore) + Math.max(2, normalUseCount));
+  const retryCap = Math.max(1, Math.floor(rawDirect * 0.5));
+  const rawTransfer = Math.min(retryCap, Math.abs(learnedTransferTrust));
   const total = rawDirect + rawTransfer;
   const directTrustWeight = rawDirect;
   const transferTrustWeight = rawTransfer;
@@ -84,6 +86,25 @@ const deriveTrustWeights = (performanceScore: number, learnedTransferTrust: numb
     transferTrustWeight,
     directTrustPercent,
     transferTrustPercent,
+  };
+};
+
+const deriveTrustMaturity = (normalUseCount: number, directTrustPercent: number, transferTrustPercent: number): { trustMaturity: TrustMaturity; maturitySummary: string } => {
+  if (normalUseCount >= 4 && directTrustPercent >= 70) {
+    return {
+      trustMaturity: 'proven_in_normal_use',
+      maturitySummary: 'This now looks proven by normal use in this same state.',
+    };
+  }
+  if (transferTrustPercent >= 50 || normalUseCount <= 1) {
+    return {
+      trustMaturity: 'mostly_retry_based',
+      maturitySummary: 'This is still leaning heavily on careful retries, not enough normal use yet.',
+    };
+  }
+  return {
+    trustMaturity: 'blended',
+    maturitySummary: 'This is part proven by normal use and part shaped by careful retries.',
   };
 };
 
@@ -145,7 +166,8 @@ const buildStateTrust = (
     const recoveryScore = deriveRecoveryScore(outcomeHistory);
     const availability = deriveAvailability(performanceScore, outcomeHistory.length, worseCount, recoveryScore, learnedTransferTrust);
     const confidence = deriveConfidence(availability, performanceScore, stability, supportingCount, learnedTransferTrust);
-    const { directTrustWeight, transferTrustWeight, directTrustPercent, transferTrustPercent } = deriveTrustWeights(performanceScore, learnedTransferTrust);
+    const { directTrustWeight, transferTrustWeight, directTrustPercent, transferTrustPercent } = deriveTrustWeights(performanceScore, learnedTransferTrust, outcomeHistory.length);
+    const { trustMaturity, maturitySummary } = deriveTrustMaturity(outcomeHistory.length, directTrustPercent, transferTrustPercent);
     const rankScore = performanceScore + recoveryScore + Math.min(learnedTransferTrust, directTrustWeight) + (confidence === 'high' ? 3 : confidence === 'medium' ? 1 : 0) - (availability === 'cooling_off' ? 4 : availability === 'avoid_for_now' ? 8 : 0);
 
     return {
@@ -161,6 +183,8 @@ const buildStateTrust = (
       transferTrustWeight,
       directTrustPercent,
       transferTrustPercent,
+      trustMaturity,
+      maturitySummary,
       outcomeHistory,
     };
   });
@@ -230,20 +254,14 @@ export const buildRecommendationLedger = (
       transferWarning: transfer.transferWarning,
       reason: suggestion.reason,
       appearedBecause:
-        currentStateTrust.transferLearningScore > 0
-          ? 'This state has gained some trust from supervised retries that turned out well, but normal same-state use still carries most of the weight.'
-          : currentStateTrust.transferLearningScore < 0
-            ? 'This state has been weakened by supervised retries that did not hold up, so caution is stronger here now.'
-            : currentStateTrust.availability === 'avoid_for_now'
-              ? 'This matched your current state before, but repeated negative outcomes in this same state have pushed it into an avoid-for-now state.'
-              : currentStateTrust.availability === 'cooling_off'
-                ? 'This matched your current state, but recent mixed or negative outcomes in this state have lowered its priority for now.'
-                : currentStateTrust.availability === 'recovering'
-                  ? 'This had a rough period in this state, but recent better outcomes in the same state are moving it back into consideration.'
-                  : suggestion.stability === 'stable'
-                    ? 'It matched active evidence for your current state and did not hit active instability warnings.'
-                    : 'It matched your current state, but some related evidence is still under review or retired, so it is shown cautiously.',
+        currentStateTrust.trustMaturity === 'proven_in_normal_use'
+          ? 'This lane is now mostly backed by what happened when it was used in the same state over time.'
+          : currentStateTrust.trustMaturity === 'mostly_retry_based'
+            ? 'This lane still depends a lot on careful retry history, so it is not as grounded in normal same-state use yet.'
+            : 'This lane is being shaped by both normal use and careful retry history, and it is moving toward stronger same-state proof.',
       trustSummary,
+      trustMaturity: currentStateTrust.trustMaturity,
+      maturitySummary: currentStateTrust.maturitySummary,
       supportingEvidence: supporting.flatMap((item) => item.references).slice(0, 4),
       weakeningEvidence: weakening.flatMap((item) => item.references).slice(0, 4),
       outcomeHistory: currentStateTrust.outcomeHistory,
