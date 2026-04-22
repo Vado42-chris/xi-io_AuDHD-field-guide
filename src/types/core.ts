@@ -20,7 +20,7 @@ export type MemoryEntryStatus = 'suggested' | 'confirmed' | 'outdated' | 'supers
 export type PatternResolutionStatus = 'active' | 'under_review' | 'retired';
 export type SuggestionStability = 'stable' | 'cautious';
 export type RecommendationConfidence = 'low' | 'medium' | 'high';
-export type RecommendationAvailability = 'active' | 'cooling_off' | 'avoid_for_now';
+export type RecommendationAvailability = 'active' | 'recovering' | 'cooling_off' | 'avoid_for_now';
 
 export interface CurrentState {
   canonicalId: CanonicalStateId;
@@ -185,6 +185,7 @@ export interface RecommendationLedgerItem {
   outcomeHistory: RecommendationOutcomeEvent[];
   performanceScore: number;
   rankScore: number;
+  recoveryScore: number;
 }
 
 export interface JournalThread {
