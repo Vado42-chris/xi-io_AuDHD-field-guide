@@ -4,6 +4,7 @@ import RecommendationStateMatrix from '../../components/support/RecommendationSt
 import TransferTrustLegend from '../../components/support/TransferTrustLegend';
 import SupportCard from '../../components/support/SupportCard';
 import {
+  ActiveTrial,
   CanonicalStateId,
   CurrentState,
   RecommendationLedgerItem,
@@ -18,7 +19,10 @@ interface HelpNowHomeProps {
   thresholdSummary: ThresholdSummary;
   personalizedSupports: Array<unknown>;
   recommendationLedger: RecommendationLedgerItem[];
+  activeTrial: ActiveTrial | null;
   onApplyRouteState: (canonicalId: CanonicalStateId) => void;
+  onStartTrial: (recommendationId: string, supportTitle: string) => void;
+  onClearTrial: () => void;
   onLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => void;
   onReviewTransfer: (recommendationId: string, transferSafety: RecommendationLedgerItem['transferSafety'], transferWarning: string | undefined, decision: TransferDecision, reason: string) => void;
   onRevalidateSupport: (recommendationId: string, result: RevalidationResult, note: string) => void;
@@ -98,7 +102,10 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   currentState,
   thresholdSummary,
   recommendationLedger,
+  activeTrial,
   onApplyRouteState,
+  onStartTrial,
+  onClearTrial,
   onLogOutcome,
   onReviewTransfer,
   onRevalidateSupport,
@@ -118,14 +125,16 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   };
 
   const handleOutcome = (outcome: SupportOutcome) => {
-    if (!selectedSupportTitle) return;
-    onLogOutcome(selectedSupportTitle, selectedRoute, outcome, selectedLedgerItem?.id);
+    const titleToUse = selectedSupportTitle || activeTrial?.supportTitle;
+    const recommendationIdToUse = selectedLedgerItem?.id || activeTrial?.recommendationId;
+    if (!titleToUse) return;
+    onLogOutcome(titleToUse, selectedRoute, outcome, recommendationIdToUse);
   };
 
   const hasTailoredSupports = recommendationLedger.length > 0;
   const isCautious = thresholdSummary.suggestionStability === 'cautious' || !thresholdSummary.canPersonalize;
 
-  const renderRecommendationGroup = (title: string, description: string, items: RecommendationLedgerItem[]) => {
+  const renderRecommendationGroup = (title: string, description: string, items: RecommendationLedgerItem[], allowTryNow = false) => {
     if (items.length === 0) return null;
     return (
       <div className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
@@ -138,8 +147,10 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
               kicker={item.priorityReason}
               title={item.title}
               body={item.body}
-              active={selectedSupportTitle === item.title}
+              active={selectedSupportTitle === item.title || activeTrial?.recommendationId === item.id}
               onSelect={() => setSelectedSupportTitle(item.title)}
+              primaryActionLabel={allowTryNow ? (activeTrial?.recommendationId === item.id ? 'Trying now' : 'Try this now') : undefined}
+              onPrimaryAction={allowTryNow ? () => onStartTrial(item.id, item.title) : undefined}
             />
           ))}
         </div>
@@ -165,6 +176,16 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         {recentOutcomeSummary ? <div className="fg-meta-pill fg-glass">Latest outcome: {recentOutcomeSummary}</div> : null}
       </div>
 
+      {activeTrial ? (
+        <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
+          <div className="fg-kicker">Currently trying</div>
+          <div className="fg-card-copy">You are currently trying “{activeTrial.supportTitle}”. When you are done, log whether it helped.</div>
+          <div className="fg-chip-row">
+            <button type="button" className="fg-choice-chip fg-glass" onClick={onClearTrial}>Clear</button>
+          </div>
+        </section>
+      ) : null}
+
       <section className="fg-panel-stack">
         <div className="fg-kicker">What feels closest right now?</div>
         <div className="fg-grid">
@@ -185,7 +206,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <section className="fg-panel-stack">
           <div className="fg-kicker">{isCautious ? 'Cautious supports' : 'Tailored supports'}</div>
           <div className="fg-state-meta">Why these first: {buildWhyTheseFirst(recommendationLedger)}</div>
-          {renderRecommendationGroup('Best fit now', 'These are the strongest current fit and need the least extra interpretation.', groupedRecommendations.bestFitNow)}
+          {renderRecommendationGroup('Best fit now', 'These are the strongest current fit and need the least extra interpretation.', groupedRecommendations.bestFitNow, true)}
           {renderRecommendationGroup('Worth trying carefully', 'These may still help, but they need a little more care or a gentler retry.', groupedRecommendations.worthTryingCarefully)}
           {renderRecommendationGroup('Needs a fresh check', 'These used to help or still look promising, but they need a quick re-check before leaning on them.', groupedRecommendations.needsFreshCheck)}
           {renderRecommendationGroup('Avoid for now', 'These have enough recent friction or failed checks that they should stay out of the active queue for now.', groupedRecommendations.avoidForNow)}
@@ -224,8 +245,8 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <div>
           <div className="fg-kicker">Did it help?</div>
           <div className="fg-state-meta">
-            {selectedSupportTitle
-              ? `Log what happened after trying “${selectedSupportTitle}”.`
+            {selectedSupportTitle || activeTrial?.supportTitle
+              ? `Log what happened after trying “${selectedSupportTitle || activeTrial?.supportTitle}”.`
               : 'Pick a support first, then log whether it helped.'}
           </div>
         </div>
@@ -236,7 +257,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
               type="button"
               className="fg-choice-chip fg-glass"
               onClick={() => handleOutcome(outcome.id)}
-              disabled={!selectedSupportTitle}
+              disabled={!selectedSupportTitle && !activeTrial}
             >
               {outcome.label}
             </button>
