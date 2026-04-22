@@ -19,6 +19,8 @@ export const RecommendationStateMatrix: React.FC<RecommendationStateMatrixProps>
             <div className="fg-card-copy">Rank: {trust.rankScore}</div>
             <div className="fg-card-copy">Performance: {trust.performanceScore}</div>
             <div className="fg-card-copy">Recovery: {trust.recoveryScore}</div>
+            <div className="fg-card-copy">Transfer learning: {trust.transferLearningScore}</div>
+            <div className="fg-card-copy">Learned transfer trust: {trust.learnedTransferTrust}</div>
             <div className="fg-state-meta">Outcomes logged: {trust.outcomeHistory.length}</div>
           </div>
         ))}
