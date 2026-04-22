@@ -41,21 +41,21 @@ export const RecommendationLedgerCard: React.FC<RecommendationLedgerCardProps> =
       <div className="fg-kicker">Why this suggestion</div>
       <h2 className="fg-card-title">{item.title}</h2>
       <div className="fg-help-meta" style={{ marginTop: 12 }}>
-        <div className="fg-meta-pill fg-glass">Confidence: {item.confidence}</div>
-        <div className="fg-meta-pill fg-glass">Current status: {item.availability.replace('_', ' ')}</div>
-        <div className="fg-meta-pill fg-glass">Trust stage: {item.trustMaturity.replace(/_/g, ' ')}</div>
-        <div className="fg-meta-pill fg-glass">Freshness: {item.trustFreshness.replace(/_/g, ' ')}</div>
+        <div className="fg-meta-pill fg-glass">Confidence: {item.status.confidence}</div>
+        <div className="fg-meta-pill fg-glass">Current status: {item.status.availability.replace('_', ' ')}</div>
+        <div className="fg-meta-pill fg-glass">Trust stage: {item.status.trustMaturity.replace(/_/g, ' ')}</div>
+        <div className="fg-meta-pill fg-glass">Freshness: {item.status.trustFreshness.replace(/_/g, ' ')}</div>
         <div className="fg-meta-pill fg-glass">Last confirmed: {lastConfirmedLabel}</div>
         <div className="fg-meta-pill fg-glass">Transfer warning: {item.transferSafety}</div>
       </div>
       <p className="fg-card-copy" style={{ marginTop: 12 }}>{item.appearedBecause}</p>
       <p className="fg-card-copy">{item.reason}</p>
-      <p className="fg-card-copy">Priority right now: {item.priorityReason}</p>
+      <p className="fg-card-copy">Priority right now: {item.status.priorityReason}</p>
       <p className="fg-card-copy">Trust mix: {item.trustSummary}.</p>
       <p className="fg-card-copy">{item.maturitySummary}</p>
       <p className="fg-card-copy">{item.freshnessSummary}</p>
       <p className="fg-card-copy">{recheckImpact}</p>
-      {item.trustFreshness !== 'fresh' ? (
+      {item.status.trustFreshness !== 'fresh' ? (
         <div className="fg-panel-stack fg-glass" style={{ padding: 14, borderRadius: 14, marginTop: 14 }}>
           <div className="fg-kicker">Fresh check</div>
           <div className="fg-card-copy">Try this again and tell the app if it still helps.</div>
