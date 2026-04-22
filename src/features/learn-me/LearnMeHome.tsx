@@ -7,6 +7,7 @@ import PatternEvidenceSummaryCard from '../../components/learn-me/PatternEvidenc
 import PatternReviewSummaryCard from '../../components/learn-me/PatternReviewSummaryCard';
 import SensorySupportCard from '../../components/learn-me/SensorySupportCard';
 import ThresholdSummaryCard from '../../components/learn-me/ThresholdSummaryCard';
+import { describeEvidenceConfidence, describeEvidenceSource } from '../../lib/patterns/evidenceSemantics';
 import { EvidenceContribution, LearningSignal, MemoryEntryStatus, MemoryVaultEntry, MemoryVaultSummary, PatternEvidenceItem, PatternEvidenceSummary, PatternResolutionStatus, PatternReviewSummary, SensorySupportRecord, ThresholdSummary } from '../../types/core';
 
 interface LearnMeHomeProps {
@@ -107,6 +108,17 @@ const buildNextSteps = (
   return steps.slice(0, 4);
 };
 
+const EvidenceCard: React.FC<{ item: EvidenceContribution }> = ({ item }) => (
+  <div className="fg-card fg-glass fg-learning-card">
+    <div className="fg-kicker">{sourceLabel(item.source)}</div>
+    <h2 className="fg-card-title">{item.summary}</h2>
+    <p className="fg-card-copy">Confidence: {item.confidence}</p>
+    <p className="fg-card-copy">{describeEvidenceConfidence(item.confidence)}</p>
+    <p className="fg-card-copy">{describeEvidenceSource(item.source)}</p>
+    {item.tags.length > 0 ? <p className="fg-card-copy">Tags: {item.tags.join(', ')}</p> : null}
+  </div>
+);
+
 export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
   signals,
   sensorySupports,
@@ -191,14 +203,7 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
         </div>
         <div className="fg-grid">
           {sharedEvidencePreview.length > 0 ? (
-            sharedEvidencePreview.map((item) => (
-              <div key={item.id} className="fg-card fg-glass fg-learning-card">
-                <div className="fg-kicker">{sourceLabel(item.source)}</div>
-                <h2 className="fg-card-title">{item.summary}</h2>
-                <p className="fg-card-copy">Confidence: {item.confidence}</p>
-                {item.tags.length > 0 ? <p className="fg-card-copy">Tags: {item.tags.join(', ')}</p> : null}
-              </div>
-            ))
+            sharedEvidencePreview.map((item) => <EvidenceCard key={item.id} item={item} />)
           ) : (
             <div className="fg-state-meta">No shared evidence yet. Journal summaries and support outcomes will appear here as they build up.</div>
           )}
@@ -214,14 +219,7 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
         </div>
         <div className="fg-grid">
           {supportEvidence.length > 0 ? (
-            supportEvidence.map((item) => (
-              <div key={item.id} className="fg-card fg-glass fg-learning-card">
-                <div className="fg-kicker">{sourceLabel(item.source)}</div>
-                <h2 className="fg-card-title">{item.summary}</h2>
-                <p className="fg-card-copy">Confidence: {item.confidence}</p>
-                {item.tags.length > 0 ? <p className="fg-card-copy">Tags: {item.tags.join(', ')}</p> : null}
-              </div>
-            ))
+            supportEvidence.map((item) => <EvidenceCard key={item.id} item={item} />)
           ) : (
             <div className="fg-state-meta">No support evidence yet. As Help Now outcomes, notes, and fresh checks build up, they will appear here.</div>
           )}
