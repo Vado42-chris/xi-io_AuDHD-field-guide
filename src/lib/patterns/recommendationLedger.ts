@@ -3,9 +3,14 @@ import {
   PatternEvidenceItem,
   PersonalizedSupportSuggestion,
   RecommendationAvailability,
+  RecommendationConfidence,
   RecommendationLedgerItem,
+  RecommendationStateTrust,
   SupportLogEntry,
+  TransferSafety,
 } from '../../types/core';
+
+const ALL_STATES: CanonicalStateId[] = ['steady', 'overloaded', 'activated', 'shut_down', 'in_pain', 'stuck', 'unclear'];
 
 const supportRefsForState = (items: PatternEvidenceItem[], state: CanonicalStateId) => {
   const normalized = state.replace('_', ' ');
@@ -44,20 +49,28 @@ const deriveAvailability = (
   return 'active';
 };
 
-export const buildRecommendationLedger = (
-  currentState: CanonicalStateId,
-  suggestions: PersonalizedSupportSuggestion[],
-  evidenceItems: PatternEvidenceItem[],
-  supportLog: SupportLogEntry[] = []
-): RecommendationLedgerItem[] => {
-  const relevantEvidence = supportRefsForState(evidenceItems, currentState);
-  const supporting = relevantEvidence.filter((item) => item.resolutionStatus === 'active');
-  const weakening = relevantEvidence.filter((item) => item.resolutionStatus !== 'active');
+const deriveConfidence = (
+  availability: RecommendationAvailability,
+  performanceScore: number,
+  stability: PersonalizedSupportSuggestion['stability'],
+  supportingCount: number
+): RecommendationConfidence => {
+  if (availability === 'avoid_for_now') return 'low';
+  if (performanceScore >= 3) return 'high';
+  if (performanceScore <= -2) return 'low';
+  if (stability === 'stable') return 'high';
+  return supportingCount > 0 ? 'medium' : 'low';
+};
 
-  const items = suggestions.map((suggestion, index) => {
-    const recommendationId = `recommendation-${currentState}-${index}`;
+const buildStateTrust = (
+  recommendationId: string,
+  stability: PersonalizedSupportSuggestion['stability'],
+  supportingCount: number,
+  supportLog: SupportLogEntry[]
+): RecommendationStateTrust[] => {
+  return ALL_STATES.map((state) => {
     const outcomeHistory = supportLog
-      .filter((entry) => entry.recommendationId === recommendationId)
+      .filter((entry) => entry.recommendationId === recommendationId && entry.stateCanonicalId === state)
       .map((entry) => ({
         id: entry.id,
         outcome: entry.outcome,
@@ -70,46 +83,98 @@ export const buildRecommendationLedger = (
     const worseCount = outcomeHistory.filter((event) => event.outcome === 'worse').length;
     const recoveryScore = deriveRecoveryScore(outcomeHistory);
     const availability = deriveAvailability(performanceScore, outcomeHistory.length, worseCount, recoveryScore);
-
-    const confidence = availability === 'avoid_for_now'
-      ? 'low'
-      : performanceScore >= 3
-        ? 'high'
-        : performanceScore <= -2
-          ? 'low'
-          : suggestion.stability === 'stable'
-            ? 'high'
-            : supporting.length > 0
-              ? 'medium'
-              : 'low';
-
+    const confidence = deriveConfidence(availability, performanceScore, stability, supportingCount);
     const rankScore = performanceScore + recoveryScore + (confidence === 'high' ? 3 : confidence === 'medium' ? 1 : 0) - (availability === 'cooling_off' ? 4 : availability === 'avoid_for_now' ? 8 : 0);
+
+    return {
+      state,
+      confidence,
+      availability,
+      performanceScore,
+      recoveryScore,
+      rankScore,
+      outcomeHistory,
+    };
+  });
+};
+
+const deriveTransferSafety = (currentState: CanonicalStateId, stateTrustMap: RecommendationStateTrust[]): { transferSafety: TransferSafety; transferWarning?: string } => {
+  const current = stateTrustMap.find((entry) => entry.state === currentState);
+  const otherStates = stateTrustMap.filter((entry) => entry.state !== currentState);
+  const strongElsewhere = otherStates.some((entry) => entry.availability === 'active' && entry.rankScore >= 3);
+
+  if (!current) {
+    return { transferSafety: 'caution', transferWarning: 'No current-state trust lane is available for this recommendation yet.' };
+  }
+
+  if ((current.availability === 'avoid_for_now' || current.availability === 'cooling_off') && strongElsewhere) {
+    return {
+      transferSafety: current.availability === 'avoid_for_now' ? 'avoid' : 'caution',
+      transferWarning: `This support appears stronger in other states, but it is ${current.availability.replace('_', ' ')} for ${currentState.replace('_', ' ')}. Avoid transferring trust automatically.`,
+    };
+  }
+
+  if (current.availability === 'recovering') {
+    return {
+      transferSafety: 'caution',
+      transferWarning: `This support is recovering for ${currentState.replace('_', ' ')}. Use it as a cautious re-test, not as a fully trusted transfer from another state.`,
+    };
+  }
+
+  if (current.availability === 'avoid_for_now') {
+    return {
+      transferSafety: 'avoid',
+      transferWarning: `This support is currently avoid for now in ${currentState.replace('_', ' ')} even if it performs better elsewhere.`,
+    };
+  }
+
+  return { transferSafety: 'safe' };
+};
+
+export const buildRecommendationLedger = (
+  currentState: CanonicalStateId,
+  suggestions: PersonalizedSupportSuggestion[],
+  evidenceItems: PatternEvidenceItem[],
+  supportLog: SupportLogEntry[] = []
+): RecommendationLedgerItem[] => {
+  const relevantEvidence = supportRefsForState(evidenceItems, currentState);
+  const supporting = relevantEvidence.filter((item) => item.resolutionStatus === 'active');
+  const weakening = relevantEvidence.filter((item) => item.resolutionStatus !== 'active');
+
+  const items = suggestions.map((suggestion, index) => {
+    const recommendationId = `recommendation-${currentState}-${index}`;
+    const stateTrustMap = buildStateTrust(recommendationId, suggestion.stability, supporting.length, supportLog);
+    const currentStateTrust = stateTrustMap.find((entry) => entry.state === currentState)!;
+    const transfer = deriveTransferSafety(currentState, stateTrustMap);
 
     return {
       id: recommendationId,
       title: suggestion.title,
       state: suggestion.state,
       body: suggestion.body,
-      confidence,
+      confidence: currentStateTrust.confidence,
       stability: suggestion.stability,
-      availability,
+      availability: currentStateTrust.availability,
+      transferSafety: transfer.transferSafety,
+      transferWarning: transfer.transferWarning,
       reason: suggestion.reason,
       appearedBecause:
-        availability === 'avoid_for_now'
-          ? 'This matched your state, but repeated negative outcomes have pushed it into an avoid-for-now state.'
-          : availability === 'cooling_off'
-            ? 'This matched your state, but recent mixed or negative outcomes have lowered its priority for now.'
-            : availability === 'recovering'
-              ? 'This had a rough period, but recent better outcomes are moving it back into consideration.'
+        currentStateTrust.availability === 'avoid_for_now'
+          ? 'This matched your current state before, but repeated negative outcomes in this same state have pushed it into an avoid-for-now state.'
+          : currentStateTrust.availability === 'cooling_off'
+            ? 'This matched your current state, but recent mixed or negative outcomes in this state have lowered its priority for now.'
+            : currentStateTrust.availability === 'recovering'
+              ? 'This had a rough period in this state, but recent better outcomes in the same state are moving it back into consideration.'
               : suggestion.stability === 'stable'
                 ? 'It matched active evidence for your current state and did not hit active instability warnings.'
                 : 'It matched your current state, but some related evidence is still under review or retired, so it is shown cautiously.',
       supportingEvidence: supporting.flatMap((item) => item.references).slice(0, 4),
       weakeningEvidence: weakening.flatMap((item) => item.references).slice(0, 4),
-      outcomeHistory,
-      performanceScore,
-      rankScore,
-      recoveryScore,
+      outcomeHistory: currentStateTrust.outcomeHistory,
+      performanceScore: currentStateTrust.performanceScore,
+      rankScore: currentStateTrust.rankScore,
+      recoveryScore: currentStateTrust.recoveryScore,
+      stateTrustMap,
     };
   });
 
