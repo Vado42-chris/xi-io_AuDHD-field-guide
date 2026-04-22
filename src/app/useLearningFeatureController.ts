@@ -54,7 +54,6 @@ export const useLearningFeatureController = ({
   const memoryEntries = useMemo(() => buildMemoryVaultEntries(journalThreads), [journalThreads]);
   const memorySummary = useMemo(() => buildMemoryVaultSummary(memoryEntries), [memoryEntries]);
   const patternSummary = useMemo(() => buildPatternReviewSummary(learningSignals, sensorySupports), [learningSignals, sensorySupports]);
-  const thresholdSummary = useMemo(() => buildThresholdSummary(learningSignals, sensorySupports), [learningSignals, sensorySupports]);
   const baseEvidenceItems = useMemo(() => buildPatternEvidenceItems(memoryEntries, supportLog), [memoryEntries, supportLog]);
 
   const evidenceItems = useMemo(
@@ -73,6 +72,10 @@ export const useLearningFeatureController = ({
   );
 
   const evidenceSummary = useMemo(() => buildPatternEvidenceSummary(evidenceItems), [evidenceItems]);
+  const thresholdSummary = useMemo(
+    () => buildThresholdSummary(learningSignals, sensorySupports, evidenceItems),
+    [learningSignals, sensorySupports, evidenceItems]
+  );
 
   const handleToggleEvidenceContested = (itemId: string) => {
     setOverrides((prev) => {
