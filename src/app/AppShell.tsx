@@ -53,6 +53,7 @@ export const AppShell: React.FC = () => {
             sensorySupports={controller.sensorySupports}
             memoryEntries={controller.memoryEntries}
             memorySummary={controller.memorySummary}
+            evidenceContributions={controller.evidenceContributions}
             evidenceItems={controller.evidenceItems}
             evidenceSummary={controller.evidenceSummary}
             summary={controller.patternSummary}
