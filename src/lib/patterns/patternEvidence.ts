@@ -45,36 +45,48 @@ export const buildPatternEvidenceItems = (
   const items: PatternEvidenceItem[] = [];
 
   stressorMap.forEach((references, label) => {
+    const contested = references.some((ref) => ref.detail.toLowerCase().includes('outdated'));
     items.push({
       id: `pattern-stressor-${label}`,
       label,
       kind: 'stressor',
       confidence: references.length > 1 ? 'repeated' : 'emerging',
       references,
-      contested: references.some((ref) => ref.detail.toLowerCase().includes('outdated')),
+      contested,
+      resolutionStatus: contested ? 'under_review' : 'active',
+      resolutionNote: contested ? 'Derived evidence appears unstable or outdated and should be reviewed.' : undefined,
+      resolutionHistory: [],
     });
   });
 
   destresserMap.forEach((references, label) => {
+    const contested = references.some((ref) => ref.detail.toLowerCase().includes('outdated'));
     items.push({
       id: `pattern-destresser-${label}`,
       label,
       kind: 'destresser',
       confidence: references.length > 1 ? 'repeated' : 'emerging',
       references,
-      contested: references.some((ref) => ref.detail.toLowerCase().includes('outdated')),
+      contested,
+      resolutionStatus: contested ? 'under_review' : 'active',
+      resolutionNote: contested ? 'Derived evidence appears unstable or outdated and should be reviewed.' : undefined,
+      resolutionHistory: [],
     });
   });
 
   const helpfulSupports = supportLog.filter((entry) => entry.outcome === 'helped' || entry.outcome === 'a_little');
   if (helpfulSupports.length > 0) {
+    const contested = supportLog.some((entry) => entry.outcome === 'worse');
     items.push({
       id: 'pattern-threshold-supports',
       label: 'Support outcomes informing readiness',
       kind: 'threshold',
       confidence: helpfulSupports.length > 1 ? 'gated' : 'emerging',
       references: helpfulSupports.map(buildSupportRef),
-      contested: supportLog.some((entry) => entry.outcome === 'worse'),
+      contested,
+      resolutionStatus: contested ? 'under_review' : 'active',
+      resolutionNote: contested ? 'Helpful support evidence is mixed with worse outcomes and should stay under review.' : undefined,
+      resolutionHistory: [],
     });
   }
 
@@ -85,4 +97,6 @@ export const buildPatternEvidenceSummary = (items: PatternEvidenceItem[]): Patte
   totalItems: items.length,
   contestedItems: items.filter((item) => item.contested).length,
   repeatedItems: items.filter((item) => item.confidence === 'repeated' || item.confidence === 'gated').length,
+  underReviewItems: items.filter((item) => item.resolutionStatus === 'under_review').length,
+  retiredItems: items.filter((item) => item.resolutionStatus === 'retired').length,
 });
