@@ -8,6 +8,7 @@ import {
   RecommendationLedgerItem,
   SupportOutcome,
   ThresholdSummary,
+  TransferDecision,
 } from '../../types/core';
 
 interface HelpNowHomeProps {
@@ -17,6 +18,7 @@ interface HelpNowHomeProps {
   recommendationLedger: RecommendationLedgerItem[];
   onApplyRouteState: (canonicalId: CanonicalStateId) => void;
   onLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => void;
+  onReviewTransfer: (recommendationId: string, transferSafety: RecommendationLedgerItem['transferSafety'], transferWarning: string | undefined, decision: TransferDecision, reason: string) => void;
   recentOutcomeSummary?: string;
 }
 
@@ -79,6 +81,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   recommendationLedger,
   onApplyRouteState,
   onLogOutcome,
+  onReviewTransfer,
   recentOutcomeSummary,
 }) => {
   const [selectedRoute, setSelectedRoute] = useState<CanonicalStateId>(currentState.canonicalId);
@@ -111,7 +114,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <h1 className="fg-section-title">A calmer first action, not a dashboard.</h1>
         <p className="fg-section-body">
           Pick what feels closest right now, get a low-demand starter support, and log whether it helped.
-          Recommendation trust is now state-specific, and the matrix view makes it possible to compare the same support across states without overgeneralizing one lane into every other lane.
+          Recommendation trust is now state-specific, and guarded transfers can be explicitly approved or rejected instead of only being warned about.
         </p>
       </div>
 
@@ -155,7 +158,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
           </div>
           {selectedLedgerItem ? (
             <>
-              <RecommendationLedgerCard item={selectedLedgerItem} />
+              <RecommendationLedgerCard item={selectedLedgerItem} onReviewTransfer={onReviewTransfer} />
               <RecommendationStateMatrix item={selectedLedgerItem} />
             </>
           ) : null}
