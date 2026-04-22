@@ -15,6 +15,7 @@ import {
   PatternEvidenceSummary,
   PatternResolutionStatus,
   PatternReviewSummary,
+  RecommendationLedgerItem,
   SensorySupportRecord,
   StateIntensity,
   SupportLogEntry,
@@ -46,6 +47,7 @@ export interface AppShellController {
   patternSummary: PatternReviewSummary;
   thresholdSummary: ThresholdSummary;
   personalizedSupports: ReturnType<typeof useHelpNowFeatureController>['personalizedSupports'];
+  recommendationLedger: RecommendationLedgerItem[];
   setActiveSection: (section: AppSection) => void;
   setSelectorOpen: (open: boolean) => void;
   handleSelectState: (stateId: string) => void;
@@ -128,6 +130,7 @@ export const useAppShellController = (): AppShellController => {
     customStates,
     sensorySupports,
     thresholdSummary: learningFeature.thresholdSummary,
+    evidenceItems: learningFeature.evidenceItems,
     supportLog,
     setCurrentState,
     setSupportLog,
@@ -161,6 +164,7 @@ export const useAppShellController = (): AppShellController => {
     patternSummary: learningFeature.patternSummary,
     thresholdSummary: learningFeature.thresholdSummary,
     personalizedSupports: helpNowFeature.personalizedSupports,
+    recommendationLedger: helpNowFeature.recommendationLedger,
     setActiveSection,
     setSelectorOpen,
     handleSelectState: helpNowFeature.handleSelectState,
