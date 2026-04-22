@@ -50,6 +50,7 @@ export const RecommendationLedgerCard: React.FC<RecommendationLedgerCardProps> =
       </div>
       <p className="fg-card-copy" style={{ marginTop: 12 }}>{item.appearedBecause}</p>
       <p className="fg-card-copy">{item.reason}</p>
+      <p className="fg-card-copy">Priority right now: {item.priorityReason}</p>
       <p className="fg-card-copy">Trust mix: {item.trustSummary}.</p>
       <p className="fg-card-copy">{item.maturitySummary}</p>
       <p className="fg-card-copy">{item.freshnessSummary}</p>
