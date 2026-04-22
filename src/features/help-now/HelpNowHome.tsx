@@ -7,6 +7,7 @@ import {
   CanonicalStateId,
   CurrentState,
   RecommendationLedgerItem,
+  RevalidationResult,
   SupportOutcome,
   ThresholdSummary,
   TransferDecision,
@@ -20,6 +21,7 @@ interface HelpNowHomeProps {
   onApplyRouteState: (canonicalId: CanonicalStateId) => void;
   onLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => void;
   onReviewTransfer: (recommendationId: string, transferSafety: RecommendationLedgerItem['transferSafety'], transferWarning: string | undefined, decision: TransferDecision, reason: string) => void;
+  onRevalidateSupport: (recommendationId: string, result: RevalidationResult, note: string) => void;
   recentOutcomeSummary?: string;
 }
 
@@ -83,6 +85,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   onApplyRouteState,
   onLogOutcome,
   onReviewTransfer,
+  onRevalidateSupport,
   recentOutcomeSummary,
 }) => {
   const [selectedRoute, setSelectedRoute] = useState<CanonicalStateId>(currentState.canonicalId);
@@ -115,7 +118,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <h1 className="fg-section-title">A calmer first action, not a dashboard.</h1>
         <p className="fg-section-body">
           Pick what feels closest right now, get a low-demand starter support, and log whether it helped.
-          Recommendation trust is now state-specific, guarded transfers can be explicitly approved or rejected, and learned transfer trust is shown separately from ordinary direct-use trust.
+          Recommendation trust is state-specific, guarded transfers can be reviewed, and older trust can ask for a simple fresh check instead of quietly fading in the background.
         </p>
       </div>
 
@@ -159,7 +162,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
           </div>
           {selectedLedgerItem ? (
             <>
-              <RecommendationLedgerCard item={selectedLedgerItem} onReviewTransfer={onReviewTransfer} />
+              <RecommendationLedgerCard item={selectedLedgerItem} onReviewTransfer={onReviewTransfer} onRevalidateSupport={onRevalidateSupport} />
               <RecommendationStateMatrix item={selectedLedgerItem} />
               <TransferTrustLegend />
             </>
