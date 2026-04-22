@@ -4,12 +4,12 @@ export const TransferTrustLegend: React.FC = () => {
   return (
     <section className="fg-card fg-glass fg-learning-card">
       <div className="fg-kicker">Trust legend</div>
-      <h2 className="fg-card-title">Direct trust vs transfer-earned trust</h2>
+      <h2 className="fg-card-title">How trust is being built here</h2>
       <div className="fg-panel-stack" style={{ marginTop: 14 }}>
-        <div className="fg-card-copy">• Direct trust comes from ordinary same-state usage history, outcome logging, and state-specific recommendation performance.</div>
-        <div className="fg-card-copy">• Transfer-earned trust comes from supervised overrides of guarded transfers that were later judged justified or not justified.</div>
-        <div className="fg-card-copy">• Positive transfer learning can strengthen a weak lane, but it does not erase direct-use history.</div>
-        <div className="fg-card-copy">• Negative transfer learning can harden caution even when a support still performs better elsewhere.</div>
+        <div className="fg-card-copy">• Normal use means what happened when this support was used in the same state before.</div>
+        <div className="fg-card-copy">• Supervised retries means the user chose to test a guarded support anyway and the app later checked whether that choice held up.</div>
+        <div className="fg-card-copy">• A support can learn a little from supervised retries, but those retries should not quickly outweigh the more grounded same-state history.</div>
+        <div className="fg-card-copy">• The percentages show how much of the current lane comes from normal use versus supervised retries.</div>
       </div>
     </section>
   );
