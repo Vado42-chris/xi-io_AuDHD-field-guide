@@ -83,6 +83,7 @@ export const AppShell: React.FC = () => {
             currentState={controller.currentState}
             thresholdSummary={controller.thresholdSummary}
             personalizedSupports={controller.personalizedSupports}
+            recommendationLedger={controller.recommendationLedger}
             onApplyRouteState={controller.handleApplyRouteState}
             onLogOutcome={controller.handleLogOutcome}
             recentOutcomeSummary={controller.recentOutcomeSummary}
