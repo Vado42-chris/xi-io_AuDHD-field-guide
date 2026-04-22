@@ -16,7 +16,9 @@ export interface FeatureViewProps {
     sensorySupports: AppShellController['sensorySupports'];
     memoryEntries: AppShellController['memoryEntries'];
     memorySummary: AppShellController['memorySummary'];
+    journalEvidence: AppShellController['journalEvidence'];
     supportEvidence: AppShellController['supportEvidence'];
+    evidenceIntakeSummary: AppShellController['evidenceIntakeSummary'];
     supportEvidenceSummary: AppShellController['supportEvidenceSummary'];
     evidenceItems: AppShellController['evidenceItems'];
     evidenceSummary: AppShellController['evidenceSummary'];
@@ -74,7 +76,9 @@ export const useFeatureViewProps = (
       sensorySupports: controller.sensorySupports,
       memoryEntries: controller.memoryEntries,
       memorySummary: controller.memorySummary,
+      journalEvidence: controller.journalEvidence,
       supportEvidence: controller.supportEvidence,
+      evidenceIntakeSummary: controller.evidenceIntakeSummary,
       supportEvidenceSummary: controller.supportEvidenceSummary,
       evidenceItems: controller.evidenceItems,
       evidenceSummary: controller.evidenceSummary,
