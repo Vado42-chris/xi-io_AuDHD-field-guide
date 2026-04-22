@@ -22,6 +22,8 @@ export type SuggestionStability = 'stable' | 'cautious';
 export type RecommendationConfidence = 'low' | 'medium' | 'high';
 export type RecommendationAvailability = 'active' | 'recovering' | 'cooling_off' | 'avoid_for_now';
 export type TransferSafety = 'safe' | 'caution' | 'avoid';
+export type TransferDecision = 'approved' | 'rejected';
+export type TransferOutcomeAssessment = 'pending' | 'justified' | 'not_justified';
 
 export interface CurrentState {
   canonicalId: CanonicalStateId;
@@ -181,6 +183,19 @@ export interface RecommendationStateTrust {
   outcomeHistory: RecommendationOutcomeEvent[];
 }
 
+export interface TransferReviewRecord {
+  id: string;
+  recommendationId: string;
+  currentState: CanonicalStateId;
+  transferSafety: TransferSafety;
+  transferWarning?: string;
+  decision: TransferDecision;
+  reason?: string;
+  createdAt: number;
+  outcomeAssessment: TransferOutcomeAssessment;
+  assessedAt?: number;
+}
+
 export interface RecommendationLedgerItem {
   id: string;
   title: string;
@@ -200,6 +215,7 @@ export interface RecommendationLedgerItem {
   rankScore: number;
   recoveryScore: number;
   stateTrustMap: RecommendationStateTrust[];
+  transferReviews: TransferReviewRecord[];
 }
 
 export interface JournalThread {
