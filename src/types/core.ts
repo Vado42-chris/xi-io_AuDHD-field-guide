@@ -52,6 +52,13 @@ export interface AppIdentity {
   isProvisioned: boolean;
 }
 
+export interface ActiveTrial {
+  recommendationId: string;
+  supportTitle: string;
+  stateCanonicalId: CanonicalStateId;
+  startedAt: number;
+}
+
 export interface StateSnapshot {
   canonicalId: CanonicalStateId;
   label: string;
