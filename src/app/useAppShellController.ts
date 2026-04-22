@@ -53,7 +53,7 @@ export interface AppShellController {
   handleSelectState: (stateId: string) => void;
   handleSelectIntensity: (intensity: StateIntensity) => void;
   handleApplyRouteState: (canonicalId: CurrentState['canonicalId']) => void;
-  handleLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome) => void;
+  handleLogOutcome: (supportTitle: string, supportRoute: string, outcome: SupportOutcome, recommendationId?: string) => void;
   handleCreateThread: () => void;
   handleOpenThread: (threadId: string) => void;
   handleSendMessage: (threadId: string, text: string) => void;
