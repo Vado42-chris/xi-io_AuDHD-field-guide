@@ -6,6 +6,7 @@ import {
   RecommendationConfidence,
   RecommendationLedgerItem,
   RecommendationStateTrust,
+  RevalidationRecord,
   SupportLogEntry,
   TransferReviewRecord,
   TransferSafety,
@@ -110,7 +111,20 @@ const deriveTrustMaturity = (normalUseCount: number, directTrustPercent: number,
   };
 };
 
-const deriveTrustFreshness = (lastUsedAt: number | undefined): { trustFreshness: TrustFreshness; freshnessSummary: string } => {
+const deriveTrustFreshness = (lastUsedAt: number | undefined, revalidationHistory: RevalidationRecord[]): { trustFreshness: TrustFreshness; freshnessSummary: string } => {
+  const latest = revalidationHistory[0];
+  if (latest?.result === 'still_helps' || latest?.result === 'helps_a_little') {
+    return {
+      trustFreshness: 'fresh',
+      freshnessSummary: 'This was checked again recently and still seems useful here.',
+    };
+  }
+  if (latest?.result === 'no_longer_helps') {
+    return {
+      trustFreshness: 'needs_recheck',
+      freshnessSummary: 'This fresh check did not hold up, so do not rely on old trust here.',
+    };
+  }
   if (!lastUsedAt) {
     return {
       trustFreshness: 'needs_recheck',
@@ -179,7 +193,8 @@ const buildStateTrust = (
   stability: PersonalizedSupportSuggestion['stability'],
   supportingCount: number,
   supportLog: SupportLogEntry[],
-  transferReviews: TransferReviewRecord[]
+  transferReviews: TransferReviewRecord[],
+  revalidationRecords: RevalidationRecord[]
 ): RecommendationStateTrust[] => {
   return ALL_STATES.map((state) => {
     const outcomeHistory = supportLog
@@ -193,18 +208,22 @@ const buildStateTrust = (
       }));
 
     const relevantReviews = assessTransferReviews(recommendationId, state, transferReviews, supportLog);
+    const relevantRechecks = revalidationRecords
+      .filter((record) => record.recommendationId === recommendationId && record.currentState === state)
+      .sort((a, b) => b.createdAt - a.createdAt);
     const { transferLearningScore, learnedTransferTrust } = deriveTransferLearning(relevantReviews);
     const performanceScore = outcomeHistory.reduce((sum, event) => sum + scoreOutcome(event.outcome), 0);
     const worseCount = outcomeHistory.filter((event) => event.outcome === 'worse').length;
     const recoveryScore = deriveRecoveryScore(outcomeHistory);
     const lastUsedAt = outcomeHistory[0]?.createdAt;
-    const { trustFreshness, freshnessSummary } = deriveTrustFreshness(lastUsedAt);
+    const { trustFreshness, freshnessSummary } = deriveTrustFreshness(lastUsedAt, relevantRechecks);
     const availability = deriveAvailability(performanceScore, outcomeHistory.length, worseCount, recoveryScore, learnedTransferTrust, trustFreshness);
     const confidence = deriveConfidence(availability, performanceScore, stability, supportingCount, learnedTransferTrust, trustFreshness);
     const { directTrustWeight, transferTrustWeight, directTrustPercent, transferTrustPercent } = deriveTrustWeights(performanceScore, learnedTransferTrust, outcomeHistory.length);
     const { trustMaturity, maturitySummary } = deriveTrustMaturity(outcomeHistory.length, directTrustPercent, transferTrustPercent);
     const freshnessPenalty = trustFreshness === 'needs_recheck' ? 2 : trustFreshness === 'aging' ? 1 : 0;
-    const rankScore = performanceScore + recoveryScore + Math.min(learnedTransferTrust, directTrustWeight) - freshnessPenalty + (confidence === 'high' ? 3 : confidence === 'medium' ? 1 : 0) - (availability === 'cooling_off' ? 4 : availability === 'avoid_for_now' ? 8 : 0);
+    const recheckBoost = relevantRechecks[0]?.result === 'still_helps' ? 2 : relevantRechecks[0]?.result === 'helps_a_little' ? 1 : relevantRechecks[0]?.result === 'no_longer_helps' ? -2 : 0;
+    const rankScore = performanceScore + recoveryScore + Math.min(learnedTransferTrust, directTrustWeight) + recheckBoost - freshnessPenalty + (confidence === 'high' ? 3 : confidence === 'medium' ? 1 : 0) - (availability === 'cooling_off' ? 4 : availability === 'avoid_for_now' ? 8 : 0);
 
     return {
       state,
@@ -267,7 +286,8 @@ export const buildRecommendationLedger = (
   suggestions: PersonalizedSupportSuggestion[],
   evidenceItems: PatternEvidenceItem[],
   supportLog: SupportLogEntry[] = [],
-  transferReviews: TransferReviewRecord[] = []
+  transferReviews: TransferReviewRecord[] = [],
+  revalidationRecords: RevalidationRecord[] = []
 ): RecommendationLedgerItem[] => {
   const relevantEvidence = supportRefsForState(evidenceItems, currentState);
   const supporting = relevantEvidence.filter((item) => item.resolutionStatus === 'active');
@@ -275,10 +295,13 @@ export const buildRecommendationLedger = (
 
   const items = suggestions.map((suggestion, index) => {
     const recommendationId = `recommendation-${currentState}-${index}`;
-    const stateTrustMap = buildStateTrust(recommendationId, suggestion.stability, supporting.length, supportLog, transferReviews);
+    const stateTrustMap = buildStateTrust(recommendationId, suggestion.stability, supporting.length, supportLog, transferReviews, revalidationRecords);
     const currentStateTrust = stateTrustMap.find((entry) => entry.state === currentState)!;
     const transfer = deriveTransferSafety(currentState, stateTrustMap);
     const assessedTransferReviews = assessTransferReviews(recommendationId, currentState, transferReviews, supportLog);
+    const revalidationHistory = revalidationRecords
+      .filter((record) => record.recommendationId === recommendationId && record.currentState === currentState)
+      .sort((a, b) => b.createdAt - a.createdAt);
     const trustSummary = buildTrustSummary(currentStateTrust.directTrustPercent, currentStateTrust.transferTrustPercent);
 
     return {
@@ -308,6 +331,7 @@ export const buildRecommendationLedger = (
       trustFreshness: currentStateTrust.trustFreshness,
       freshnessSummary: currentStateTrust.freshnessSummary,
       lastUsedAt: currentStateTrust.lastUsedAt,
+      revalidationHistory,
       supportingEvidence: supporting.flatMap((item) => item.references).slice(0, 4),
       weakeningEvidence: weakening.flatMap((item) => item.references).slice(0, 4),
       outcomeHistory: currentStateTrust.outcomeHistory,
