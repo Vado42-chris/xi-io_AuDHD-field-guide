@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
-import { CurrentState, JournalThread } from '../types/core';
+import { CurrentState, JournalThread, MemoryEntryStatus } from '../types/core';
 import { buildThreadMemoryEntry } from '../lib/journal/threadIntelligence';
 import { makeStateSnapshot } from './appShellDefaults';
 
@@ -16,6 +16,7 @@ export interface JournalFeatureController {
   handleKeepThreadState: (threadId: string) => void;
   handleApplySuggestedTags: (threadId: string) => void;
   handleConfirmMemoryEntry: (entryId: string) => void;
+  handleSaveMemoryEntry: (entryId: string, summary: string, confirmedTags: string[], status: MemoryEntryStatus, notes: string) => void;
 }
 
 export const useJournalFeatureController = ({
@@ -56,7 +57,8 @@ export const useJournalFeatureController = ({
       const userMessage = { id: `m-${Date.now()}-u`, role: 'user' as const, text, createdAt: Date.now() };
       const ibalMessage = { id: `m-${Date.now()}-i`, role: 'ibal' as const, text: 'Noted. I will treat this as part of the same thread and keep the context connected. After this send, check whether your state still fits.', createdAt: Date.now() + 1 };
       const nextThread: JournalThread = { ...thread, updatedAt: Date.now(), summary: text.length > 120 ? `${text.slice(0, 117)}...` : text, messages: [...thread.messages, userMessage, ibalMessage] };
-      return { ...nextThread, memory: buildThreadMemoryEntry(nextThread) };
+      const rebuilt = buildThreadMemoryEntry(nextThread);
+      return { ...nextThread, memory: { ...rebuilt, status: thread.memory?.status ?? rebuilt.status, notes: thread.memory?.notes ?? rebuilt.notes } };
     }));
   };
 
@@ -73,7 +75,7 @@ export const useJournalFeatureController = ({
     setJournalThreads((prev) => prev.map((thread) => {
       if (thread.id !== threadId || !thread.memory) return thread;
       const mergedTags = Array.from(new Set([...thread.tags, ...thread.memory.suggestedTags]));
-      return { ...thread, tags: mergedTags, memory: { ...thread.memory, confirmedTags: mergedTags } };
+      return { ...thread, tags: mergedTags, memory: { ...thread.memory, confirmedTags: mergedTags, status: 'confirmed' } };
     }));
   };
 
@@ -82,7 +84,29 @@ export const useJournalFeatureController = ({
     setJournalThreads((prev) => prev.map((thread) => {
       if (thread.id !== threadId || !thread.memory) return thread;
       const mergedTags = Array.from(new Set([...thread.tags, ...thread.memory.confirmedTags]));
-      return { ...thread, tags: mergedTags, memory: { ...thread.memory, confirmedTags: mergedTags } };
+      return { ...thread, tags: mergedTags, memory: { ...thread.memory, confirmedTags: mergedTags, status: 'confirmed' } };
+    }));
+  };
+
+  const handleSaveMemoryEntry = (entryId: string, summary: string, confirmedTags: string[], status: MemoryEntryStatus, notes: string) => {
+    const threadId = entryId.replace('memory-', '');
+    setJournalThreads((prev) => prev.map((thread) => {
+      if (thread.id !== threadId) return thread;
+      const baseMemory = thread.memory ?? buildThreadMemoryEntry(thread);
+      const mergedTags = Array.from(new Set(confirmedTags));
+      return {
+        ...thread,
+        updatedAt: Date.now(),
+        tags: mergedTags.length > 0 ? mergedTags : thread.tags,
+        memory: {
+          ...baseMemory,
+          summary: summary || baseMemory.summary,
+          confirmedTags: mergedTags,
+          status,
+          notes,
+          lastStructuredAt: Date.now(),
+        },
+      };
     }));
   };
 
@@ -93,5 +117,6 @@ export const useJournalFeatureController = ({
     handleKeepThreadState,
     handleApplySuggestedTags,
     handleConfirmMemoryEntry,
+    handleSaveMemoryEntry,
   };
 };
