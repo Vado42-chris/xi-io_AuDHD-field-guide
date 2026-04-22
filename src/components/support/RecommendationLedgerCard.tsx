@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { RecommendationLedgerItem, TransferDecision } from '../../types/core';
+import { RecommendationLedgerItem, RevalidationResult, TransferDecision } from '../../types/core';
 
 interface RecommendationLedgerCardProps {
   item: RecommendationLedgerItem;
   onReviewTransfer: (recommendationId: string, transferSafety: RecommendationLedgerItem['transferSafety'], transferWarning: string | undefined, decision: TransferDecision, reason: string) => void;
+  onRevalidateSupport: (recommendationId: string, result: RevalidationResult, note: string) => void;
 }
 
-export const RecommendationLedgerCard: React.FC<RecommendationLedgerCardProps> = ({ item, onReviewTransfer }) => {
+export const RecommendationLedgerCard: React.FC<RecommendationLedgerCardProps> = ({ item, onReviewTransfer, onRevalidateSupport }) => {
   const [reason, setReason] = useState('');
+  const [recheckNote, setRecheckNote] = useState('');
 
   return (
     <section className="fg-card fg-glass fg-learning-card">
@@ -25,6 +27,26 @@ export const RecommendationLedgerCard: React.FC<RecommendationLedgerCardProps> =
       <p className="fg-card-copy">Trust mix: {item.trustSummary}.</p>
       <p className="fg-card-copy">{item.maturitySummary}</p>
       <p className="fg-card-copy">{item.freshnessSummary}</p>
+      {item.trustFreshness !== 'fresh' ? (
+        <div className="fg-panel-stack fg-glass" style={{ padding: 14, borderRadius: 14, marginTop: 14 }}>
+          <div className="fg-kicker">Fresh check</div>
+          <div className="fg-card-copy">Try this again and tell the app if it still helps.</div>
+          <textarea className="fg-textarea" value={recheckNote} onChange={(e) => setRecheckNote(e.target.value)} placeholder="what happened when you tried it again?" />
+          <div className="fg-chip-row">
+            <button type="button" className="fg-choice-chip fg-glass" onClick={() => onRevalidateSupport(item.id, 'still_helps', recheckNote.trim())}>Still helps</button>
+            <button type="button" className="fg-choice-chip fg-glass" onClick={() => onRevalidateSupport(item.id, 'helps_a_little', recheckNote.trim())}>Helps a little</button>
+            <button type="button" className="fg-choice-chip fg-glass" onClick={() => onRevalidateSupport(item.id, 'no_longer_helps', recheckNote.trim())}>No longer helps</button>
+          </div>
+          {item.revalidationHistory.length > 0 ? (
+            <div className="fg-panel-stack">
+              <div className="fg-kicker">Past fresh checks</div>
+              {item.revalidationHistory.map((record) => (
+                <div key={record.id} className="fg-card-copy">• {new Date(record.createdAt).toLocaleString()}, {record.result.replace(/_/g, ' ')}</div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       {item.transferWarning ? <p className="fg-card-copy">{item.transferWarning}</p> : null}
       {item.transferSafety !== 'safe' ? (
         <div className="fg-panel-stack fg-glass" style={{ padding: 14, borderRadius: 14, marginTop: 14 }}>
