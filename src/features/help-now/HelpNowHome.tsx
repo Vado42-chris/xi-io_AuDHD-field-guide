@@ -154,7 +154,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
                 key={item.id}
                 kicker={item.availability === 'recovering' ? 'Recovering' : item.stability === 'cautious' ? 'Use gently' : 'Tailored support'}
                 title={item.title}
-                body={`${item.body} ${item.reason}`}
+                body={`${item.body} ${item.priorityReason}`}
                 active={selectedSupportTitle === item.title}
                 onSelect={() => setSelectedSupportTitle(item.title)}
               />
