@@ -9,10 +9,12 @@ import {
   SupportLogEntry,
   TransferReviewRecord,
   TransferSafety,
+  TrustFreshness,
   TrustMaturity,
 } from '../../types/core';
 
 const ALL_STATES: CanonicalStateId[] = ['steady', 'overloaded', 'activated', 'shut_down', 'in_pain', 'stuck', 'unclear'];
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 const supportRefsForState = (items: PatternEvidenceItem[], state: CanonicalStateId) => {
   const normalized = state.replace('_', ' ');
@@ -108,16 +110,45 @@ const deriveTrustMaturity = (normalUseCount: number, directTrustPercent: number,
   };
 };
 
+const deriveTrustFreshness = (lastUsedAt: number | undefined): { trustFreshness: TrustFreshness; freshnessSummary: string } => {
+  if (!lastUsedAt) {
+    return {
+      trustFreshness: 'needs_recheck',
+      freshnessSummary: 'This has not been used here yet, so it needs a fresh check.',
+    };
+  }
+
+  const ageMs = Date.now() - lastUsedAt;
+  if (ageMs >= 45 * DAY_MS) {
+    return {
+      trustFreshness: 'needs_recheck',
+      freshnessSummary: 'This used to work well, but it has been a while and needs a fresh check.',
+    };
+  }
+  if (ageMs >= 21 * DAY_MS) {
+    return {
+      trustFreshness: 'aging',
+      freshnessSummary: 'This may still be useful, but it is getting old and would benefit from a re-check soon.',
+    };
+  }
+  return {
+    trustFreshness: 'fresh',
+    freshnessSummary: 'This trust is based on fairly recent use in this same state.',
+  };
+};
+
 const deriveAvailability = (
   performanceScore: number,
   outcomeHistoryLength: number,
   worseCount: number,
   recoveryScore: number,
-  learnedTransferTrust: number
+  learnedTransferTrust: number,
+  trustFreshness: TrustFreshness
 ): RecommendationAvailability => {
-  const adjustedPerformance = performanceScore + learnedTransferTrust;
+  const freshnessPenalty = trustFreshness === 'needs_recheck' ? 2 : trustFreshness === 'aging' ? 1 : 0;
+  const adjustedPerformance = performanceScore + learnedTransferTrust - freshnessPenalty;
   if ((worseCount >= 2 || adjustedPerformance <= -4) && recoveryScore <= 1) return 'avoid_for_now';
-  if ((worseCount >= 1 || (outcomeHistoryLength >= 2 && adjustedPerformance < 0)) && recoveryScore < 2) return 'cooling_off';
+  if ((worseCount >= 1 || (outcomeHistoryLength >= 2 && adjustedPerformance < 0) || trustFreshness === 'needs_recheck') && recoveryScore < 2) return 'cooling_off';
   if ((recoveryScore + Math.max(0, learnedTransferTrust)) >= 2 && (adjustedPerformance < 2 || worseCount >= 1)) return 'recovering';
   return 'active';
 };
@@ -127,9 +158,11 @@ const deriveConfidence = (
   performanceScore: number,
   stability: PersonalizedSupportSuggestion['stability'],
   supportingCount: number,
-  learnedTransferTrust: number
+  learnedTransferTrust: number,
+  trustFreshness: TrustFreshness
 ): RecommendationConfidence => {
-  const adjustedPerformance = performanceScore + learnedTransferTrust;
+  const freshnessPenalty = trustFreshness === 'needs_recheck' ? 2 : trustFreshness === 'aging' ? 1 : 0;
+  const adjustedPerformance = performanceScore + learnedTransferTrust - freshnessPenalty;
   if (availability === 'avoid_for_now') return 'low';
   if (adjustedPerformance >= 3) return 'high';
   if (adjustedPerformance <= -2) return 'low';
@@ -164,11 +197,14 @@ const buildStateTrust = (
     const performanceScore = outcomeHistory.reduce((sum, event) => sum + scoreOutcome(event.outcome), 0);
     const worseCount = outcomeHistory.filter((event) => event.outcome === 'worse').length;
     const recoveryScore = deriveRecoveryScore(outcomeHistory);
-    const availability = deriveAvailability(performanceScore, outcomeHistory.length, worseCount, recoveryScore, learnedTransferTrust);
-    const confidence = deriveConfidence(availability, performanceScore, stability, supportingCount, learnedTransferTrust);
+    const lastUsedAt = outcomeHistory[0]?.createdAt;
+    const { trustFreshness, freshnessSummary } = deriveTrustFreshness(lastUsedAt);
+    const availability = deriveAvailability(performanceScore, outcomeHistory.length, worseCount, recoveryScore, learnedTransferTrust, trustFreshness);
+    const confidence = deriveConfidence(availability, performanceScore, stability, supportingCount, learnedTransferTrust, trustFreshness);
     const { directTrustWeight, transferTrustWeight, directTrustPercent, transferTrustPercent } = deriveTrustWeights(performanceScore, learnedTransferTrust, outcomeHistory.length);
     const { trustMaturity, maturitySummary } = deriveTrustMaturity(outcomeHistory.length, directTrustPercent, transferTrustPercent);
-    const rankScore = performanceScore + recoveryScore + Math.min(learnedTransferTrust, directTrustWeight) + (confidence === 'high' ? 3 : confidence === 'medium' ? 1 : 0) - (availability === 'cooling_off' ? 4 : availability === 'avoid_for_now' ? 8 : 0);
+    const freshnessPenalty = trustFreshness === 'needs_recheck' ? 2 : trustFreshness === 'aging' ? 1 : 0;
+    const rankScore = performanceScore + recoveryScore + Math.min(learnedTransferTrust, directTrustWeight) - freshnessPenalty + (confidence === 'high' ? 3 : confidence === 'medium' ? 1 : 0) - (availability === 'cooling_off' ? 4 : availability === 'avoid_for_now' ? 8 : 0);
 
     return {
       state,
@@ -185,6 +221,9 @@ const buildStateTrust = (
       transferTrustPercent,
       trustMaturity,
       maturitySummary,
+      trustFreshness,
+      freshnessSummary,
+      lastUsedAt,
       outcomeHistory,
     };
   });
@@ -254,14 +293,21 @@ export const buildRecommendationLedger = (
       transferWarning: transfer.transferWarning,
       reason: suggestion.reason,
       appearedBecause:
-        currentStateTrust.trustMaturity === 'proven_in_normal_use'
-          ? 'This lane is now mostly backed by what happened when it was used in the same state over time.'
-          : currentStateTrust.trustMaturity === 'mostly_retry_based'
-            ? 'This lane still depends a lot on careful retry history, so it is not as grounded in normal same-state use yet.'
-            : 'This lane is being shaped by both normal use and careful retry history, and it is moving toward stronger same-state proof.',
+        currentStateTrust.trustFreshness === 'needs_recheck'
+          ? 'This used to work here, but it has been a while and it needs a fresh check before you lean on it too hard.'
+          : currentStateTrust.trustFreshness === 'aging'
+            ? 'This still has some value here, but the trust is getting older and should be re-checked soon.'
+            : currentStateTrust.trustMaturity === 'proven_in_normal_use'
+              ? 'This lane is now mostly backed by what happened when it was used in the same state over time.'
+              : currentStateTrust.trustMaturity === 'mostly_retry_based'
+                ? 'This lane still depends a lot on careful retry history, so it is not as grounded in normal same-state use yet.'
+                : 'This lane is being shaped by both normal use and careful retry history, and it is moving toward stronger same-state proof.',
       trustSummary,
       trustMaturity: currentStateTrust.trustMaturity,
       maturitySummary: currentStateTrust.maturitySummary,
+      trustFreshness: currentStateTrust.trustFreshness,
+      freshnessSummary: currentStateTrust.freshnessSummary,
+      lastUsedAt: currentStateTrust.lastUsedAt,
       supportingEvidence: supporting.flatMap((item) => item.references).slice(0, 4),
       weakeningEvidence: weakening.flatMap((item) => item.references).slice(0, 4),
       outcomeHistory: currentStateTrust.outcomeHistory,
