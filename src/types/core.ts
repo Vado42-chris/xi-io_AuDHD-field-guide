@@ -64,6 +64,21 @@ export interface StateTransition {
   source: 'post_send' | 'manual';
 }
 
+export interface MemoryRevision {
+  id: string;
+  changedAt: number;
+  actor: 'user' | 'system';
+  previousSummary: string;
+  previousConfirmedTags: string[];
+  previousStatus: MemoryEntryStatus;
+  previousNotes?: string;
+  nextSummary: string;
+  nextConfirmedTags: string[];
+  nextStatus: MemoryEntryStatus;
+  nextNotes?: string;
+  reason: string;
+}
+
 export interface ThreadMemoryEntry {
   summary: string;
   suggestedTags: string[];
@@ -72,6 +87,9 @@ export interface ThreadMemoryEntry {
   destresserTags: string[];
   status: MemoryEntryStatus;
   notes?: string;
+  provenanceSource: 'thread';
+  supersedesEntryId?: string;
+  revisionHistory: MemoryRevision[];
   lastStructuredAt: number;
 }
 
@@ -88,6 +106,9 @@ export interface MemoryVaultEntry {
   status: MemoryEntryStatus;
   notes?: string;
   hasConflict: boolean;
+  provenanceSource: 'thread';
+  supersedesEntryId?: string;
+  revisionHistory: MemoryRevision[];
 }
 
 export interface MemoryVaultSummary {
@@ -97,6 +118,7 @@ export interface MemoryVaultSummary {
   repeatedStressors: string[];
   repeatedDestressers: string[];
   conflictEntries: number;
+  revisedEntries: number;
 }
 
 export interface JournalThread {
