@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import RecommendationLedgerCard from '../../components/support/RecommendationLedgerCard';
 import RecommendationStateMatrix from '../../components/support/RecommendationStateMatrix';
+import TransferTrustLegend from '../../components/support/TransferTrustLegend';
 import SupportCard from '../../components/support/SupportCard';
 import {
   CanonicalStateId,
@@ -114,7 +115,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <h1 className="fg-section-title">A calmer first action, not a dashboard.</h1>
         <p className="fg-section-body">
           Pick what feels closest right now, get a low-demand starter support, and log whether it helped.
-          Recommendation trust is now state-specific, and guarded transfers can be explicitly approved or rejected instead of only being warned about.
+          Recommendation trust is now state-specific, guarded transfers can be explicitly approved or rejected, and learned transfer trust is shown separately from ordinary direct-use trust.
         </p>
       </div>
 
@@ -160,6 +161,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
             <>
               <RecommendationLedgerCard item={selectedLedgerItem} onReviewTransfer={onReviewTransfer} />
               <RecommendationStateMatrix item={selectedLedgerItem} />
+              <TransferTrustLegend />
             </>
           ) : null}
           {coolingOffRecommendations.length > 0 ? (
