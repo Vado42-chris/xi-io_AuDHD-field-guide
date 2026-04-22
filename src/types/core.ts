@@ -28,6 +28,7 @@ export type TrustMaturity = 'mostly_retry_based' | 'blended' | 'proven_in_normal
 export type TrustFreshness = 'fresh' | 'aging' | 'needs_recheck';
 export type RevalidationResult = 'still_helps' | 'helps_a_little' | 'no_longer_helps';
 export type EvidenceSource = 'journal' | 'support_outcome' | 'trial_reflection' | 'revalidation' | 'manual' | 'customization';
+export type AttemptKind = 'normal' | 'retry' | 'revalidation' | 'transfer';
 
 export interface CurrentState {
   canonicalId: CanonicalStateId;
@@ -51,6 +52,17 @@ export interface AppIdentity {
   username: string;
   avatarColor: string;
   isProvisioned: boolean;
+}
+
+export interface SupportAttempt {
+  id: string;
+  recommendationId?: string;
+  supportTitle: string;
+  kind: AttemptKind;
+  stateCanonicalId: CanonicalStateId;
+  startedAt: number;
+  finishedAt?: number;
+  outcome?: SupportOutcome;
 }
 
 export interface ActiveTrial {
