@@ -13,6 +13,7 @@ import {
   MemoryVaultSummary,
   PatternEvidenceItem,
   PatternEvidenceSummary,
+  PatternResolutionStatus,
   PatternReviewSummary,
   SensorySupportRecord,
   StateIntensity,
@@ -60,6 +61,7 @@ export interface AppShellController {
   handleConfirmSensory: (recordId: string) => void;
   handleConfirmMemoryEntry: (entryId: string) => void;
   handleToggleEvidenceContested: (itemId: string) => void;
+  handleResolveEvidence: (itemId: string, nextStatus: PatternResolutionStatus, note: string) => void;
   handleSaveMemoryEntry: (entryId: string, summary: string, confirmedTags: string[], status: MemoryEntryStatus, notes: string) => void;
   handleRenameState: (stateId: string, label: string) => void;
   handleToggleStateFavorite: (stateId: string) => void;
@@ -174,6 +176,7 @@ export const useAppShellController = (): AppShellController => {
     handleConfirmSensory,
     handleConfirmMemoryEntry: journalFeature.handleConfirmMemoryEntry,
     handleToggleEvidenceContested: learningFeature.handleToggleEvidenceContested,
+    handleResolveEvidence: learningFeature.handleResolveEvidence,
     handleSaveMemoryEntry: journalFeature.handleSaveMemoryEntry,
     handleRenameState: customizeFeature.handleRenameState,
     handleToggleStateFavorite: customizeFeature.handleToggleStateFavorite,
