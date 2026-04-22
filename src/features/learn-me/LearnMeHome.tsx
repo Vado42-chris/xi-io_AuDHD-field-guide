@@ -14,7 +14,9 @@ interface LearnMeHomeProps {
   sensorySupports: SensorySupportRecord[];
   memoryEntries: MemoryVaultEntry[];
   memorySummary: MemoryVaultSummary;
+  journalEvidence: EvidenceContribution[];
   supportEvidence: EvidenceContribution[];
+  evidenceIntakeSummary: { total: number; journal: number; support: number; confirmed: number; latestSource?: string };
   supportEvidenceSummary: { total: number; confirmed: number; latestSource?: string };
   evidenceItems: PatternEvidenceItem[];
   evidenceSummary: PatternEvidenceSummary;
@@ -44,7 +46,9 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
   sensorySupports,
   memoryEntries,
   memorySummary,
+  journalEvidence,
   supportEvidence,
+  evidenceIntakeSummary,
   supportEvidenceSummary,
   evidenceItems,
   evidenceSummary,
@@ -58,6 +62,9 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
 }) => {
   const stressors = signals.filter((signal) => signal.kind === 'stressor');
   const destressers = signals.filter((signal) => signal.kind === 'destresser');
+  const sharedEvidencePreview = [...journalEvidence.slice(0, 3), ...supportEvidence.slice(0, 3)]
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(0, 6);
 
   return (
     <div className="fg-content-card fg-glass fg-help-layout">
@@ -65,7 +72,7 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
         <div className="fg-kicker">Learn Me</div>
         <h1 className="fg-section-title">Readable patterns, without pretending certainty.</h1>
         <p className="fg-section-body">
-          Support evidence is now a real Learn Me input, not just a side stream. Outcomes, optional notes, and fresh checks from Help Now are being read here through the shared evidence contribution domain.
+          Journal memory and Help Now activity now enter the same shared evidence intake. This keeps the app from learning through separate lanes that never meet.
         </p>
       </div>
 
@@ -73,6 +80,29 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
       <PatternReviewSummaryCard summary={summary} />
       <MemoryVaultSummaryCard summary={memorySummary} />
       <PatternEvidenceSummaryCard summary={evidenceSummary} />
+
+      <section className="fg-panel-stack">
+        <div className="fg-kicker">Shared evidence intake</div>
+        <div className="fg-state-meta">
+          {evidenceIntakeSummary.total > 0
+            ? `${evidenceIntakeSummary.total} evidence items are in view, ${evidenceIntakeSummary.journal} from journal memory, ${evidenceIntakeSummary.support} from support activity, with ${evidenceIntakeSummary.confirmed} already at confirmed strength.`
+            : 'As journal memory and support activity build up, they will flow into the same intake here.'}
+        </div>
+        <div className="fg-grid">
+          {sharedEvidencePreview.length > 0 ? (
+            sharedEvidencePreview.map((item) => (
+              <div key={item.id} className="fg-card fg-glass fg-learning-card">
+                <div className="fg-kicker">{sourceLabel(item.source)}</div>
+                <h2 className="fg-card-title">{item.summary}</h2>
+                <p className="fg-card-copy">Confidence: {item.confidence}</p>
+                {item.tags.length > 0 ? <p className="fg-card-copy">Tags: {item.tags.join(', ')}</p> : null}
+              </div>
+            ))
+          ) : (
+            <div className="fg-state-meta">No shared evidence yet. Journal summaries and support outcomes will appear here as they build up.</div>
+          )}
+        </div>
+      </section>
 
       <section className="fg-panel-stack">
         <div className="fg-kicker">Support evidence coming in</div>
