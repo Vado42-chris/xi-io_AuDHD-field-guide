@@ -6,6 +6,7 @@ import RecommendationLedgerCard from '../../components/support/RecommendationLed
 import RecommendationStateMatrix from '../../components/support/RecommendationStateMatrix';
 import TransferTrustLegend from '../../components/support/TransferTrustLegend';
 import SupportCard from '../../components/support/SupportCard';
+import { buildReadinessGuideBody, buildReadinessTrustLine } from '../../lib/patterns/readinessTrustCopy';
 import { getDisplayStateLabel } from '../../lib/state/stateLabels';
 import {
   ActiveTrial,
@@ -103,16 +104,6 @@ const buildWhyTheseFirst = (items: RecommendationLedgerItem[]) => {
   if (first.status.trustFreshness === 'fresh') return 'These come first because they are the strongest current fit and have been confirmed more recently.';
   if (first.status.availability === 'recovering') return 'These come first because they still fit now, even though they are being re-tested carefully.';
   return 'These come first because they are the safest current fit from what the app knows right now.';
-};
-
-const buildReadinessGuideBody = (thresholdSummary: ThresholdSummary) => {
-  if (thresholdSummary.readiness === 'not_ready') {
-    return 'The app can help you right away with starter supports, state check-ins, and gentle logging. Personalized suggestions are still warming up, so the safest path is to use the app, log what happened, and let the evidence build first.';
-  }
-  if (thresholdSummary.readiness === 'warming_up') {
-    return 'The app has started learning from your entries and support attempts. Personalized suggestions may appear, but they should still be treated as cautious and checked against what actually happens.';
-  }
-  return 'The app has enough evidence to start giving more grounded personalized suggestions. Keep logging outcomes so it can stay current and notice when something changes.';
 };
 
 const groupRecommendations = (items: RecommendationLedgerItem[]) => {
@@ -290,7 +281,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <h1 className="fg-section-title">A calmer first action, not a dashboard.</h1>
         <p className="fg-section-body">
           Pick what feels closest right now, get a low-demand starter support, and log whether it helped.
-          Recommendation trust is state-specific, guarded transfers can be reviewed, and older trust can ask for a simple fresh check instead of quietly fading in the background.
+          Trust builds in layers here, so the safest next step is the one that matches your current state and still leaves room to learn.
         </p>
       </div>
 
@@ -300,6 +291,11 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <div className="fg-meta-pill fg-glass">Suggestion mode: {thresholdSummary.suggestionStability}</div>
         {recentOutcomeSummary ? <div className="fg-meta-pill fg-glass">Latest outcome: {recentOutcomeSummary}</div> : null}
       </div>
+
+      <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
+        <div className="fg-kicker">Readiness and trust</div>
+        <div className="fg-state-meta">{buildReadinessTrustLine(thresholdSummary)}</div>
+      </section>
 
       <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
         <div className="fg-kicker">Support view preference</div>
@@ -316,7 +312,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
 
       {showReadinessGuide ? (
         <GuidedActionPanel
-          kicker="How this works right now"
+          kicker="How trust works right now"
           body={buildReadinessGuideBody(thresholdSummary)}
           actions={[{ label: 'Got it', onClick: () => setReadinessGuideDismissed(true) }]}
         />
