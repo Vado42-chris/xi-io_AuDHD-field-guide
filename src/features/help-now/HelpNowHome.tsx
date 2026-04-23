@@ -182,6 +182,11 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   const showReadinessGuide = !readinessGuideDismissed;
   const firstStarterSupport = activeSupports[0];
   const secondaryStarterSupports = activeSupports.slice(1);
+  const prioritizedComfortTools = useMemo(() => {
+    const relevant = favoriteComfortTools.filter((tool) => tool.helpfulStates.includes(currentState.canonicalId));
+    const other = favoriteComfortTools.filter((tool) => !tool.helpfulStates.includes(currentState.canonicalId));
+    return { relevant, other };
+  }, [favoriteComfortTools, currentState.canonicalId]);
 
   const handleRouteSelect = (routeId: CanonicalStateId) => {
     setSelectedRoute(routeId);
@@ -269,16 +274,42 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
       {favoriteComfortTools.length > 0 ? (
         <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
           <div className="fg-kicker">Pinned comforts</div>
-          <div className="fg-state-meta">These come from Customize, so the support flow can keep your preferred comfort tools closer at hand.</div>
-          <div className="fg-grid">
-            {favoriteComfortTools.slice(0, 2).map((tool) => (
-              <article key={tool.id} className="fg-card fg-glass">
-                <h2 className="fg-card-title">{tool.label}</h2>
-                <p className="fg-card-copy">Category: {tool.category}</p>
-                <p className="fg-card-copy">Helpful states: {tool.helpfulStates.length > 0 ? tool.helpfulStates.map((state) => getDisplayStateLabel(state, customStates)).join(', ') : 'not learned yet'}</p>
-              </article>
-            ))}
+          <div className="fg-state-meta">
+            {prioritizedComfortTools.relevant.length > 0
+              ? `These favorites are being prioritized because they match ${currentState.label} right now.`
+              : 'These come from Customize, so the support flow can keep your preferred comfort tools closer at hand.'}
           </div>
+
+          {prioritizedComfortTools.relevant.length > 0 ? (
+            <div className="fg-panel-stack" style={{ marginTop: 12 }}>
+              <div className="fg-kicker">Best match for this state</div>
+              <div className="fg-grid">
+                {prioritizedComfortTools.relevant.slice(0, 2).map((tool) => (
+                  <article key={tool.id} className="fg-card fg-glass">
+                    <h2 className="fg-card-title">{tool.label}</h2>
+                    <p className="fg-card-copy">Category: {tool.category}</p>
+                    <p className="fg-card-copy">Why here: marked helpful for {getDisplayStateLabel(currentState.canonicalId, customStates, currentState.label)}</p>
+                    <p className="fg-card-copy">Helpful states: {tool.helpfulStates.length > 0 ? tool.helpfulStates.map((state) => getDisplayStateLabel(state, customStates)).join(', ') : 'not learned yet'}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {prioritizedComfortTools.other.length > 0 ? (
+            <div className="fg-panel-stack" style={{ marginTop: 12 }}>
+              <div className="fg-kicker">Other pinned comforts</div>
+              <div className="fg-grid">
+                {prioritizedComfortTools.other.slice(0, prioritizedComfortTools.relevant.length > 0 ? 2 : 3).map((tool) => (
+                  <article key={tool.id} className="fg-card fg-glass">
+                    <h2 className="fg-card-title">{tool.label}</h2>
+                    <p className="fg-card-copy">Category: {tool.category}</p>
+                    <p className="fg-card-copy">Helpful states: {tool.helpfulStates.length > 0 ? tool.helpfulStates.map((state) => getDisplayStateLabel(state, customStates)).join(', ') : 'not learned yet'}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </section>
       ) : null}
 
