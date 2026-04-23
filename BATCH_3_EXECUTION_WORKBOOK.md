@@ -54,6 +54,7 @@ Complete these before Batch 3 starts.
 - [ ] Batch 2 closeout report completed
 - [ ] Batch 1 to Batch 2 comparison report completed
 - [ ] Progression ladder reviewed
+- [ ] Broader readiness planning checkpoint template reviewed so the team is clear on what Batch 3 is meant to inform
 - [ ] Any required targeted fixes completed or accepted risks documented
 - [ ] Participant-facing caveat changes applied, if needed
 - [ ] Facilitator guidance updated, if needed
@@ -156,6 +157,7 @@ Questions:
 - Is the product starting to show enough stability for broader readiness planning to be discussed?
 - Are major blockers no longer dominating the signal?
 - Are remaining issues narrowing in scope?
+- Would the broader readiness planning checkpoint now have enough real evidence to answer more than “not yet”?
 
 Notes:  
 
@@ -177,6 +179,7 @@ Notes:
 - [ ] Review Batch 2 closeout report
 - [ ] Review Batch 1 to Batch 2 comparison report
 - [ ] Review progression ladder current position
+- [ ] Review broader readiness planning checkpoint template so the team knows exactly what Batch 3 is expected to feed
 - [ ] Confirm Batch 3 goals
 - [ ] Confirm no unresolved blocker should pause the batch
 - [ ] Update tracker and schedule
@@ -211,6 +214,14 @@ Notes:
 - [ ] Identify what stabilized, regressed, or stayed unresolved
 - [ ] Create new triage items if needed
 - [ ] Log any new decisions
+
+Notes:  
+
+## Readiness handoff period
+
+- [ ] Decide whether the broader readiness planning checkpoint should actually be opened
+- [ ] If yes, open `BROADER_READINESS_PLANNING_CHECKPOINT_TEMPLATE.md` and carry forward the strongest evidence and unresolved blockers
+- [ ] If no, record why the signal is still insufficient and what the next pilot step should be instead
 
 Notes:  
 
