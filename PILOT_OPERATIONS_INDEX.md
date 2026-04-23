@@ -65,6 +65,14 @@ Use when:
 - deciding whether the product is still in trusted-pilot territory
 - deciding whether broader readiness planning is justified
 
+### `BROADER_READINESS_PLANNING_CHECKPOINT_TEMPLATE.md`
+What it is for:
+- deciding whether pilot evidence is strong enough to justify broader readiness planning
+- clarifying what broader readiness planning would and would not mean
+
+Use when:
+- the pilot may be approaching a point where broader readiness planning is being considered
+
 ---
 
 ## Pre-pilot gate artifact
@@ -217,6 +225,20 @@ What it is for:
 Use when:
 - deciding whether the pilot is genuinely maturing the product
 
+### `BATCH_3_EXECUTION_WORKBOOK.md`
+What it is for:
+- running the third pilot batch with a focus on stabilization, consistency, and broader-readiness signals
+
+Use when:
+- executing Batch 3 day by day
+
+### `BATCH_3_CLOSEOUT_REPORT_TEMPLATE.md`
+What it is for:
+- consolidating what Batch 3 proved, what still blocks broader readiness planning, and what the next pilot step should be
+
+Use when:
+- closing Batch 3 and making the next-step call
+
 ---
 
 # 2. Correct order of operations
@@ -315,6 +337,21 @@ Compare early pilot rounds:
 Purpose:
 - decide whether the pilot is genuinely maturing the product
 - decide whether broader readiness planning is justified or still premature
+
+## Step 12
+Run Batch 3 if justified:
+- `BATCH_3_EXECUTION_WORKBOOK.md`
+- `BATCH_3_CLOSEOUT_REPORT_TEMPLATE.md`
+
+Purpose:
+- test stabilization, consistency, and whether broader readiness planning should actually open
+
+## Step 13
+Open broader readiness planning only if justified:
+- `BROADER_READINESS_PLANNING_CHECKPOINT_TEMPLATE.md`
+
+Purpose:
+- decide whether pilot evidence is strong enough to justify moving beyond the tightly limited trusted-pilot phase
 
 ---
 
@@ -450,11 +487,12 @@ Prevented by:
 - batch workbooks and closeout reports
 
 ## Failure mode 6
-Assuming the pilot is progressing without explicit comparison
+Assuming the pilot is progressing without explicit comparison or readiness control
 
 Prevented by:
 - batch comparison report
 - progression ladder revisit after early batches
+- broader readiness checkpoint before any wider planning language
 
 ---
 
