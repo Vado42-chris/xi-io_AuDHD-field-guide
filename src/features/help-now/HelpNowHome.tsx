@@ -44,7 +44,10 @@ interface StarterSupport {
   body: string;
 }
 
+type SupportViewPreference = 'simple' | 'detailed';
+
 const READINESS_DISMISSED_KEY = 'fg_help_now_readiness_guide_dismissed_v1';
+const SUPPORT_VIEW_PREFERENCE_KEY = 'fg_help_now_support_view_preference_v1';
 
 const ROUTES: Array<{ id: CanonicalStateId; title: string; body: string }> = [
   { id: 'in_pain', title: 'Pain spike', body: 'Pain-aware support comes first when the body is leading everything else.' },
@@ -164,8 +167,28 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
       return false;
     }
   });
-  const [showMoreRecommendations, setShowMoreRecommendations] = useState(false);
-  const [showSelectedRecommendationDetails, setShowSelectedRecommendationDetails] = useState(false);
+  const [supportViewPreference, setSupportViewPreference] = useState<SupportViewPreference>(() => {
+    try {
+      const stored = window.localStorage.getItem(SUPPORT_VIEW_PREFERENCE_KEY);
+      return stored === 'detailed' ? 'detailed' : 'simple';
+    } catch {
+      return 'simple';
+    }
+  });
+  const [showMoreRecommendations, setShowMoreRecommendations] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem(SUPPORT_VIEW_PREFERENCE_KEY) === 'detailed';
+    } catch {
+      return false;
+    }
+  });
+  const [showSelectedRecommendationDetails, setShowSelectedRecommendationDetails] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem(SUPPORT_VIEW_PREFERENCE_KEY) === 'detailed';
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     try {
@@ -174,6 +197,14 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
       // ignore storage failures in restricted environments
     }
   }, [readinessGuideDismissed]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SUPPORT_VIEW_PREFERENCE_KEY, supportViewPreference);
+    } catch {
+      // ignore storage failures in restricted environments
+    }
+  }, [supportViewPreference]);
 
   const activeSupports = useMemo(() => STARTER_SUPPORTS[selectedRoute] || STARTER_SUPPORTS.unclear, [selectedRoute]);
   const groupedRecommendations = useMemo(() => groupRecommendations(recommendationLedger), [recommendationLedger]);
@@ -191,7 +222,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   const handleRouteSelect = (routeId: CanonicalStateId) => {
     setSelectedRoute(routeId);
     setSelectedSupportTitle(null);
-    setShowSelectedRecommendationDetails(false);
+    setShowSelectedRecommendationDetails(supportViewPreference === 'detailed');
     onApplyRouteState(routeId);
   };
 
@@ -210,6 +241,13 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
     onSaveTrialReflection(pendingReflection.supportTitle, pendingReflection.outcome, prompt.id, reflectionNote, pendingReflection.recommendationId);
     setPendingReflection(null);
     setReflectionNote('');
+  };
+
+  const handleSupportViewPreference = (nextPreference: SupportViewPreference) => {
+    setSupportViewPreference(nextPreference);
+    const expanded = nextPreference === 'detailed';
+    setShowMoreRecommendations(expanded);
+    setShowSelectedRecommendationDetails(expanded);
   };
 
   const hasTailoredSupports = recommendationLedger.length > 0;
@@ -232,7 +270,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
               active={selectedSupportTitle === item.title || activeTrial?.recommendationId === item.id}
               onSelect={() => {
                 setSelectedSupportTitle(item.title);
-                setShowSelectedRecommendationDetails(false);
+                setShowSelectedRecommendationDetails(supportViewPreference === 'detailed');
               }}
               primaryActionLabel={allowTryNow ? (activeTrial?.recommendationId === item.id ? 'Trying now' : 'Try this now') : undefined}
               onPrimaryAction={allowTryNow ? () => onStartTrial(item.id, item.title) : undefined}
@@ -262,6 +300,19 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
         <div className="fg-meta-pill fg-glass">Suggestion mode: {thresholdSummary.suggestionStability}</div>
         {recentOutcomeSummary ? <div className="fg-meta-pill fg-glass">Latest outcome: {recentOutcomeSummary}</div> : null}
       </div>
+
+      <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
+        <div className="fg-kicker">Support view preference</div>
+        <div className="fg-state-meta">The app can remember whether you prefer a simpler support view or fuller detail by default.</div>
+        <div className="fg-chip-row" style={{ marginTop: 12 }}>
+          <button type="button" className="fg-choice-chip fg-glass" data-active={supportViewPreference === 'simple'} onClick={() => handleSupportViewPreference('simple')}>
+            Simpler view
+          </button>
+          <button type="button" className="fg-choice-chip fg-glass" data-active={supportViewPreference === 'detailed'} onClick={() => handleSupportViewPreference('detailed')}>
+            Fuller detail
+          </button>
+        </div>
+      </section>
 
       {showReadinessGuide ? (
         <GuidedActionPanel
