@@ -8,6 +8,7 @@ import PatternReviewSummaryCard from '../../components/learn-me/PatternReviewSum
 import SensorySupportCard from '../../components/learn-me/SensorySupportCard';
 import ThresholdSummaryCard from '../../components/learn-me/ThresholdSummaryCard';
 import { describeEvidenceConfidence, describeEvidenceSource } from '../../lib/patterns/evidenceSemantics';
+import { buildReadinessTrustLine } from '../../lib/patterns/readinessTrustCopy';
 import { EvidenceContribution, LearningSignal, MemoryEntryStatus, MemoryVaultEntry, MemoryVaultSummary, PatternEvidenceItem, PatternEvidenceSummary, PatternResolutionStatus, PatternReviewSummary, SensorySupportRecord, ThresholdSummary } from '../../types/core';
 
 interface LearnMeHomeProps {
@@ -204,6 +205,11 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
       </div>
 
       <ThresholdSummaryCard summary={thresholdSummary} />
+
+      <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
+        <div className="fg-kicker">Readiness and trust</div>
+        <div className="fg-state-meta">{buildReadinessTrustLine(thresholdSummary)}</div>
+      </section>
 
       <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
         <div className="fg-kicker">What seems most true right now</div>
