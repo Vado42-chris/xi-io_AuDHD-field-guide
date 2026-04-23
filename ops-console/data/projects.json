@@ -1,0 +1,32 @@
+[
+  {
+    "id": "afg",
+    "name": "AuDHD Field Guide",
+    "purpose": "protected alpha app",
+    "description": "State-aware support and learning surface hosted under xi-io.com as a protected alpha or beta route.",
+    "branch": "main",
+    "repoUrl": "https://github.com/Vado42-chris/xi-io_AuDHD-field-guide.git",
+    "healthUrl": "https://www.xi-io.com/afg/",
+    "localRepoPath": "/media/chrishallberg/Storage 22/999_Work/003_Projects/003_AuDHD_FieldGuide",
+    "deployPath": "/run/user/1000/gvfs/smb-share:server=192.168.4.120,share=sites/xi-io.coes/xi-io.com/public/AFG",
+    "buildCommand": "cd '/media/chrishallberg/Storage 22/999_Work/003_Projects/003_AuDHD_FieldGuide' && npm ci && npm run build -- --base=/afg/",
+    "deployCommand": "rsync -av --delete '/media/chrishallberg/Storage 22/999_Work/003_Projects/003_AuDHD_FieldGuide/dist/' '/run/user/1000/gvfs/smb-share:server=192.168.4.120,share=sites/xi-io.coes/xi-io.com/public/AFG/'",
+    "pullCommand": "cd '/media/chrishallberg/Storage 22/999_Work/003_Projects/003_AuDHD_FieldGuide' && git pull origin main",
+    "access": "Cloudflare Access on /afg/*"
+  },
+  {
+    "id": "ops-console",
+    "name": "xi-io Ops Console",
+    "purpose": "private operations app",
+    "description": "Private status and deployment console meant for xi-io.net, protected at the edge and used to monitor sync posture across projects.",
+    "branch": "main",
+    "repoUrl": "https://github.com/Vado42-chris/xi-io_AuDHD-field-guide.git",
+    "healthUrl": "https://www.xi-io.net/",
+    "localRepoPath": "/media/chrishallberg/Storage 22/999_Work/003_Projects/003_AuDHD_FieldGuide/ops-console",
+    "deployPath": "/run/user/1000/gvfs/smb-share:server=192.168.4.120,share=sites/xi-io.net/public",
+    "buildCommand": "Static site, copy ops-console files directly after review.",
+    "deployCommand": "rsync -av --delete '/media/chrishallberg/Storage 22/999_Work/003_Projects/003_AuDHD_FieldGuide/ops-console/' '/run/user/1000/gvfs/smb-share:server=192.168.4.120,share=sites/xi-io.net/public/'",
+    "pullCommand": "cd '/media/chrishallberg/Storage 22/999_Work/003_Projects/003_AuDHD_FieldGuide' && git pull origin main",
+    "access": "Protect entire xi-io.net domain with Cloudflare Access"
+  }
+]
