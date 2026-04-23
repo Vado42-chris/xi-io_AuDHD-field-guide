@@ -68,17 +68,19 @@ Meaning:
 
 ## Current position
 
-**Recommended current position: Level 1 moving into Level 2**
+**Recommended current position: Level 1, structurally prepared to test whether Level 2 is justified.**
 
 Why:
 - the trusted pilot stack is now fully documented
 - Batch 1 and Batch 2 operations are explicitly scaffolded
 - the current posture supports small trusted pilot work
 - broader readiness is not yet justified without actual batch evidence
+- repeated-use validation has not been earned yet, it has only been prepared for
 
 This means:
 - trusted pilot work is justified
 - broader readiness planning is not yet justified by documentation alone
+- movement into Level 2 should be based on real Batch 1 evidence, not structural readiness by itself
 
 ---
 
@@ -261,12 +263,12 @@ When using it, answer explicitly:
 
 # 9. Honest recommendation
 
-The product should not claim progression beyond Level 1 / early Level 2 until real batch evidence exists.
+The product should not claim progression beyond Level 1 until real batch evidence exists.
 
 The documentation stack is now strong enough to run the pilot well.
-That does not by itself justify broader readiness language.
+That does not by itself justify broader readiness language or repeated-use validation claims.
 
-The ladder should be used to keep those two truths separate.
+The ladder should be used to keep those truths separate.
 
 ---
 
