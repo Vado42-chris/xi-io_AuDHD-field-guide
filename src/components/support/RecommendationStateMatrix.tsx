@@ -1,11 +1,13 @@
 import React from 'react';
-import { RecommendationLedgerItem } from '../../types/core';
+import { getDisplayStateLabel } from '../../lib/state/stateLabels';
+import { CustomStateLabel, RecommendationLedgerItem } from '../../types/core';
 
 interface RecommendationStateMatrixProps {
   item: RecommendationLedgerItem;
+  customStates?: CustomStateLabel[];
 }
 
-export const RecommendationStateMatrix: React.FC<RecommendationStateMatrixProps> = ({ item }) => {
+export const RecommendationStateMatrix: React.FC<RecommendationStateMatrixProps> = ({ item, customStates = [] }) => {
   return (
     <section className="fg-card fg-glass fg-learning-card">
       <div className="fg-kicker">State comparison</div>
@@ -13,7 +15,7 @@ export const RecommendationStateMatrix: React.FC<RecommendationStateMatrixProps>
       <div className="fg-grid" style={{ marginTop: 14 }}>
         {item.stateTrustMap.map((trust) => (
           <div key={trust.state} className="fg-glass" style={{ padding: 12, borderRadius: 14 }}>
-            <div className="fg-kicker">{trust.state}</div>
+            <div className="fg-kicker">{getDisplayStateLabel(trust.state, customStates)}</div>
             <div className="fg-card-copy">Availability: {trust.availability}</div>
             <div className="fg-card-copy">Confidence: {trust.confidence}</div>
             <div className="fg-card-copy">Rank: {trust.rankScore}</div>
