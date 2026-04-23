@@ -217,6 +217,7 @@ These are in place:
 - Batch 3 workbook and closeout template
 - Batch 1 to Batch 2 comparison template
 - Batch 2 to Batch 3 comparison template
+- cumulative trusted pilot report template
 - progression ladder
 - broader readiness planning checkpoint
 - pilot operations index
@@ -229,7 +230,7 @@ These remain incomplete until executed and recorded:
 - real Batch 1 evidence
 - real Batch 2 evidence
 - real Batch 3 evidence
-- cumulative pilot evidence
+- cumulative pilot evidence based on actual use
 - broader readiness determination based on actual pilot results
 
 ---
@@ -243,11 +244,11 @@ These remain incomplete until executed and recorded:
 ### Why
 Because the system is now missing fewer structural pieces than before, but it still lacks:
 - a stable master reporting spine, which this ledger is meant to provide
-- cumulative pilot reporting above pairwise comparisons
+- a clear handoff from trusted-pilot reporting into explicit RC-entry control
 - real execution replacing theoretical execution
 
 ### Estimated distance to pilot-candidate completion
-**Estimated remaining passes: 3 to 6**
+**Estimated remaining passes: 2 to 5**
 
 That estimate assumes:
 - disciplined continuation
@@ -272,7 +273,7 @@ Because an RC path would require:
 **Estimated remaining passes after pilot-candidate completion: 18 to 30**
 
 ### Estimated distance from now to serious RC-track work
-**Estimated remaining passes from now: 21 to 36**
+**Estimated remaining passes from now: 20 to 35**
 
 This is not a promise.
 It is the current best evidence-based forecast.
@@ -297,9 +298,9 @@ The planned state is stronger than the fully consolidated state.
 The regression and cleanup work is named, but not yet fully executed and burned down.
 
 ## Hole 4
-**Cumulative reporting gap**
+**RC-entry control gap**
 
-The repo now has pairwise pilot comparison layers, but still needs the cumulative whole-pilot reporting layer.
+The repo now has strong pilot readiness, progression, and cumulative pilot reporting, but it still needs the explicit entry criteria for when RC-track work is actually allowed to begin.
 
 ## Hole 5
 **Release-posture gap**
@@ -334,6 +335,7 @@ The project should have:
 - stronger integration confidence
 - stronger blocker burn-down
 - clearer broader readiness posture
+- explicit RC-entry criteria in writing
 
 ---
 
@@ -351,16 +353,19 @@ The next emphasis should be:
 Complete the standing reporting and cumulative pilot status layer.
 
 ### Step 2
-Use the regression gate and cleanup ledger as actual operational tools.
+Define the explicit RC-entry control layer.
 
 ### Step 3
-Prepare Batch 1 for real use, not just theoretical completeness.
+Use the regression gate and cleanup ledger as actual operational tools.
 
 ### Step 4
-Run real pilot evidence through the existing system.
+Prepare Batch 1 for real use, not just theoretical completeness.
 
 ### Step 5
-Only then let broader-readiness questions become active.
+Run real pilot evidence through the existing system.
+
+### Step 6
+Only then let broader-readiness and RC-entry questions become active.
 
 ---
 
@@ -393,20 +398,20 @@ Next planned artifact or execution step:
 ## Macro
 Current posture: pilot-candidate preparation, not release-candidate preparation  
 Current phase: completion of pilot-candidate reporting and control layer  
-RC distance estimate: 21 to 36 passes from current state  
-Pilot distance estimate: 3 to 6 passes from current state  
+RC distance estimate: 20 to 35 passes from current state  
+Pilot distance estimate: 2 to 5 passes from current state  
 
 ## Meso
 Strongest layer: pilot operations and evaluation structure  
 Weakest layer: integration confidence and executed QA evidence  
 Most important current risk: mistaking structural readiness for proven product readiness  
-Most important next step: complete the standing progress spine, then shift toward execution and evidence  
+Most important next step: close the remaining control-layer gap, then shift toward execution and evidence  
 
 ## Micro
-Latest meaningful slice: Batch 2 to Batch 3 comparison report template  
+Latest meaningful slice: cumulative trusted pilot report template  
 Top blocker: lack of real executed pilot evidence  
-Top unresolved hole: cumulative and ongoing release-posture reporting  
-Next planned artifact or execution step: cumulative pilot reporting and status-control completion  
+Top unresolved hole: explicit RC-entry control after the trusted pilot  
+Next planned artifact or execution step: release-candidate entry criteria template  
 
 ---
 
