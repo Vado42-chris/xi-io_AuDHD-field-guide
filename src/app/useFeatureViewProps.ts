@@ -41,6 +41,7 @@ export interface FeatureViewProps {
   };
   helpNowProps: {
     currentState: AppShellController['currentState'];
+    customStates: AppShellController['customStates'];
     thresholdSummary: AppShellController['thresholdSummary'];
     personalizedSupports: AppShellController['personalizedSupports'];
     recommendationLedger: AppShellController['recommendationLedger'];
@@ -102,6 +103,7 @@ export const useFeatureViewProps = (
     },
     helpNowProps: {
       currentState: controller.currentState,
+      customStates: controller.customStates,
       thresholdSummary: controller.thresholdSummary,
       personalizedSupports: controller.personalizedSupports,
       recommendationLedger: controller.recommendationLedger,
