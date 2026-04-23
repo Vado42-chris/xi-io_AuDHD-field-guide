@@ -383,9 +383,12 @@ Prevented by:
 
 # 7. Honest recommendation
 
-The stack is now complete enough that the next smart move is not more pilot meta-documentation.
+The stack is now complete enough that the next smart move is to use it deliberately rather than keep expanding it by default.
 
-The next smart move is to actually use this index to run:
+That does not mean no further pilot documents will ever be useful.
+It means any additional artifact should only be created when it clearly removes a real execution gap.
+
+The priority should now be to actually use this index to run:
 - a pre-pilot regression pass
 - a small Batch 1
 - a real synthesis and triage checkpoint
