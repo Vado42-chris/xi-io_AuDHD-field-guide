@@ -12,6 +12,7 @@ The next risk is operational fragmentation, where people are unsure:
 - which file is for planning vs execution vs synthesis
 - what the correct order of operations is
 - what minimum set of documents is required for Batch 1
+- how later pilot batches and readiness checkpoints connect back to the early stack
 
 This index exists to solve that.
 
@@ -53,6 +54,16 @@ What it is for:
 Use when:
 - deciding whether a small trusted pilot is appropriate at all
 - aligning on what the pilot should and should not claim
+
+### `PILOT_READINESS_PROGRESSION_LADDER.md`
+What it is for:
+- defining progression levels
+- setting advancement criteria
+- preventing readiness drift by momentum alone
+
+Use when:
+- deciding whether the product is still in trusted-pilot territory
+- deciding whether broader readiness planning is justified
 
 ---
 
@@ -168,6 +179,46 @@ Use when:
 
 ---
 
+## Batch execution and closeout artifacts
+
+### `BATCH_1_EXECUTION_WORKBOOK.md`
+What it is for:
+- running the first trusted pilot batch as a concrete operational sequence
+
+Use when:
+- executing Batch 1 day by day
+
+### `BATCH_1_CLOSEOUT_REPORT_TEMPLATE.md`
+What it is for:
+- consolidating what Batch 1 proved, what it did not prove, and whether Batch 2 should proceed
+
+Use when:
+- closing Batch 1 and making the next-step call
+
+### `BATCH_2_EXECUTION_WORKBOOK.md`
+What it is for:
+- running the second pilot batch with a focus on repeated-use value and Batch 1 carry-forward checks
+
+Use when:
+- executing Batch 2 day by day
+
+### `BATCH_2_CLOSEOUT_REPORT_TEMPLATE.md`
+What it is for:
+- consolidating what Batch 2 proved, what stayed unresolved, and what the next pilot step should be
+
+Use when:
+- closing Batch 2 and making the next-step call
+
+### `BATCH_1_TO_BATCH_2_COMPARISON_REPORT_TEMPLATE.md`
+What it is for:
+- comparing the first two pilot rounds explicitly
+- identifying improvement, unresolved issues, and regressions
+
+Use when:
+- deciding whether the pilot is genuinely maturing the product
+
+---
+
 # 2. Correct order of operations
 
 The pilot stack should usually be used in this order.
@@ -176,10 +227,12 @@ The pilot stack should usually be used in this order.
 Review:
 - `PILOT_READINESS_CHECKPOINT.md`
 - `INTERNAL_QA_AND_PRODUCT_CLEANUP_LEDGER.md`
+- `PILOT_READINESS_PROGRESSION_LADDER.md`
 
 Purpose:
 - confirm the pilot posture
 - confirm known blockers and caveats
+- confirm the current progression level and what evidence is still missing
 
 ## Step 2
 Run:
@@ -192,10 +245,12 @@ Purpose:
 Plan:
 - `PILOT_BATCH_SCHEDULE_TEMPLATE.md`
 - `PILOT_ROLLOUT_TRACKER_TEMPLATE.md`
+- `BATCH_1_EXECUTION_WORKBOOK.md`
 
 Purpose:
 - define Batch 1
 - assign participants and schedule windows
+- turn the first batch into a concrete operating sequence
 
 ## Step 4
 Invite:
@@ -237,12 +292,29 @@ Purpose:
 - convert findings into tracked product work and explicit calls
 
 ## Step 9
-Decide whether to continue:
-- revisit `PILOT_BATCH_SCHEDULE_TEMPLATE.md`
-- revisit `PRE_PILOT_REGRESSION_AND_SIGNOFF_CHECKLIST.md` if needed
+Close Batch 1:
+- `BATCH_1_CLOSEOUT_REPORT_TEMPLATE.md`
 
 Purpose:
 - determine whether Batch 2 should proceed unchanged, proceed with caveats, or pause for fixes
+
+## Step 10
+Run Batch 2 if justified:
+- `BATCH_2_EXECUTION_WORKBOOK.md`
+- `BATCH_2_CLOSEOUT_REPORT_TEMPLATE.md`
+
+Purpose:
+- test repeated-use value and Batch 1 carry-forward issues
+- make the next-step decision after the second round
+
+## Step 11
+Compare early pilot rounds:
+- `BATCH_1_TO_BATCH_2_COMPARISON_REPORT_TEMPLATE.md`
+- revisit `PILOT_READINESS_PROGRESSION_LADDER.md`
+
+Purpose:
+- decide whether the pilot is genuinely maturing the product
+- decide whether broader readiness planning is justified or still premature
 
 ---
 
@@ -255,6 +327,7 @@ If someone wants the smallest usable stack for Batch 1, this is the minimum set.
 - `PRE_PILOT_REGRESSION_AND_SIGNOFF_CHECKLIST.md`
 - `PILOT_BATCH_SCHEDULE_TEMPLATE.md`
 - `PILOT_ROLLOUT_TRACKER_TEMPLATE.md`
+- `BATCH_1_EXECUTION_WORKBOOK.md`
 
 ## Required during Batch 1
 - `TRUSTED_PILOT_PARTICIPANT_BRIEF.md`
@@ -266,6 +339,7 @@ If someone wants the smallest usable stack for Batch 1, this is the minimum set.
 - `PILOT_FINDINGS_SYNTHESIS_TEMPLATE.md`
 - `PILOT_ISSUE_TRIAGE_TEMPLATE.md`
 - `PILOT_DECISION_LOG_TEMPLATE.md`
+- `BATCH_1_CLOSEOUT_REPORT_TEMPLATE.md`
 
 ---
 
@@ -286,8 +360,9 @@ Learn whether:
 
 ### Day 1
 - review readiness checkpoint
+- review progression ladder current-position logic
 - run pre-pilot regression checklist
-- create Batch 1 plan
+- create Batch 1 plan and workbook
 - update rollout tracker
 
 ### Day 2 to Day 4
@@ -309,15 +384,8 @@ For each participant:
 - record any explicit product or pilot decisions
 
 ### Batch 1 checkpoint
-Ask:
-- did the core loop hold up?
-- did trust language land correctly?
-- did any blocker appear often enough to pause Batch 2?
-
-Then decide:
-- continue
-- continue with caveats
-- pause for fixes
+- complete the Batch 1 closeout report
+- decide whether Batch 2 is justified
 
 ---
 
@@ -362,10 +430,11 @@ Prevented by:
 - using the session template and facilitator runbook together
 
 ## Failure mode 3
-Letting findings pile up without synthesis
+Letting findings pile up without synthesis or closeout
 
 Prevented by:
 - explicit synthesis step after each batch
+- explicit closeout reports for each batch
 
 ## Failure mode 4
 Talking about issues without turning them into tracked work
@@ -378,6 +447,14 @@ Letting the pilot drift into a loose stream of sessions with no checkpoint logic
 
 Prevented by:
 - rollout tracker and batch schedule template
+- batch workbooks and closeout reports
+
+## Failure mode 6
+Assuming the pilot is progressing without explicit comparison
+
+Prevented by:
+- batch comparison report
+- progression ladder revisit after early batches
 
 ---
 
@@ -392,6 +469,8 @@ The priority should now be to actually use this index to run:
 - a pre-pilot regression pass
 - a small Batch 1
 - a real synthesis and triage checkpoint
+- a real Batch 1 closeout
+- a disciplined decision on whether Batch 2 is justified
 
 That is where the highest-value learning now lives.
 
