@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>xi-io Ops Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-block">
+        <p class="eyebrow">private operations</p>
+        <h1>xi-io Ops Console</h1>
+        <p class="brand-copy">A private status and deployment console for xi-io experimental apps and infrastructure.</p>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Sections">
+        <a href="#overview">Overview</a>
+        <a href="#projects">Projects</a>
+        <a href="#security">Security posture</a>
+        <a href="#commands">Command playbooks</a>
+        <a href="#raw-data">Raw snapshot</a>
+      </nav>
+
+      <section class="sidebar-panel">
+        <h2>Access model</h2>
+        <ul>
+          <li><strong>xi-io.net</strong> should stay behind Cloudflare Access.</li>
+          <li><strong>xi-io.com/apps/afg</strong> should be treated as protected alpha or beta access.</li>
+          <li>App-level login comes later, only if the product itself needs accounts.</li>
+        </ul>
+      </section>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar" id="overview">
+        <div>
+          <p class="eyebrow">standing status view</p>
+          <h2>Current sync posture</h2>
+          <p class="topbar-copy">This console reads a status snapshot and tells you what is ahead, behind, dirty, or ready to deploy.</p>
+        </div>
+        <div class="topbar-actions">
+          <button id="refreshButton" class="button button-primary" type="button">Refresh snapshot</button>
+          <button id="copySummaryButton" class="button button-secondary" type="button">Copy summary</button>
+        </div>
+      </header>
+
+      <section class="status-grid" aria-label="Summary metrics">
+        <article class="metric-card">
+          <span class="metric-label">Projects tracked</span>
+          <strong class="metric-value" id="projectCount">0</strong>
+        </article>
+        <article class="metric-card">
+          <span class="metric-label">Need pull</span>
+          <strong class="metric-value" id="needPullCount">0</strong>
+        </article>
+        <article class="metric-card">
+          <span class="metric-label">Need build</span>
+          <strong class="metric-value" id="needBuildCount">0</strong>
+        </article>
+        <article class="metric-card">
+          <span class="metric-label">Need deploy</span>
+          <strong class="metric-value" id="needDeployCount">0</strong>
+        </article>
+      </section>
+
+      <section class="panel snapshot-panel">
+        <div>
+          <h3>Snapshot status</h3>
+          <p id="snapshotGeneratedAt" class="muted">Waiting for snapshot...</p>
+        </div>
+        <div>
+          <p id="snapshotSource" class="muted">No source loaded yet.</p>
+        </div>
+      </section>
+
+      <section class="panel" id="projects">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">tracked projects</p>
+            <h3>Managed app surfaces</h3>
+          </div>
+          <p class="muted">The first two managed entries are the AFG app and the xi-io.net admin interface itself.</p>
+        </div>
+        <div id="projectCards" class="project-grid"></div>
+      </section>
+
+      <section class="panel" id="security">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">locked security posture</p>
+            <h3>Trust boundaries</h3>
+          </div>
+        </div>
+        <div class="security-grid">
+          <article class="security-card">
+            <h4>xibalba-studio.com</h4>
+            <p>Public brand and polished presentation layer.</p>
+            <span class="pill pill-open">public</span>
+          </article>
+          <article class="security-card">
+            <h4>xi-io.com</h4>
+            <p>Public shell with protected alpha and beta app routes.</p>
+            <span class="pill pill-guarded">mixed</span>
+          </article>
+          <article class="security-card">
+            <h4>xi-io.net</h4>
+            <p>Private operations and site-management layer. Protect the whole domain at the edge first.</p>
+            <span class="pill pill-private">private</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" id="commands">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">copy-ready actions</p>
+            <h3>Command playbooks</h3>
+          </div>
+          <p class="muted">These are the exact local commands tied to the tracked project definitions in the snapshot.</p>
+        </div>
+        <div id="commandPlaybooks" class="command-grid"></div>
+      </section>
+
+      <section class="panel" id="raw-data">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">raw transparency</p>
+            <h3>Snapshot JSON</h3>
+          </div>
+          <button id="copyJsonButton" class="button button-secondary" type="button">Copy snapshot JSON</button>
+        </div>
+        <pre id="rawSnapshot" class="raw-json">No data loaded yet.</pre>
+      </section>
+    </main>
+  </div>
+
+  <template id="projectCardTemplate">
+    <article class="project-card">
+      <header class="project-card-header">
+        <div>
+          <p class="project-purpose"></p>
+          <h4 class="project-name"></h4>
+        </div>
+        <span class="pill project-state-pill"></span>
+      </header>
+      <p class="project-description"></p>
+
+      <dl class="meta-grid">
+        <div>
+          <dt>Branch</dt>
+          <dd class="project-branch"></dd>
+        </div>
+        <div>
+          <dt>Health URL</dt>
+          <dd><a class="project-url" href="#" target="_blank" rel="noreferrer"></a></dd>
+        </div>
+        <div>
+          <dt>Local repo</dt>
+          <dd class="project-local-path"></dd>
+        </div>
+        <div>
+          <dt>Deploy target</dt>
+          <dd class="project-deploy-path"></dd>
+        </div>
+      </dl>
+
+      <div class="sync-grid">
+        <div class="sync-box">
+          <span class="sync-label">Local</span>
+          <strong class="project-local-commit"></strong>
+        </div>
+        <div class="sync-box">
+          <span class="sync-label">Remote</span>
+          <strong class="project-remote-commit"></strong>
+        </div>
+        <div class="sync-box">
+          <span class="sync-label">Deployed</span>
+          <strong class="project-deployed-commit"></strong>
+        </div>
+      </div>
+
+      <ul class="flag-list"></ul>
+
+      <div class="action-row">
+        <button class="button button-secondary copy-pull-command" type="button">Copy pull</button>
+        <button class="button button-secondary copy-build-command" type="button">Copy build</button>
+        <button class="button button-secondary copy-deploy-command" type="button">Copy deploy</button>
+      </div>
+    </article>
+  </template>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
