@@ -239,6 +239,21 @@ What it is for:
 Use when:
 - closing Batch 3 and making the next-step call
 
+### `BATCH_2_TO_BATCH_3_COMPARISON_REPORT_TEMPLATE.md`
+What it is for:
+- comparing the repeated-use and stabilization rounds explicitly
+- identifying whether the product is genuinely stabilizing in the right ways
+
+Use when:
+- deciding whether Batch 3 actually strengthened the case for broader readiness planning
+
+### `CUMULATIVE_TRUSTED_PILOT_REPORT_TEMPLATE.md`
+What it is for:
+- consolidating the trusted pilot as one body of evidence above the closeouts and pairwise comparisons
+
+Use when:
+- deciding what the trusted pilot as a whole has and has not proven
+
 ---
 
 # 2. Correct order of operations
@@ -347,6 +362,20 @@ Purpose:
 - test stabilization, consistency, and whether broader readiness planning should actually open
 
 ## Step 13
+Compare Batch 2 and Batch 3:
+- `BATCH_2_TO_BATCH_3_COMPARISON_REPORT_TEMPLATE.md`
+
+Purpose:
+- decide whether the stabilization round actually strengthened the case for broader readiness planning
+
+## Step 14
+Consolidate the full trusted pilot:
+- `CUMULATIVE_TRUSTED_PILOT_REPORT_TEMPLATE.md`
+
+Purpose:
+- decide what the trusted pilot as a whole has and has not proven
+
+## Step 15
 Open broader readiness planning only if justified:
 - `BROADER_READINESS_PLANNING_CHECKPOINT_TEMPLATE.md`
 
@@ -490,7 +519,8 @@ Prevented by:
 Assuming the pilot is progressing without explicit comparison or readiness control
 
 Prevented by:
-- batch comparison report
+- pairwise batch comparison reports
+- cumulative pilot reporting
 - progression ladder revisit after early batches
 - broader readiness checkpoint before any wider planning language
 
