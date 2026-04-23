@@ -6,10 +6,12 @@ import RecommendationLedgerCard from '../../components/support/RecommendationLed
 import RecommendationStateMatrix from '../../components/support/RecommendationStateMatrix';
 import TransferTrustLegend from '../../components/support/TransferTrustLegend';
 import SupportCard from '../../components/support/SupportCard';
+import { getDisplayStateLabel } from '../../lib/state/stateLabels';
 import {
   ActiveTrial,
   CanonicalStateId,
   CurrentState,
+  CustomStateLabel,
   RecommendationLedgerItem,
   RevalidationResult,
   SensorySupportRecord,
@@ -21,6 +23,7 @@ import {
 
 interface HelpNowHomeProps {
   currentState: CurrentState;
+  customStates: CustomStateLabel[];
   thresholdSummary: ThresholdSummary;
   personalizedSupports: Array<unknown>;
   recommendationLedger: RecommendationLedgerItem[];
@@ -136,6 +139,7 @@ const getReflectionPrompt = (outcome: SupportOutcome): { id: TrialReflectionReco
 
 export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
   currentState,
+  customStates,
   thresholdSummary,
   recommendationLedger,
   activeTrial,
@@ -271,7 +275,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
               <article key={tool.id} className="fg-card fg-glass">
                 <h2 className="fg-card-title">{tool.label}</h2>
                 <p className="fg-card-copy">Category: {tool.category}</p>
-                <p className="fg-card-copy">Helpful states: {tool.helpfulStates.length > 0 ? tool.helpfulStates.map((state) => state.replace('_', ' ')).join(', ') : 'not learned yet'}</p>
+                <p className="fg-card-copy">Helpful states: {tool.helpfulStates.length > 0 ? tool.helpfulStates.map((state) => getDisplayStateLabel(state, customStates)).join(', ') : 'not learned yet'}</p>
               </article>
             ))}
           </div>
@@ -372,7 +376,7 @@ export const HelpNowHome: React.FC<HelpNowHomeProps> = ({
               {showSelectedRecommendationDetails ? (
                 <>
                   <RecommendationLedgerCard item={selectedLedgerItem} onReviewTransfer={onReviewTransfer} onRevalidateSupport={onRevalidateSupport} />
-                  <RecommendationStateMatrix item={selectedLedgerItem} />
+                  <RecommendationStateMatrix item={selectedLedgerItem} customStates={customStates} />
                   <TransferTrustLegend />
                 </>
               ) : null}
