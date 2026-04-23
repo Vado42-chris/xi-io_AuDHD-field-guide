@@ -108,6 +108,51 @@ const buildNextSteps = (
   return steps.slice(0, 4);
 };
 
+const buildUncertaintyGuidance = (
+  evidenceItems: PatternEvidenceItem[],
+  summary: PatternReviewSummary,
+  thresholdSummary: ThresholdSummary
+) => {
+  const items: string[] = [];
+  const contestedCount = evidenceItems.filter((item) => item.contested).length;
+  const underReviewCount = evidenceItems.filter((item) => item.resolutionStatus === 'under_review').length;
+  const retiredCount = evidenceItems.filter((item) => item.resolutionStatus === 'retired').length;
+
+  if (contestedCount > 0) {
+    items.push(`${contestedCount} evidence item${contestedCount === 1 ? ' is' : 's are'} contested right now, which means the app has reasons to be careful before treating those patterns like settled truth.`);
+  }
+  if (underReviewCount > 0) {
+    items.push(`${underReviewCount} item${underReviewCount === 1 ? ' is' : 's are'} under review, so treat them as mixed signals to watch rather than reliable guidance to lean on.`);
+  }
+  if (retiredCount > 0) {
+    items.push(`${retiredCount} item${retiredCount === 1 ? ' has' : 's have'} been retired, which usually means an older pattern no longer looks trustworthy enough to keep active.`);
+  }
+  if (summary.cautionNotes.length > 0) {
+    items.push(`The clearest caution right now is ${summary.cautionNotes[0].toLowerCase()}, so it is better to test gently than assume the pattern is stable.`);
+  }
+  if (thresholdSummary.readiness !== 'ready') {
+    items.push('Because the system is not fully ready yet, uncertainty should be treated like a normal part of learning, not a failure.');
+  }
+
+  if (items.length === 0) {
+    items.push('There are no strong contradiction flags right now, but that does not mean everything is proven. Keep using outcomes and fresh checks to keep trust honest.');
+  }
+
+  return items.slice(0, 4);
+};
+
+const buildUncertaintyNextStep = (evidenceItems: PatternEvidenceItem[]) => {
+  const contested = evidenceItems.find((item) => item.contested);
+  if (contested) {
+    return `Start by reviewing or resolving “${contested.label}”, because contested evidence is the clearest place where the app is telling you not to over-trust the pattern yet.`;
+  }
+  const underReview = evidenceItems.find((item) => item.resolutionStatus === 'under_review');
+  if (underReview) {
+    return `Treat “${underReview.label}” as mixed for now and gather one more real-world check before leaning on it.`;
+  }
+  return 'When something feels mixed, keep the next step small, log the outcome, and prefer the safest support over the most ambitious one.';
+};
+
 const EvidenceCard: React.FC<{ item: EvidenceContribution }> = ({ item }) => (
   <div className="fg-card fg-glass fg-learning-card">
     <div className="fg-kicker">{sourceLabel(item.source)}</div>
@@ -145,6 +190,8 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
     .slice(0, 6);
   const takeaways = buildTakeaways(thresholdSummary, summary, evidenceIntakeSummary, stressors, destressers, sensorySupports);
   const nextSteps = buildNextSteps(thresholdSummary, stressors, destressers, supportEvidenceSummary, memoryEntries);
+  const uncertaintyGuidance = buildUncertaintyGuidance(evidenceItems, summary, thresholdSummary);
+  const uncertaintyNextStep = buildUncertaintyNextStep(evidenceItems);
 
   return (
     <div className="fg-content-card fg-glass fg-help-layout">
@@ -187,6 +234,22 @@ export const LearnMeHome: React.FC<LearnMeHomeProps> = ({
           ) : (
             <div className="fg-state-meta">As more evidence builds, this section will turn patterns into clearer next steps.</div>
           )}
+        </div>
+      </section>
+
+      <section className="fg-panel-stack fg-glass" style={{ padding: 18, borderRadius: 18 }}>
+        <div className="fg-kicker">What still looks mixed or uncertain</div>
+        <div className="fg-grid">
+          {uncertaintyGuidance.map((item) => (
+            <article key={item} className="fg-card fg-glass">
+              <h2 className="fg-card-title">Uncertainty note</h2>
+              <p className="fg-card-copy">{item}</p>
+            </article>
+          ))}
+          <article className="fg-card fg-glass">
+            <h2 className="fg-card-title">How to treat that uncertainty</h2>
+            <p className="fg-card-copy">{uncertaintyNextStep}</p>
+          </article>
         </div>
       </section>
 
