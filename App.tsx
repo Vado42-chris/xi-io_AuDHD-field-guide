@@ -8,51 +8,7 @@ import { FormattedText } from './components/FormattedText.ts';
 import { Icons } from './components/icons.ts';
 import { Panel } from './components/Panel.ts';
 import { Button, MetaLabel } from './components/primitives.ts';
-
-const TelemetrySidebar: React.FC<{ results: ComprehensiveResult; stability: number; selectedPoint?: HistoryPoint | null }> = ({ results, stability, selectedPoint }) => (
-  <aside className="w-80 flex flex-col border-l border-white/5 bg-[#080808]/50 p-6 overflow-y-auto xi-scroll">
-    <MetaLabel className="mb-6">{selectedPoint ? 'Temporal Slice' : 'Neural Telemetry'}</MetaLabel>
-    
-    <div className="space-y-8">
-      {selectedPoint ? (
-        <div>
-          <div className="text-3xl font-thin text-white mb-2">{selectedPoint.date}</div>
-          <div className="p-4 bg-white/5 rounded border border-white/5 mb-6">
-            <MetaLabel className="text-[8px] opacity-40">Load Index</MetaLabel>
-            <div className="text-3xl font-bold tabular-nums text-orange-400">{(selectedPoint.value * 100).toFixed(0)}%</div>
-          </div>
-          <p className="text-sm italic opacity-60">"{selectedPoint.noteSnippet}"</p>
-        </div>
-      ) : (
-        <>
-          <div>
-            <div className="text-5xl font-thin tracking-tighter text-white">{stability}%</div>
-            <MetaLabel className="text-[8px] opacity-40 mt-1">Stability Confidence</MetaLabel>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            {[results.autism, results.adhd, results.masking, results.burnout].map(p => (
-              <div key={p.label} className="p-3 bg-white/5 rounded border border-white/5">
-                <div className="text-[8px] uppercase opacity-30 mb-1">{p.label}</div>
-                <div className="text-lg font-bold">{p.percentile}%</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="space-y-3">
-            <MetaLabel className="text-[8px] opacity-40">Actionable Intel</MetaLabel>
-            {results.hallberg.actionableIntel.map((intel, i) => (
-              <div key={i} className="text-[11px] font-light text-white/70 italic flex gap-2">
-                <div className="w-1 h-1 bg-[#4DB6AC] rounded-full mt-1.5 shrink-0" />
-                {intel}
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  </aside>
-);
+import { TelemetrySidebar } from './components/TelemetrySidebar.ts';
 
 const App: React.FC = () => {
   const [identity, setIdentity] = useState<UserIdentity>(() => {
