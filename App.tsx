@@ -5,10 +5,7 @@ import { ALL_QUESTIONS, NEURAL_NODES, ADDONS, NEURAL_HARMONICS, DEMO_BASELINE, U
 import { analyzePatterns, getHistoryTrend } from './services/hallbergMath.ts';
 import { geminiService, MessagePart, ChatHistoryItem } from './services/geminiService.ts';
 import { FormattedText } from './components/FormattedText.ts';
-
-const MetaLabel: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <div className={`text-[10px] font-black tracking-[0.25em] uppercase text-[#4DB6AC] mb-2 leading-none whitespace-nowrap ${className}`}>{children}</div>
-);
+import { Button, MetaLabel } from './components/primitives.ts';
 
 const Panel: React.FC<{ children: React.ReactNode; className?: string; onClick?: () => void; locked?: boolean }> = ({ children, className = '', onClick, locked }) => (
   <section 
@@ -24,13 +21,6 @@ const Panel: React.FC<{ children: React.ReactNode; className?: string; onClick?:
     )}
     {children}
   </section>
-);
-
-const Button: React.FC<{ children: React.ReactNode; onClick?: () => void; className?: string; primary?: boolean; disabled?: boolean; danger?: boolean }> = 
-({ children, onClick, className = '', primary, disabled, danger }) => (
-  <button disabled={disabled} onClick={onClick} className={`xi-button ${primary ? 'xi-button-primary' : danger ? 'border-red-500/20 bg-red-500/5 text-red-500 hover:bg-red-500/10' : 'xi-button-secondary'} ${disabled ? 'opacity-30' : ''} ${className}`}>
-    {children}
-  </button>
 );
 
 const Icons = {
