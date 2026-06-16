@@ -1,5 +1,7 @@
 import React from 'react';
 
+// Presentation-only renderer for coach message text. Keep this free of storage,
+// model calls, routing, markdown libraries, and sanitization side effects.
 export const FormattedText: React.FC<{ text: string }> = ({ text }) => {
   const segments = text.split('\n');
   return React.createElement(
