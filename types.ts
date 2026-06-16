@@ -1,6 +1,7 @@
 
 export enum Page {
   Landing = 'landing',
+  HelpNow = 'help-now',
   Assessment = 'assessment',
   Tracking = 'tracking',
   Coach = 'coach',
@@ -124,36 +125,39 @@ export interface Question {
 export interface Addon {
   id: string;
   name: string;
-  version: string;
   description: string;
-  enabled: boolean;
-  author: string;
-  isConnected: boolean;
+  category: 'academic' | 'music' | 'parenting' | 'workplace' | 'healthcare' | 'social';
+  icon: string;
+  installed: boolean;
+  premium: boolean;
 }
 
 export interface SpotifyTrack {
   id: string;
   title: string;
   artist: string;
-  duration: string;
-  mode: 'Ambient' | 'Focus' | 'Release';
+  bpm: number;
+  energy: number;
+  therapeuticIntent: string;
+  previewUrl?: string;
 }
 
 export interface SpotifyState {
-  isPlaying: boolean;
-  regulationMode: 'Ambient' | 'Focus' | 'Release';
-  currentTrack?: SpotifyTrack;
-  playlist: SpotifyTrack[];
+  connected: boolean;
+  currentPlaylist?: SpotifyTrack[];
+}
+
+export interface NeuralHarmonic {
+  id: string;
+  name: string;
+  frequency: string;
+  protocol: string;
+  targetState: string;
 }
 
 export interface HistoryPoint {
   date: string;
   value: number;
-  fullDate: number;
   mood: number;
   noteSnippet: string;
-}
-
-export interface EnvironmentData {
-  entropyModifier: number;
 }
