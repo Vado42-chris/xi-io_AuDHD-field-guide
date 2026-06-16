@@ -6,23 +6,8 @@ import { analyzePatterns, getHistoryTrend } from './services/hallbergMath.ts';
 import { geminiService, MessagePart, ChatHistoryItem } from './services/geminiService.ts';
 import { FormattedText } from './components/FormattedText.ts';
 import { Icons } from './components/icons.ts';
+import { Panel } from './components/Panel.ts';
 import { Button, MetaLabel } from './components/primitives.ts';
-
-const Panel: React.FC<{ children: React.ReactNode; className?: string; onClick?: () => void; locked?: boolean }> = ({ children, className = '', onClick, locked }) => (
-  <section 
-    onClick={!locked ? onClick : undefined} 
-    className={`xi-panel p-8 relative overflow-hidden ${className} ${onClick && !locked ? 'cursor-pointer hover:border-[#4DB6AC]/40' : ''}`}
-  >
-    {locked && (
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center text-center p-6">
-        <Icons.Vault className="text-[#4DB6AC] mb-2" />
-        <div className="text-[10px] font-black uppercase tracking-widest text-[#4DB6AC]">Uplink Restricted</div>
-        <p className="text-[8px] opacity-40 uppercase mt-1">Upgrade to Pro Neural Link</p>
-      </div>
-    )}
-    {children}
-  </section>
-);
 
 const TelemetrySidebar: React.FC<{ results: ComprehensiveResult; stability: number; selectedPoint?: HistoryPoint | null }> = ({ results, stability, selectedPoint }) => (
   <aside className="w-80 flex flex-col border-l border-white/5 bg-[#080808]/50 p-6 overflow-y-auto xi-scroll">
