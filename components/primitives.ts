@@ -1,5 +1,6 @@
 import React from 'react';
 
+// Shared presentation primitives. Keep these free of app state and service calls.
 export const MetaLabel: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => React.createElement(
   'div',
   { className: `text-[10px] font-black tracking-[0.25em] uppercase text-[#4DB6AC] mb-2 leading-none whitespace-nowrap ${className}` },
