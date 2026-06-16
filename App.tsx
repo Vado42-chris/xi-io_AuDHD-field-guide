@@ -5,6 +5,7 @@ import { ALL_QUESTIONS, NEURAL_NODES, ADDONS, NEURAL_HARMONICS, DEMO_BASELINE, U
 import { analyzePatterns, getHistoryTrend } from './services/hallbergMath.ts';
 import { geminiService, MessagePart, ChatHistoryItem } from './services/geminiService.ts';
 import { FormattedText } from './components/FormattedText.ts';
+import { HelpNowView } from './components/HelpNowView.ts';
 import { Icons } from './components/icons.ts';
 import { Panel } from './components/Panel.ts';
 import { Button, MetaLabel } from './components/primitives.ts';
@@ -222,6 +223,7 @@ const App: React.FC = () => {
         <div className="flex-1 px-3 space-y-2 overflow-y-auto xi-scroll">
           {[
             { id: Page.Landing, label: 'Control Center', icon: Icons.Home },
+            { id: Page.HelpNow, label: 'Help Now', icon: Icons.Bolt },
             { id: Page.Assessment, label: 'Diagnostic Lab', icon: Icons.Report },
             { id: Page.Tracking, label: 'Somatic Lexicon', icon: Icons.Journal },
             { id: Page.Coach, label: 'Neural Relay', icon: Icons.Bolt },
@@ -284,6 +286,8 @@ const App: React.FC = () => {
                </Panel>
             </div>
           )}
+
+          {currentPage === Page.HelpNow && <HelpNowView onOpenRelay={() => setCurrentPage(Page.Coach)} />}
 
           {currentPage === Page.Provisioning && (
             <div className="h-full flex items-center justify-center p-12 text-center bg-[#050505]">
