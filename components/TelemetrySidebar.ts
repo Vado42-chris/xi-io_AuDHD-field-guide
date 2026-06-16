@@ -2,6 +2,8 @@ import React from 'react';
 import type { ComprehensiveResult, HistoryPoint } from '../types.ts';
 import { MetaLabel } from './primitives.ts';
 
+// Read-only telemetry display. Keep calculations, history selection, storage,
+// and route changes outside this component.
 export const TelemetrySidebar: React.FC<{
   results: ComprehensiveResult;
   stability: number;

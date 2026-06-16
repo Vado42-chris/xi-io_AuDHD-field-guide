@@ -1,6 +1,8 @@
 import React from 'react';
 import { Icons } from './icons.ts';
 
+// Presentational shell panel. Locked overlay is visual only; do not add auth,
+// billing, routing, storage, or provider behavior here.
 export const Panel: React.FC<{
   children: React.ReactNode;
   className?: string;
