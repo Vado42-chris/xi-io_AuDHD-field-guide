@@ -6,6 +6,8 @@ import { analyzePatterns, getHistoryTrend } from './services/hallbergMath.ts';
 import { geminiService, MessagePart, ChatHistoryItem } from './services/geminiService.ts';
 import { FormattedText } from './components/FormattedText.ts';
 import { HelpNowView } from './components/HelpNowView.ts';
+import { SomaticLexiconView } from './components/SomaticLexiconView.ts';
+import { SurvivalIntelView } from './components/SurvivalIntelView.ts';
 import { Icons } from './components/icons.ts';
 import { Panel } from './components/Panel.ts';
 import { Button, MetaLabel } from './components/primitives.ts';
@@ -290,6 +292,10 @@ const App: React.FC = () => {
           )}
 
           {currentPage === HELP_NOW_PAGE && <HelpNowView onOpenRelay={() => setCurrentPage(Page.Coach)} />}
+
+          {currentPage === Page.Tracking && <SomaticLexiconView lexicon={lexicon} />}
+
+          {currentPage === Page.Resources && <SurvivalIntelView subscribedCategories={identity.subscribedCategories} />}
 
           {currentPage === Page.Provisioning && (
             <div className="h-full flex items-center justify-center p-12 text-center bg-[#050505]">
