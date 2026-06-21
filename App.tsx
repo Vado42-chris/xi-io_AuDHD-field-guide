@@ -34,6 +34,7 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(identity.isProvisioned ? Page.Landing : Page.Provisioning);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [wipeConfirm, setWipeConfirm] = useState(false);
   const [responses, setResponses] = useState<Record<string, number>>(() => JSON.parse(localStorage.getItem('xi_responses') || '{}'));
   const [lexicon, setLexicon] = useState<JournalEntry[]>(() => JSON.parse(localStorage.getItem('xi_lexicon') || '[]'));
   const [uUnits, setUUnits] = useState<number>(() => Number(localStorage.getItem('xi_uUnits') || 12));
@@ -482,8 +483,13 @@ const App: React.FC = () => {
           )}
 
           {currentPage === Page.Settings && (
-            <div className="max-w-3xl mx-auto p-12 space-y-12">
-               <MetaLabel>Identity Configuration</MetaLabel>
+            <div className="max-w-4xl mx-auto p-12 space-y-8">
+               <header className="space-y-3">
+                 <MetaLabel>Calibration</MetaLabel>
+                 <h2 className="text-5xl font-thin tracking-tighter text-white">Settings & Data Controls</h2>
+                 <p className="text-sm opacity-65 leading-relaxed max-w-2xl">Manage identity labels and local data actions. This screen is intentionally explicit because export and wipe actions affect your local trace.</p>
+               </header>
+
                <Panel>
                  <MetaLabel className="mb-4">Stakeholder Profile</MetaLabel>
                  <div className="space-y-6">
@@ -502,13 +508,42 @@ const App: React.FC = () => {
                           <button key={l} className="px-3 py-1.5 bg-white/5 rounded text-[10px] font-bold uppercase">{l}</button>
                         ))}
                       </div>
+                      <p className="text-xs opacity-45 mt-3">Lexicon labels are presentation-only in this pass. No data model change is applied here.</p>
                     </div>
                  </div>
                </Panel>
 
-               <div className="pt-8 border-t border-white/5 flex justify-between items-center">
-                 <Button danger onClick={() => { localStorage.clear(); window.location.reload(); }}><Icons.Trash /> Wipe Neural Trace</Button>
-                 <Button onClick={handleExportVault}><Icons.Download /> Export Vault JSON</Button>
+               <div className="grid md:grid-cols-2 gap-6">
+                 <Panel className="border-[#4DB6AC]/20">
+                   <MetaLabel>Export</MetaLabel>
+                   <p className="text-xs opacity-65 leading-relaxed mt-3 mb-6">Download the current local trace as a JSON file. This does not encrypt the export and does not send data anywhere.</p>
+                   <Button onClick={handleExportVault}><Icons.Download /> Export Vault JSON</Button>
+                 </Panel>
+
+                 <Panel className="border-red-500/20 bg-red-500/[0.02]">
+                   <MetaLabel className="text-red-400">Destructive Action</MetaLabel>
+                   <p className="text-xs opacity-65 leading-relaxed mt-3 mb-4">Wiping clears local browser storage and reloads the app. This cannot be undone from inside the app.</p>
+                   <label className="flex items-start gap-3 text-xs opacity-75 leading-relaxed mb-6 cursor-pointer">
+                     <input
+                       type="checkbox"
+                       checked={wipeConfirm}
+                       onChange={(e) => setWipeConfirm(e.target.checked)}
+                       className="mt-1"
+                     />
+                     I understand this will clear the local trace stored in this browser.
+                   </label>
+                   <Button
+                     danger
+                     disabled={!wipeConfirm}
+                     onClick={() => {
+                       if (!wipeConfirm) return;
+                       localStorage.clear();
+                       window.location.reload();
+                     }}
+                   >
+                     <Icons.Trash /> Wipe Neural Trace
+                   </Button>
+                 </Panel>
                </div>
             </div>
           )}
