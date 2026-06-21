@@ -231,8 +231,8 @@ const App: React.FC = () => {
             ) : (
               lexicon.slice(0, 5).map(entry => (
                 <div key={entry.id} className="p-4 rounded-xl bg-white/5 border border-white/5">
-                  <div className="text-[10px] uppercase tracking-[0.2em] opacity-40 mb-2">{entry.date}</div>
-                  <p className="text-sm opacity-75 leading-relaxed">{entry.text}</p>
+                  <div className="text-[10px] uppercase tracking-[0.2em] opacity-40 mb-2">{new Date(entry.timestamp).toLocaleDateString()}</div>
+                  <p className="text-sm opacity-75 leading-relaxed">{entry.note}</p>
                 </div>
               ))
             )}
@@ -265,7 +265,7 @@ const App: React.FC = () => {
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {NEWS_CATEGORIES.map(category => (
           <Panel key={category.id} className="p-6">
-            <MetaLabel>{category.label}</MetaLabel>
+            <MetaLabel>{category.name}</MetaLabel>
             <p className="text-xs opacity-60 leading-relaxed mt-3">Category shell ready for curated resources. No live feed is connected in this pass.</p>
           </Panel>
         ))}
