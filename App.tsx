@@ -212,6 +212,72 @@ const App: React.FC = () => {
     </div>
   );
 
+  const TrackingView = () => (
+    <div className="max-w-5xl mx-auto p-12 space-y-8">
+      <header className="space-y-3">
+        <MetaLabel>Somatic Lexicon</MetaLabel>
+        <h2 className="text-5xl font-thin tracking-tighter text-white">Body Signal Ledger</h2>
+        <p className="text-sm opacity-65 leading-relaxed max-w-2xl">
+          Track how regulation load shows up in the body. This route now renders intentionally, but this pass does not add new storage, export, or model behavior.
+        </p>
+      </header>
+
+      <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-6">
+        <Panel>
+          <MetaLabel>Current Lexicon Entries</MetaLabel>
+          <div className="mt-6 space-y-3">
+            {lexicon.length === 0 ? (
+              <p className="text-sm opacity-55 italic">No committed somatic entries yet. Use Diagnostic Lab and Neural Relay to build a safer signal map over time.</p>
+            ) : (
+              lexicon.slice(0, 5).map(entry => (
+                <div key={entry.id} className="p-4 rounded-xl bg-white/5 border border-white/5">
+                  <div className="text-[10px] uppercase tracking-[0.2em] opacity-40 mb-2">{new Date(entry.timestamp).toLocaleDateString()}</div>
+                  <p className="text-sm opacity-75 leading-relaxed">{entry.note}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </Panel>
+        <div className="space-y-4">
+          <Panel className="border-[#4DB6AC]/20">
+            <MetaLabel>Route Status</MetaLabel>
+            <p className="text-xs opacity-65 leading-relaxed mt-3">Visible route body added. Deeper lexicon editing belongs in a later focused pass.</p>
+          </Panel>
+          <Panel>
+            <MetaLabel>Next Safe Step</MetaLabel>
+            <p className="text-xs opacity-65 leading-relaxed mt-3">Add explicit entry creation, editing, and review flows only after storage and privacy language are tightened.</p>
+          </Panel>
+        </div>
+      </div>
+    </div>
+  );
+
+  const ResourcesView = () => (
+    <div className="max-w-5xl mx-auto p-12 space-y-8">
+      <header className="space-y-3">
+        <MetaLabel>Survival Intel</MetaLabel>
+        <h2 className="text-5xl font-thin tracking-tighter text-white">Resource Index</h2>
+        <p className="text-sm opacity-65 leading-relaxed max-w-2xl">
+          A calm index for trusted supports, scripts, and categories. This pass makes the route explicit without adding remote sync, live content ingestion, or external calls.
+        </p>
+      </header>
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {NEWS_CATEGORIES.map(category => (
+          <Panel key={category.id} className="p-6">
+            <MetaLabel>{category.name}</MetaLabel>
+            <p className="text-xs opacity-60 leading-relaxed mt-3">Category shell ready for curated resources. No live feed is connected in this pass.</p>
+          </Panel>
+        ))}
+      </div>
+
+      <Panel className="border-orange-500/20">
+        <MetaLabel className="text-orange-400">Boundary</MetaLabel>
+        <p className="text-xs opacity-65 leading-relaxed mt-3">This route is informational only. It does not provide crisis services, medical advice, or automatic escalation.</p>
+      </Panel>
+    </div>
+  );
+
   return (
     <div className="h-screen w-screen flex relative bg-[#050505] overflow-hidden">
       <div id="flashlight" />
@@ -329,6 +395,10 @@ const App: React.FC = () => {
           )}
 
           {currentPage === Page.Report && <ReportView />}
+
+          {currentPage === Page.Tracking && <TrackingView />}
+
+          {currentPage === Page.Resources && <ResourcesView />}
 
           {currentPage === Page.Calendar && (
             <div className="max-w-4xl mx-auto p-12">
