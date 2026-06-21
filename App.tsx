@@ -508,7 +508,7 @@ const App: React.FC = () => {
 
                <div className="pt-8 border-t border-white/5 flex justify-between items-center">
                  <Button danger onClick={() => { localStorage.clear(); window.location.reload(); }}><Icons.Trash /> Wipe Neural Trace</Button>
-                 <Button onClick={handleExportVault}><Icons.Download /> Export Encrypted Vault</Button>
+                 <Button onClick={handleExportVault}><Icons.Download /> Export Vault JSON</Button>
                </div>
             </div>
           )}
